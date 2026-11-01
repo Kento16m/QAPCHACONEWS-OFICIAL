@@ -1,4 +1,4 @@
-# Logs
+# Logs y archivos temporales
 logs
 *.log
 npm-debug.log*
@@ -7,11 +7,20 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencias pesadas (Hostinger no las necesita porque ya subimos el dist compilado)
 node_modules
-# dist
-dist-ssr
-.output
-.vinxi
-.tanstack/**
-.nitro
-*.local
+
+# Variables de entorno y credenciales (NUNCA SE SUBEN POR SEGURIDAD)
+.env
+.env.local
+.env.*
+!.env.example
+
+# Archivos del sistema operativo y editores
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# ⚠️ NOTA CRÍTICA: La carpeta 'dist' NO está aquí para que Git la permita subir y Hostinger la lea.
