@@ -67,7 +67,7 @@ test.afterAll(async () => {
   for (const id of userIds) await api(`/auth/v1/admin/users/${id}`, { method: "DELETE" });
 });
 
-const EXTERNAL_DATA = ["**/api.openweathermap.org/**", "**/api/clima*", "**/api/cotizaciones*", "**/cotizaciones.json"];
+const EXTERNAL_DATA = ["**/api/clima*", "**/api/cotizaciones*", "**/cotizaciones.json"];
 
 // Every test runs with weather and exchange-rate services down: the site must not depend on them.
 const prepare = async (page: Page | BrowserContext, consent: string | null = "false") => {

@@ -1,8 +1,5 @@
-export const OPENWEATHER_API_KEY = (import.meta.env.VITE_OPENWEATHER_API_KEY ?? "").trim();
 export const OPENWEATHER_CITY = "Asuncion,PY";
 export const OPENWEATHER_CITY_LABEL = "Asunción, PY";
-export const OPENWEATHER_BASE_URL = "https://api.openweathermap.org/data/2.5";
-export const OPENWEATHER_GEO_BASE_URL = "https://api.openweathermap.org/geo/1.0";
 
 export type WeatherCurrent = {
   city: string;
@@ -126,21 +123,13 @@ async function fetchJsonWithWeatherCache<T>(cacheKey: string, loader: () => Prom
   return data;
 }
 
+// The server adds the API key; see netlify/shared/openweather.mjs.
 function buildWeatherUrl(endpoint: string, params: URLSearchParams) {
-  return `${OPENWEATHER_BASE_URL}${endpoint}?${params.toString()}`;
-}
-
-function buildGeoUrl(endpoint: string, params: URLSearchParams) {
-  return `${OPENWEATHER_GEO_BASE_URL}${endpoint}?${params.toString()}`;
+  params.set("endpoint", endpoint);
+  return `/api/clima?${params.toString()}`;
 }
 
 async function parseWeatherError(response: Response): Promise<Error> {
-  if (response.status === 401) {
-    return new Error(
-      "La clave de OpenWeatherMap aún no está activa. OpenWeatherMap puede tardar 10 a 30 minutos en activarla; revisá VITE_OPENWEATHER_API_KEY.",
-    );
-  }
-
   if (response.status === 429) {
     return new Error("Se excedió el límite de peticiones de OpenWeatherMap. Intentalo más tarde.");
   }
@@ -158,10 +147,6 @@ async function parseWeatherError(response: Response): Promise<Error> {
 }
 
 export async function fetchCurrentWeatherForCity(city: string): Promise<WeatherCurrent> {
-  if (!OPENWEATHER_API_KEY) {
-    throw new Error("Falta la variable VITE_OPENWEATHER_API_KEY en el entorno.");
-  }
-
   const query = city.trim() || OPENWEATHER_CITY;
   const cacheKey = `weather:current:${query}`;
 
@@ -178,7 +163,6 @@ export async function fetchCurrentWeatherForCity(city: string): Promise<WeatherC
       q: query,
       units: "metric",
       lang: "es",
-      appid: OPENWEATHER_API_KEY,
     });
 
     const response = await fetch(buildWeatherUrl("/weather", params));
@@ -224,16 +208,11 @@ export async function fetchCurrentWeather(): Promise<WeatherCurrent> {
 }
 
 export async function fetchUvIndexForCoordinates(lat: number, lon: number): Promise<number> {
-  if (!OPENWEATHER_API_KEY) {
-    throw new Error("Falta la variable VITE_OPENWEATHER_API_KEY en el entorno.");
-  }
-
   const cacheKey = `weather:uv:${lat}:${lon}`;
   const data = await fetchJsonWithWeatherCache<{ value?: number }>(cacheKey, async () => {
     const params = new URLSearchParams({
       lat: String(lat),
       lon: String(lon),
-      appid: OPENWEATHER_API_KEY,
     });
 
     const response = await fetch(buildWeatherUrl("/uvi", params));
@@ -248,16 +227,11 @@ export async function fetchUvIndexForCoordinates(lat: number, lon: number): Prom
 }
 
 export async function fetchAirQualityForCoordinates(lat: number, lon: number): Promise<number> {
-  if (!OPENWEATHER_API_KEY) {
-    throw new Error("Falta la variable VITE_OPENWEATHER_API_KEY en el entorno.");
-  }
-
   const cacheKey = `weather:air-quality:${lat}:${lon}`;
   const data = await fetchJsonWithWeatherCache<{ list?: Array<{ main?: { aqi?: number } }> }>(cacheKey, async () => {
     const params = new URLSearchParams({
       lat: String(lat),
       lon: String(lon),
-      appid: OPENWEATHER_API_KEY,
     });
 
     const response = await fetch(buildWeatherUrl("/air_pollution", params));
@@ -296,10 +270,6 @@ export async function fetchWeatherSnapshotForCity(city: string): Promise<Weather
 }
 
 export async function fetchHourlyForecastForCity(city: string): Promise<HourlyForecastPoint[]> {
-  if (!OPENWEATHER_API_KEY) {
-    throw new Error("Falta la variable VITE_OPENWEATHER_API_KEY en el entorno.");
-  }
-
   const query = city.trim() || OPENWEATHER_CITY;
   const cacheKey = `weather:hourly:${query}`;
 
@@ -308,7 +278,6 @@ export async function fetchHourlyForecastForCity(city: string): Promise<HourlyFo
       q: query,
       units: "metric",
       lang: "es",
-      appid: OPENWEATHER_API_KEY,
     });
 
     const response = await fetch(buildWeatherUrl("/forecast", params));
@@ -341,10 +310,6 @@ export async function fetchHourlyForecastForCity(city: string): Promise<HourlyFo
 }
 
 export async function fetchForecastWeatherForCity(city: string): Promise<ForecastDay[]> {
-  if (!OPENWEATHER_API_KEY) {
-    throw new Error("Falta la variable VITE_OPENWEATHER_API_KEY en el entorno.");
-  }
-
   const query = city.trim() || OPENWEATHER_CITY;
   const cacheKey = `weather:forecast:${query}`;
 
@@ -353,7 +318,6 @@ export async function fetchForecastWeatherForCity(city: string): Promise<Forecas
       q: query,
       units: "metric",
       lang: "es",
-      appid: OPENWEATHER_API_KEY,
     });
 
     const response = await fetch(buildWeatherUrl("/forecast", params));

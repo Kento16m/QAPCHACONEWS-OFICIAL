@@ -1,10 +1,12 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 // @ts-expect-error plain JavaScript module shared with the Netlify function
 import { createRatesFetcher } from "./netlify/shared/maxicambios.mjs";
+// @ts-expect-error plain JavaScript module shared with the Netlify function
+import { proxyWeather } from "./netlify/shared/openweather.mjs";
 
 const fetchRates = createRatesFetcher();
 
@@ -31,12 +33,25 @@ function maxicambiosProxyPlugin() {
     }
   };
 
+  // Same behavior as netlify/functions/clima.mjs while developing locally.
+  const handleWeather = async (req: any, res: any) => {
+    const apiKey = loadEnv("development", process.cwd(), "").OPENWEATHER_API_KEY?.trim() ?? "";
+    const response = await proxyWeather(`http://localhost${req.url}`, apiKey);
+    res.statusCode = response.status;
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.end(await response.text());
+  };
+
   return {
     name: "maxicambios-proxy",
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         if (req.url?.startsWith("/api/cotizaciones")) {
           await handle(req, res);
+          return;
+        }
+        if (req.url?.startsWith("/api/clima")) {
+          await handleWeather(req, res);
           return;
         }
         next();
@@ -46,6 +61,10 @@ function maxicambiosProxyPlugin() {
       server.middlewares.use(async (req, res, next) => {
         if (req.url?.startsWith("/api/cotizaciones")) {
           await handle(req, res);
+          return;
+        }
+        if (req.url?.startsWith("/api/clima")) {
+          await handleWeather(req, res);
           return;
         }
         next();
