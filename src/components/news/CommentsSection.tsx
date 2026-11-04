@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import DOMPurify from "dompurify";
+import { readFunctionError } from "@/lib/function-error";
 import { ChevronDown, ChevronUp, Heart, LogIn, MessageSquare, MoreHorizontal, Reply, Send, Trash2 } from "lucide-react";
 import {
   AlertDialog,
@@ -441,16 +442,13 @@ export function CommentsSection({ articleId }: { articleId: string }) {
         },
       });
 
-      console.debug("Supabase function response:", { data, invokeError });
-
-      const payloadError = data && typeof data === "object" && "error" in data ? (data as { error?: unknown }).error : undefined;
+      const functionError = await readFunctionError(invokeError);
+      const payloadError =
+        data && typeof data === "object" && "error" in data ? (data as { error?: unknown }).error : functionError.message;
       const payloadMessage = payloadError ? normalizeErrorMessage(payloadError) : normalizeErrorMessage(invokeError);
 
       if (payloadError || invokeError) {
-        const statusCode =
-          typeof invokeError === "object" && invokeError !== null && "status" in invokeError
-            ? Number((invokeError as Record<string, unknown>).status)
-            : null;
+        const statusCode = functionError.status;
 
         const authIssue =
           typeof invokeError === "object" &&
@@ -469,6 +467,8 @@ export function CommentsSection({ articleId }: { articleId: string }) {
                 ? "No se pudo publicar el comentario. Intentalo nuevamente en unos segundos."
                 : payloadMessage;
 
+        // Nothing was published, so the comment shown while waiting must go; the draft stays to retry.
+        setComments((current) => current.filter((item) => item.id !== optimisticComment.id));
         setError(friendlyMessage);
         setIsSubmitting(false);
         return;

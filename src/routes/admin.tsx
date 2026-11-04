@@ -21,6 +21,7 @@ import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { trackArticlePublished } from "@/lib/analytics";
 import { useArticleForm } from "@/hooks/use-article-form";
 import { buildArticlePayload, isNewlyPublished } from "@/lib/article-form";
+import { printHtml } from "@/lib/print";
 import { createSlug } from "@/lib/slug";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -146,19 +147,6 @@ const getDeviceIconForType = (deviceType: string) => {
     default:
       return Monitor;
   }
-};
-
-const resolveAccessIpFallback = (ipAddress: string | null | undefined, userId?: string | null) => {
-  if (ipAddress) return ipAddress;
-
-  if (typeof document !== "undefined") {
-    const referrer = document.referrer || "";
-    if (referrer) return `referrer:${referrer}`;
-  }
-
-  if (userId) return `auth:${userId.slice(0, 8)}`;
-
-  return "No disponible";
 };
 
 const matchesAccessDateRange = (
@@ -882,8 +870,6 @@ function AdminPage() {
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone ?? null,
       referrer: typeof document !== "undefined" ? document.referrer || null : null,
       page_url: typeof window !== "undefined" ? window.location.href : null,
-      session_id: user.id ?? null,
-      ip_address: resolveAccessIpFallback(null, user.id),
       status: "success",
       event_type: "admin_panel_access",
     });
@@ -907,7 +893,7 @@ function AdminPage() {
       log.email ?? "",
       log.role ?? "",
       formatAccessStatus(log.status),
-      resolveAccessIpFallback(log.ip_address, log.user_id),
+      log.ip_address ?? "No disponible",
       log.page_url ?? "",
       log.browser ?? "",
       getDeviceTypeFromUserAgent(log.user_agent),
@@ -974,7 +960,7 @@ function AdminPage() {
                       <td>${(log.email ?? "").replace(/</g, "&lt;")}</td>
                       <td>${(log.role ?? "").replace(/</g, "&lt;")}</td>
                       <td>${formatAccessStatus(log.status)}</td>
-                      <td>${resolveAccessIpFallback(log.ip_address, log.user_id).replace(/</g, "&lt;")}</td>
+                      <td>${(log.ip_address ?? "No disponible").replace(/</g, "&lt;")}</td>
                       <td>${new Date(log.accessed_at).toLocaleString("es-AR")}</td>
                     </tr>
                   `,
@@ -986,16 +972,9 @@ function AdminPage() {
       </html>
     `;
 
-    const printWindow = window.open("", "_blank", "noopener,noreferrer");
-    if (!printWindow) {
-      window.alert("El navegador bloqueó la impresión del PDF.");
-      return;
+    if (!printHtml(html)) {
+      window.alert("El navegador bloqueó la ventana para imprimir. Permití las ventanas emergentes de este sitio.");
     }
-
-    printWindow.document.write(html);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => printWindow.print(), 250);
   };
 
   const targetUserAccess = useMemo(() => {
@@ -1339,7 +1318,13 @@ function AdminPage() {
     const confirmed = window.confirm("¿Seguro que querés eliminar este artículo?");
     if (!confirmed) return;
 
-    await deleteArticle(articleId);
+    try {
+      await deleteArticle(articleId);
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "No se pudo eliminar el artículo.");
+      return;
+    }
+
     resetForm();
     setSelectedId(null);
     setActiveTab("articles");
@@ -2076,10 +2061,7 @@ function AdminPage() {
                           <div className="flex justify-between gap-3 border-b border-slate-200 pb-2">
                             <span>IP</span>
                             <span className="font-medium text-slate-900 break-all">
-                              {resolveAccessIpFallback(
-                                selectedAccessLog.ip_address,
-                                selectedAccessLog.user_id,
-                              )}
+                              {selectedAccessLog.ip_address ?? "No disponible"}
                             </span>
                           </div>
                           <div className="flex justify-between gap-3 border-b border-slate-200 pb-2">
@@ -3386,7 +3368,12 @@ function AdminPage() {
                             <button
                               type="button"
                               onClick={async () => {
-                                await deleteCategory(category.id);
+                                try {
+                                  await deleteCategory(category.id);
+                                } catch (error) {
+                                  window.alert(error instanceof Error ? error.message : "No se pudo eliminar la categoría.");
+                                  return;
+                                }
                                 await queryClient.invalidateQueries({
                                   queryKey: ["admin", "categories"],
                                 });
@@ -3529,7 +3516,12 @@ function AdminPage() {
                           <button
                             type="button"
                             onClick={async () => {
-                              await deleteTag(tag.id);
+                              try {
+                                await deleteTag(tag.id);
+                              } catch (error) {
+                                window.alert(error instanceof Error ? error.message : "No se pudo eliminar la etiqueta.");
+                                return;
+                              }
                               await queryClient.invalidateQueries({ queryKey: ["admin", "tags"] });
                             }}
                             className="text-[10px] font-bold uppercase text-red-600"

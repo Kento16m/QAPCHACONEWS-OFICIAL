@@ -160,6 +160,13 @@ async function ensureAdminAccess(): Promise<void> {
   }
 }
 
+const removeRow = async (table: string, column: string, value: string | number) => {
+  const client = requireSupabaseClient();
+  const { data, error } = await client.from(table).delete().eq(column, value).select(column);
+  if (error) throw error;
+  if (!data?.length) throw new Error("No se pudo eliminar: ya no existe o no tenés permiso.");
+};
+
 export async function getAdminArticles(): Promise<AdminArticle[]> {
   const client = requireSupabaseClient();
 
@@ -266,42 +273,17 @@ export async function getAdminNewsletterSubscribers(): Promise<AdminNewsletterSu
 export async function getAdminAccessLogs(): Promise<AdminAccessLog[]> {
   const client = requireSupabaseClient();
 
-  try {
-    const { data, error } = await client
-      .from("admin_access_logs")
-      .select(
-        "id, user_id, email, full_name, role, user_agent, browser, operating_system, language, timezone, referrer, page_url, session_id, ip_address, accessed_at, status, event_type"
-      )
-      .order("accessed_at", { ascending: false });
+  const { data, error } = await client
+    .from("admin_access_logs")
+    .select(
+      "id, user_id, email, full_name, role, user_agent, browser, operating_system, language, timezone, referrer, page_url, session_id, ip_address, accessed_at, status, event_type"
+    )
+    .order("accessed_at", { ascending: false })
+    .limit(500);
 
-    if (error) throw error;
+  if (error) throw error;
 
-    return (data ?? []).map((row: any) => ({
-      id: Number(row.id),
-      user_id: row.user_id ?? null,
-      email: row.email ?? null,
-      full_name: row.full_name ?? null,
-      role: row.role ?? null,
-      user_agent: row.user_agent ?? null,
-      browser: row.browser ?? null,
-      operating_system: row.operating_system ?? null,
-      language: row.language ?? null,
-      timezone: row.timezone ?? null,
-      referrer: row.referrer ?? null,
-      page_url: row.page_url ?? null,
-      session_id: row.session_id ?? null,
-      ip_address: row.ip_address ?? null,
-      accessed_at: row.accessed_at ?? new Date().toISOString(),
-      status: row.status ?? "success",
-      event_type: row.event_type ?? "admin_panel_access",
-    }));
-  } catch (error: any) {
-    const message = String(error?.message ?? "").toLowerCase();
-    if (message.includes("does not exist") || message.includes("relation") || message.includes("admin_access_logs")) {
-      return [];
-    }
-    throw error;
-  }
+  return (data ?? []) as AdminAccessLog[];
 }
 
 export async function recordAdminAccessLog(input: {
@@ -316,25 +298,10 @@ export async function recordAdminAccessLog(input: {
   timezone?: string | null;
   referrer?: string | null;
   page_url?: string | null;
-  session_id?: string | null;
-  ip_address?: string | null;
   status?: string | null;
   event_type?: string | null;
 }): Promise<void> {
   const client = requireSupabaseClient();
-
-  const resolveIpAddress = () => {
-    if (input.ip_address) return input.ip_address;
-
-    if (typeof document !== "undefined") {
-      const referrer = document.referrer || "";
-      if (referrer) return `referrer:${referrer}`;
-    }
-
-    if (input.user_id) return `auth:${input.user_id.slice(0, 8)}`;
-
-    return null;
-  };
 
   try {
     const payload = {
@@ -349,21 +316,13 @@ export async function recordAdminAccessLog(input: {
       timezone: input.timezone ?? null,
       referrer: input.referrer ?? null,
       page_url: input.page_url ?? null,
-      session_id: input.session_id ?? null,
-      ip_address: resolveIpAddress(),
       status: input.status ?? "success",
       event_type: input.event_type ?? "admin_panel_access",
       accessed_at: new Date().toISOString(),
     };
 
     const { error } = await client.from("admin_access_logs").insert(payload);
-    if (error) {
-      const message = String(error.message ?? "").toLowerCase();
-      if (message.includes("does not exist") || message.includes("relation") || message.includes("admin_access_logs")) {
-        return;
-      }
-      throw error;
-    }
+    if (error) throw error;
   } catch (error) {
     console.warn("No se pudo registrar el acceso administrativo.", error);
   }
@@ -425,10 +384,7 @@ export async function getArticleCommentsForAdmin(articleId: string): Promise<Adm
 
 export async function deleteCommentForAdmin(commentId: number): Promise<void> {
   await ensureAdminAccess();
-  const client = requireSupabaseClient();
-
-  const { error } = await client.from("comments").delete().eq("id", commentId);
-  if (error) throw error;
+  await removeRow("comments", "id", commentId);
 }
 
 export async function createCategory(input: Partial<{ name: string; slug: string; color: string | null; sort_order: number }>): Promise<AdminCategory> {
@@ -486,9 +442,7 @@ export async function updateCategory(
 
 export async function deleteCategory(id: string): Promise<void> {
   await ensureAdminAccess();
-  const client = requireSupabaseClient();
-  const { error } = await client.from("categories").delete().eq("id", id);
-  if (error) throw error;
+  await removeRow("categories", "id", id);
 }
 
 export async function createTag(input: Partial<{ name: string; slug: string }>): Promise<AdminTag> {
@@ -527,9 +481,7 @@ export async function updateTag(id: string, updates: Partial<{ name: string; slu
 
 export async function deleteTag(id: string): Promise<void> {
   await ensureAdminAccess();
-  const client = requireSupabaseClient();
-  const { error } = await client.from("tags").delete().eq("id", id);
-  if (error) throw error;
+  await removeRow("tags", "id", id);
 }
 
 async function prepareWebpFile(file: File): Promise<File> {
@@ -654,9 +606,7 @@ export async function uploadArticleMedia(file: File): Promise<string> {
 
 export async function deleteArticle(id: string): Promise<void> {
   await ensureAdminAccess();
-  const client = requireSupabaseClient();
-  const { error } = await client.from("articles").delete().eq("id", id);
-  if (error) throw error;
+  await removeRow("articles", "id", id);
 }
 
 const profileChangeError = (error: { code?: string; message: string }) =>

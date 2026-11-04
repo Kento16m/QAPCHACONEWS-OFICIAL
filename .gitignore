@@ -36,3 +36,6 @@ dist-ssr
 # Estado local que no debe versionarse
 graphify-out/
 supabase/.temp/
+.playwright/
+test-results/
+playwright-report/
