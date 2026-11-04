@@ -426,8 +426,16 @@ function AdminPage() {
     [articles, selectedId],
   );
 
-  const { form, setForm, clearDraft, reset: resetForm, recoverDraft, hasRestoredDraft, hasStaleDraft, tagsReady } =
-    useArticleForm(selectedArticle, getArticleTagIds);
+  const {
+    form,
+    setForm,
+    clearDraft,
+    reset: resetForm,
+    recoverDraft,
+    hasRestoredDraft,
+    hasStaleDraft,
+    tagsReady,
+  } = useArticleForm(selectedArticle, getArticleTagIds);
 
   const selectedManagementArticle = useMemo(
     () =>
@@ -622,20 +630,24 @@ function AdminPage() {
       return null;
     };
 
-    const selectedBlock = findMediaBlock(range.commonAncestorContainer) ?? findMediaBlock(range.startContainer);
+    const selectedBlock =
+      findMediaBlock(range.commonAncestorContainer) ?? findMediaBlock(range.startContainer);
     if (!selectedBlock) {
-      const previousNode = range.startContainer.nodeType === Node.ELEMENT_NODE
-        ? (range.startContainer as Element).previousElementSibling
-        : range.startContainer.parentElement?.previousElementSibling;
-      const nextNode = range.startContainer.nodeType === Node.ELEMENT_NODE
-        ? (range.startContainer as Element).nextElementSibling
-        : range.startContainer.parentElement?.nextElementSibling;
+      const previousNode =
+        range.startContainer.nodeType === Node.ELEMENT_NODE
+          ? (range.startContainer as Element).previousElementSibling
+          : range.startContainer.parentElement?.previousElementSibling;
+      const nextNode =
+        range.startContainer.nodeType === Node.ELEMENT_NODE
+          ? (range.startContainer as Element).nextElementSibling
+          : range.startContainer.parentElement?.nextElementSibling;
 
-      const adjacentBlock = previousNode?.getAttribute("data-media-block") === "true"
-        ? previousNode
-        : nextNode?.getAttribute("data-media-block") === "true"
-          ? nextNode
-          : null;
+      const adjacentBlock =
+        previousNode?.getAttribute("data-media-block") === "true"
+          ? previousNode
+          : nextNode?.getAttribute("data-media-block") === "true"
+            ? nextNode
+            : null;
 
       if (!adjacentBlock) return false;
       adjacentBlock.remove();
@@ -692,7 +704,8 @@ function AdminPage() {
 
       if (["youtube-nocookie.com", "www.youtube-nocookie.com"].includes(host)) {
         const embedPath = path.match(/^\/embed\/(.+)$/)?.[1];
-        if (embedPath) return `https://www.youtube-nocookie.com/embed/${embedPath.split(/[/?#]/)[0]}`;
+        if (embedPath)
+          return `https://www.youtube-nocookie.com/embed/${embedPath.split(/[/?#]/)[0]}`;
       }
 
       if (["instagram.com", "www.instagram.com"].includes(host)) {
@@ -765,7 +778,8 @@ function AdminPage() {
 
       insertMarkupBlock(markup);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "No se pudo subir el archivo multimedia.";
+      const message =
+        error instanceof Error ? error.message : "No se pudo subir el archivo multimedia.";
       window.alert(message);
     } finally {
       event.target.value = "";
@@ -950,7 +964,9 @@ function AdminPage() {
     `;
 
     if (!printHtml(html)) {
-      window.alert("El navegador bloqueó la ventana para imprimir. Permití las ventanas emergentes de este sitio.");
+      window.alert(
+        "El navegador bloqueó la ventana para imprimir. Permití las ventanas emergentes de este sitio.",
+      );
     }
   };
 
@@ -1119,7 +1135,11 @@ function AdminPage() {
 
       setForm((current) => ({ ...current, author_id: resolvedAuthorId }));
 
-      const payload = buildArticlePayload({ ...form, author_id: resolvedAuthorId }, selectedArticle, new Date());
+      const payload = buildArticlePayload(
+        { ...form, author_id: resolvedAuthorId },
+        selectedArticle,
+        new Date(),
+      );
 
       const saved = selectedArticle
         ? await updateArticle(selectedArticle.id, payload)
@@ -1990,9 +2010,7 @@ function AdminPage() {
                           <div className="mt-3">
                             <UserAvatar
                               name={
-                                selectedAccessLog.full_name ||
-                                selectedAccessLog.email ||
-                                "Usuario"
+                                selectedAccessLog.full_name || selectedAccessLog.email || "Usuario"
                               }
                               avatarUrl={targetUserAccess?.avatar_url ?? null}
                               sizeClass="h-20 w-20"
@@ -2351,254 +2369,302 @@ function AdminPage() {
                   }}
                 >
                   {/* Nothing can change during a save: what was sent is exactly what gets marked as saved. */}
-                  <fieldset disabled={saveMutation.isPending} className="min-w-0 space-y-5 border-0 p-0">
-                  {hasRestoredDraft && (
-                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                      <span>Recuperamos un borrador que no se había guardado.</span>
-                      <button type="button" onClick={resetForm} className="font-semibold underline underline-offset-2">
-                        Descartar borrador
-                      </button>
-                    </div>
-                  )}
-                  {hasStaleDraft && (
-                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                      <span>Tenés un borrador sin guardar, pero esta nota cambió después. Estás viendo la versión más reciente.</span>
-                      <span className="flex gap-4">
-                        <button type="button" onClick={recoverDraft} className="font-semibold underline underline-offset-2">
-                          Recuperar borrador
-                        </button>
-                        <button type="button" onClick={resetForm} className="font-semibold underline underline-offset-2">
+                  <fieldset
+                    disabled={saveMutation.isPending}
+                    className="min-w-0 space-y-5 border-0 p-0"
+                  >
+                    {hasRestoredDraft && (
+                      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                        <span>Recuperamos un borrador que no se había guardado.</span>
+                        <button
+                          type="button"
+                          onClick={resetForm}
+                          className="font-semibold underline underline-offset-2"
+                        >
                           Descartar borrador
                         </button>
-                      </span>
-                    </div>
-                  )}
-                  <div className="grid gap-5 md:grid-cols-2">
-                    <label className="space-y-2 md:col-span-2">
-                      <span className="text-sm font-medium text-foreground">Título</span>
-                      <input
-                        value={form.title}
-                        onChange={(event) =>
-                          setForm((prev) => ({ ...prev, title: event.target.value }))
-                        }
-                        className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary"
-                        placeholder="Ej: El Chaco abre una nueva etapa de inversión"
-                      />
-                    </label>
-
-                    <label className="space-y-2">
-                      <span className="text-sm font-medium text-foreground">Slug</span>
-                      <input
-                        value={form.slug}
-                        onChange={(event) =>
-                          setForm((prev) => ({ ...prev, slug: event.target.value }))
-                        }
-                        className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary"
-                        placeholder="ejemplo-slug"
-                      />
-                    </label>
-
-                    <label className="space-y-2">
-                      <span className="text-sm font-medium text-foreground">Estado</span>
-                      <select
-                        value={form.status}
-                        onChange={(event) =>
-                          setForm((prev) => ({
-                            ...prev,
-                            status: event.target.value as AdminArticle["status"],
-                          }))
-                        }
-                        className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary"
-                      >
-                        <option value="draft">Borrador</option>
-                        <option value="scheduled">Programado</option>
-                        <option value="published">Publicado</option>
-                        <option value="archived">Archivado</option>
-                      </select>
-                    </label>
-
-                    {form.status === "scheduled" && (
-                      <label className="space-y-2">
-                        <span className="text-sm font-medium text-foreground">
-                          Programar publicación
+                      </div>
+                    )}
+                    {hasStaleDraft && (
+                      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                        <span>
+                          Tenés un borrador sin guardar, pero esta nota cambió después. Estás viendo
+                          la versión más reciente.
                         </span>
+                        <span className="flex gap-4">
+                          <button
+                            type="button"
+                            onClick={recoverDraft}
+                            className="font-semibold underline underline-offset-2"
+                          >
+                            Recuperar borrador
+                          </button>
+                          <button
+                            type="button"
+                            onClick={resetForm}
+                            className="font-semibold underline underline-offset-2"
+                          >
+                            Descartar borrador
+                          </button>
+                        </span>
+                      </div>
+                    )}
+                    <div className="grid gap-5 md:grid-cols-2">
+                      <label className="space-y-2 md:col-span-2">
+                        <span className="text-sm font-medium text-foreground">Título</span>
                         <input
-                          type="datetime-local"
-                          value={form.scheduled_at}
+                          value={form.title}
                           onChange={(event) =>
-                            setForm((prev) => ({ ...prev, scheduled_at: event.target.value }))
+                            setForm((prev) => ({ ...prev, title: event.target.value }))
                           }
                           className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary"
+                          placeholder="Ej: El Chaco abre una nueva etapa de inversión"
                         />
                       </label>
-                    )}
 
-                    <div className="space-y-2">
-                      <span className="text-sm font-medium text-foreground">Autor</span>
-                      <div className="flex items-center justify-between gap-3 rounded-xl border border-input bg-background px-3 py-3">
-                        <div className="flex items-center gap-3">
-                          <UserAvatar
-                            name={lockedAuthor?.full_name ?? currentEditorialUser.name}
-                            avatarUrl={lockedAuthor?.avatar_url ?? null}
-                            sizeClass="h-10 w-10"
-                            textClass="text-xs"
-                            fallbackBg="bg-slate-900 text-white"
+                      <label className="space-y-2">
+                        <span className="text-sm font-medium text-foreground">Slug</span>
+                        <input
+                          value={form.slug}
+                          onChange={(event) =>
+                            setForm((prev) => ({ ...prev, slug: event.target.value }))
+                          }
+                          className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary"
+                          placeholder="ejemplo-slug"
+                        />
+                      </label>
+
+                      <label className="space-y-2">
+                        <span className="text-sm font-medium text-foreground">Estado</span>
+                        <select
+                          value={form.status}
+                          onChange={(event) =>
+                            setForm((prev) => ({
+                              ...prev,
+                              status: event.target.value as AdminArticle["status"],
+                            }))
+                          }
+                          className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary"
+                        >
+                          <option value="draft">Borrador</option>
+                          <option value="scheduled">Programado</option>
+                          <option value="published">Publicado</option>
+                          <option value="archived">Archivado</option>
+                        </select>
+                      </label>
+
+                      {form.status === "scheduled" && (
+                        <label className="space-y-2">
+                          <span className="text-sm font-medium text-foreground">
+                            Programar publicación
+                          </span>
+                          <input
+                            type="datetime-local"
+                            value={form.scheduled_at}
+                            onChange={(event) =>
+                              setForm((prev) => ({ ...prev, scheduled_at: event.target.value }))
+                            }
+                            className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary"
                           />
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">
-                              {lockedAuthor?.full_name ?? currentEditorialUser.name}
-                            </p>
-                            <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
-                              Editor principal
-                            </p>
-                          </div>
-                        </div>
-                        <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-700">
-                          Fijo
-                        </span>
-                      </div>
-                    </div>
+                        </label>
+                      )}
 
-                    <label className="space-y-2">
-                      <span className="text-sm font-medium text-foreground">Categoría</span>
-                      <select
-                        value={form.category_id ?? ""}
-                        onChange={(event) =>
-                          setForm((prev) => ({ ...prev, category_id: event.target.value || null }))
-                        }
-                        className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary"
-                      >
-                        <option value="">Sin categoría</option>
-                        {categories.map((category) => (
-                          <option key={category.id} value={category.id}>
-                            {category.name}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-
-                    <div className="space-y-2 md:col-span-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-medium text-foreground">Etiquetas</span>
-                        <span className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-                          {form.tag_ids.length} seleccionadas
-                        </span>
-                      </div>
-
-                      <div className="flex min-h-12 flex-wrap gap-2 rounded-xl border border-input bg-background p-3">
-                        {adminTags.length === 0 ? (
-                          <p className="text-sm text-muted-foreground">
-                            Todavía no hay etiquetas creadas. Podés crear una desde la sección de
-                            etiquetas.
-                          </p>
-                        ) : (
-                          adminTags.map((tag) => {
-                            const selected = form.tag_ids.includes(tag.id);
-                            return (
-                              <button
-                                key={tag.id}
-                                type="button"
-                                onClick={() =>
-                                  setForm((prev) => {
-                                    const nextTagIds = prev.tag_ids.includes(tag.id)
-                                      ? prev.tag_ids.filter((id) => id !== tag.id)
-                                      : [...prev.tag_ids, tag.id];
-                                    return { ...prev, tag_ids: nextTagIds };
-                                  })
-                                }
-                                className={[
-                                  "rounded-full border px-3 py-1.5 text-sm font-semibold transition",
-                                  selected
-                                    ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                                    : "border-input bg-background text-foreground hover:border-primary/60 hover:bg-accent",
-                                ].join(" ")}
-                              >
-                                #{tag.name}
-                              </button>
-                            );
-                          })
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="space-y-2 md:col-span-2">
-                      <span className="text-sm font-medium text-foreground">Imagen principal</span>
-
-                      <div
-                        onDragOver={(event) => {
-                          event.preventDefault();
-                          setIsCoverDragging(true);
-                        }}
-                        onDragLeave={(event) => {
-                          event.preventDefault();
-                          setIsCoverDragging(false);
-                        }}
-                        onDrop={(event) => {
-                          event.preventDefault();
-                          setIsCoverDragging(false);
-                          const files = Array.from(event.dataTransfer.files ?? []);
-                          void processCoverFiles(files);
-                        }}
-                        className={[
-                          "group relative overflow-hidden rounded-[24px] border border-dashed transition-all duration-200",
-                          isCoverDragging
-                            ? "border-primary bg-primary/5 shadow-[0_18px_32px_rgba(15,23,42,0.06)]"
-                            : "border-slate-300 bg-slate-50/80",
-                        ].join(" ")}
-                      >
-                        {coverGallery.length > 0 ? (
-                          <>
-                            <div
-                              className="overflow-hidden rounded-[20px]"
-                              style={{ aspectRatio: "16 / 9" }}
-                            >
-                              <div
-                                className="flex h-full transition-transform duration-700 ease-out"
-                                style={{ transform: `translateX(-${activeCoverIndex * 100}%)` }}
-                              >
-                                {coverGallery.map((url, index) => (
-                                  <div key={`${url}-${index}`} className="min-w-full">
-                                    <img
-                                      src={url}
-                                      alt="Vista previa del artículo"
-                                      className="h-full w-full bg-white object-cover"
-                                    />
-                                  </div>
-                                ))}
-                              </div>
+                      <div className="space-y-2">
+                        <span className="text-sm font-medium text-foreground">Autor</span>
+                        <div className="flex items-center justify-between gap-3 rounded-xl border border-input bg-background px-3 py-3">
+                          <div className="flex items-center gap-3">
+                            <UserAvatar
+                              name={lockedAuthor?.full_name ?? currentEditorialUser.name}
+                              avatarUrl={lockedAuthor?.avatar_url ?? null}
+                              sizeClass="h-10 w-10"
+                              textClass="text-xs"
+                              fallbackBg="bg-slate-900 text-white"
+                            />
+                            <div>
+                              <p className="text-sm font-semibold text-foreground">
+                                {lockedAuthor?.full_name ?? currentEditorialUser.name}
+                              </p>
+                              <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                                Editor principal
+                              </p>
                             </div>
+                          </div>
+                          <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-700">
+                            Fijo
+                          </span>
+                        </div>
+                      </div>
 
-                            {coverGallery.length > 1 && (
-                              <div className="absolute inset-x-0 bottom-4 flex justify-center">
-                                <div className="flex items-center gap-2 rounded-full border border-white/60 bg-slate-950/60 px-3 py-1.5 backdrop-blur-sm">
-                                  {coverGallery.map((_, index) => (
-                                    <button
-                                      key={index}
-                                      type="button"
-                                      aria-label={`Ver imagen ${index + 1}`}
-                                      onClick={() => setActiveCoverIndex(index)}
-                                      className={`h-2.5 rounded-full transition-all ${
-                                        activeCoverIndex === index
-                                          ? "w-7 bg-white"
-                                          : "w-2.5 bg-white/40 hover:bg-white/70"
-                                      }`}
-                                    />
+                      <label className="space-y-2">
+                        <span className="text-sm font-medium text-foreground">Categoría</span>
+                        <select
+                          value={form.category_id ?? ""}
+                          onChange={(event) =>
+                            setForm((prev) => ({
+                              ...prev,
+                              category_id: event.target.value || null,
+                            }))
+                          }
+                          className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary"
+                        >
+                          <option value="">Sin categoría</option>
+                          {categories.map((category) => (
+                            <option key={category.id} value={category.id}>
+                              {category.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <div className="space-y-2 md:col-span-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-sm font-medium text-foreground">Etiquetas</span>
+                          <span className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                            {form.tag_ids.length} seleccionadas
+                          </span>
+                        </div>
+
+                        <div className="flex min-h-12 flex-wrap gap-2 rounded-xl border border-input bg-background p-3">
+                          {adminTags.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">
+                              Todavía no hay etiquetas creadas. Podés crear una desde la sección de
+                              etiquetas.
+                            </p>
+                          ) : (
+                            adminTags.map((tag) => {
+                              const selected = form.tag_ids.includes(tag.id);
+                              return (
+                                <button
+                                  key={tag.id}
+                                  type="button"
+                                  onClick={() =>
+                                    setForm((prev) => {
+                                      const nextTagIds = prev.tag_ids.includes(tag.id)
+                                        ? prev.tag_ids.filter((id) => id !== tag.id)
+                                        : [...prev.tag_ids, tag.id];
+                                      return { ...prev, tag_ids: nextTagIds };
+                                    })
+                                  }
+                                  className={[
+                                    "rounded-full border px-3 py-1.5 text-sm font-semibold transition",
+                                    selected
+                                      ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                                      : "border-input bg-background text-foreground hover:border-primary/60 hover:bg-accent",
+                                  ].join(" ")}
+                                >
+                                  #{tag.name}
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 md:col-span-2">
+                        <span className="text-sm font-medium text-foreground">
+                          Imagen principal
+                        </span>
+
+                        <div
+                          onDragOver={(event) => {
+                            event.preventDefault();
+                            setIsCoverDragging(true);
+                          }}
+                          onDragLeave={(event) => {
+                            event.preventDefault();
+                            setIsCoverDragging(false);
+                          }}
+                          onDrop={(event) => {
+                            event.preventDefault();
+                            setIsCoverDragging(false);
+                            const files = Array.from(event.dataTransfer.files ?? []);
+                            void processCoverFiles(files);
+                          }}
+                          className={[
+                            "group relative overflow-hidden rounded-[24px] border border-dashed transition-all duration-200",
+                            isCoverDragging
+                              ? "border-primary bg-primary/5 shadow-[0_18px_32px_rgba(15,23,42,0.06)]"
+                              : "border-slate-300 bg-slate-50/80",
+                          ].join(" ")}
+                        >
+                          {coverGallery.length > 0 ? (
+                            <>
+                              <div
+                                className="overflow-hidden rounded-[20px]"
+                                style={{ aspectRatio: "16 / 9" }}
+                              >
+                                <div
+                                  className="flex h-full transition-transform duration-700 ease-out"
+                                  style={{ transform: `translateX(-${activeCoverIndex * 100}%)` }}
+                                >
+                                  {coverGallery.map((url, index) => (
+                                    <div key={`${url}-${index}`} className="min-w-full">
+                                      <img
+                                        src={url}
+                                        alt="Vista previa del artículo"
+                                        className="h-full w-full bg-white object-cover"
+                                      />
+                                    </div>
                                   ))}
                                 </div>
                               </div>
-                            )}
 
-                            <div className="absolute inset-x-4 bottom-4 flex items-center justify-between gap-3 rounded-2xl border border-white/60 bg-slate-950/70 px-3 py-2 backdrop-blur-sm">
-                              <div className="min-w-0">
-                                <p className="truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200">
-                                  Portada actual
+                              {coverGallery.length > 1 && (
+                                <div className="absolute inset-x-0 bottom-4 flex justify-center">
+                                  <div className="flex items-center gap-2 rounded-full border border-white/60 bg-slate-950/60 px-3 py-1.5 backdrop-blur-sm">
+                                    {coverGallery.map((_, index) => (
+                                      <button
+                                        key={index}
+                                        type="button"
+                                        aria-label={`Ver imagen ${index + 1}`}
+                                        onClick={() => setActiveCoverIndex(index)}
+                                        className={`h-2.5 rounded-full transition-all ${
+                                          activeCoverIndex === index
+                                            ? "w-7 bg-white"
+                                            : "w-2.5 bg-white/40 hover:bg-white/70"
+                                        }`}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              <div className="absolute inset-x-4 bottom-4 flex items-center justify-between gap-3 rounded-2xl border border-white/60 bg-slate-950/70 px-3 py-2 backdrop-blur-sm">
+                                <div className="min-w-0">
+                                  <p className="truncate text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200">
+                                    Portada actual
+                                  </p>
+                                  <p className="truncate text-sm text-white">
+                                    {coverGallery[activeCoverIndex]}
+                                  </p>
+                                </div>
+                                <label className="inline-flex cursor-pointer items-center justify-center rounded-full bg-white px-3 py-2 text-xs font-bold text-slate-900 shadow-sm hover:bg-slate-100">
+                                  Cambiar
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    multiple
+                                    className="hidden"
+                                    onChange={handleCoverUpload}
+                                  />
+                                </label>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="flex min-h-[280px] flex-col items-center justify-center gap-4 px-6 py-8 text-center">
+                              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-sm">
+                                <ImageUp className="h-6 w-6" />
+                              </div>
+                              <div>
+                                <p className="text-base font-bold text-slate-900">
+                                  Arrastrá una imagen aquí
                                 </p>
-                                <p className="truncate text-sm text-white">
-                                  {coverGallery[activeCoverIndex]}
+                                <p className="mt-1 text-sm text-slate-500">
+                                  o seleccioná un archivo desde tu computadora
                                 </p>
                               </div>
-                              <label className="inline-flex cursor-pointer items-center justify-center rounded-full bg-white px-3 py-2 text-xs font-bold text-slate-900 shadow-sm hover:bg-slate-100">
-                                Cambiar
+                              <label className="inline-flex cursor-pointer items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800">
+                                Elegir archivo
                                 <input
                                   type="file"
                                   accept="image/*"
@@ -2608,198 +2674,176 @@ function AdminPage() {
                                 />
                               </label>
                             </div>
-                          </>
-                        ) : (
-                          <div className="flex min-h-[280px] flex-col items-center justify-center gap-4 px-6 py-8 text-center">
-                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-sm">
-                              <ImageUp className="h-6 w-6" />
-                            </div>
-                            <div>
-                              <p className="text-base font-bold text-slate-900">
-                                Arrastrá una imagen aquí
-                              </p>
-                              <p className="mt-1 text-sm text-slate-500">
-                                o seleccioná un archivo desde tu computadora
-                              </p>
-                            </div>
-                            <label className="inline-flex cursor-pointer items-center justify-center rounded-full bg-slate-900 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800">
-                              Elegir archivo
-                              <input
-                                type="file"
-                                accept="image/*"
-                                multiple
-                                className="hidden"
-                                onChange={handleCoverUpload}
-                              />
-                            </label>
-                          </div>
-                        )}
-                      </div>
+                          )}
+                        </div>
 
-                      <div className="flex flex-col gap-3 sm:flex-row">
-                        <input
-                          value={coverGallery.join(", ") || form.cover_image_url}
-                          onChange={(event) => {
-                            const urls = parseCoverGallery(event.target.value);
-                            if (urls.length === 0) {
-                              setCoverGallery([]);
-                              setActiveCoverIndex(0);
-                              setForm((prev) => ({ ...prev, cover_image_url: "" }));
-                              return;
-                            }
-
-                            setCoverGallery(urls);
-                            setActiveCoverIndex(0);
-                            setForm((prev) => ({ ...prev, cover_image_url: urls[0] ?? "" }));
-                          }}
-                          className="h-11 flex-1 rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary"
-                          placeholder="https://... o pegar URL de la imagen"
-                        />
-                        <label className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-input bg-background px-4 py-2 text-sm font-semibold text-foreground hover:bg-accent">
-                          Subir archivo
+                        <div className="flex flex-col gap-3 sm:flex-row">
                           <input
-                            type="file"
-                            accept="image/*"
-                            multiple
-                            className="hidden"
-                            onChange={handleCoverUpload}
+                            value={coverGallery.join(", ") || form.cover_image_url}
+                            onChange={(event) => {
+                              const urls = parseCoverGallery(event.target.value);
+                              if (urls.length === 0) {
+                                setCoverGallery([]);
+                                setActiveCoverIndex(0);
+                                setForm((prev) => ({ ...prev, cover_image_url: "" }));
+                                return;
+                              }
+
+                              setCoverGallery(urls);
+                              setActiveCoverIndex(0);
+                              setForm((prev) => ({ ...prev, cover_image_url: urls[0] ?? "" }));
+                            }}
+                            className="h-11 flex-1 rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary"
+                            placeholder="https://... o pegar URL de la imagen"
                           />
-                        </label>
+                          <label className="inline-flex cursor-pointer items-center justify-center rounded-xl border border-input bg-background px-4 py-2 text-sm font-semibold text-foreground hover:bg-accent">
+                            Subir archivo
+                            <input
+                              type="file"
+                              accept="image/*"
+                              multiple
+                              className="hidden"
+                              onChange={handleCoverUpload}
+                            />
+                          </label>
+                        </div>
                       </div>
-                    </div>
 
-                    <label className="space-y-2 md:col-span-2">
-                      <span className="text-sm font-medium text-foreground">Extracto</span>
-                      <textarea
-                        value={form.excerpt}
-                        onChange={(event) =>
-                          setForm((prev) => ({ ...prev, excerpt: event.target.value }))
-                        }
-                        rows={3}
-                        className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none transition focus:border-primary"
-                      />
-                    </label>
-
-                    <label className="space-y-2 md:col-span-2">
-                      <span className="text-sm font-medium text-foreground">SEO Title</span>
-                      <input
-                        value={form.seo_title}
-                        onChange={(event) =>
-                          setForm((prev) => ({ ...prev, seo_title: event.target.value }))
-                        }
-                        className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary"
-                      />
-                    </label>
-
-                    <label className="space-y-2 md:col-span-2">
-                      <span className="text-sm font-medium text-foreground">SEO Description</span>
-                      <textarea
-                        value={form.seo_description}
-                        onChange={(event) =>
-                          setForm((prev) => ({ ...prev, seo_description: event.target.value }))
-                        }
-                        rows={2}
-                        className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none transition focus:border-primary"
-                      />
-                    </label>
-
-                    <div className="space-y-2 md:col-span-2">
-                      <div className="flex items-center justify-between gap-3">
-                        <span className="text-sm font-medium text-foreground">Contenido</span>
-                        <span className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-                          Formato simple
-                        </span>
-                      </div>
-                      <RichTextToolbar
-                        onFormat={applyTextFormat}
-                        onInsertImage={() => insertTextMedia("image")}
-                        onInsertVideo={() => insertTextMedia("video")}
-                        onUploadMedia={() => mediaInputRef.current?.click()}
-                      />
-                      <input
-                        ref={mediaInputRef}
-                        type="file"
-                        accept="image/*,video/*"
-                        multiple
-                        className="hidden"
-                        onChange={handleInlineMediaUpload}
-                      />
-                      <div
-                        ref={attachEditor}
-                        role="textbox"
-                        aria-label="Contenido del artículo"
-                        tabIndex={0}
-                        suppressContentEditableWarning
-                        contentEditable={!saveMutation.isPending}
-                        dir="ltr"
-                        style={{ direction: "ltr", textAlign: "left" }}
-                        onKeyDown={(event) => {
-                          if ((event.key === "Backspace" || event.key === "Delete") && removeSelectedMediaBlock()) {
-                            event.preventDefault();
+                      <label className="space-y-2 md:col-span-2">
+                        <span className="text-sm font-medium text-foreground">Extracto</span>
+                        <textarea
+                          value={form.excerpt}
+                          onChange={(event) =>
+                            setForm((prev) => ({ ...prev, excerpt: event.target.value }))
                           }
-                        }}
-                        onInput={(event) => {
-                          const element = event.currentTarget;
-                          setForm((prev) => ({ ...prev, content: element.innerHTML }));
-                        }}
-                        className="min-h-[260px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm leading-7 text-foreground outline-none transition focus:border-primary empty:before:pointer-events-none empty:before:block empty:before:text-muted-foreground empty:before:content-[attr(data-placeholder)]"
-                        data-placeholder="Escribí la nota completa…"
-                      />
-                    </div>
-                  </div>
+                          rows={3}
+                          className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none transition focus:border-primary"
+                        />
+                      </label>
 
-                  <div className="flex flex-wrap gap-3">
-                    <label className="flex items-center gap-2 text-sm text-foreground">
-                      <input
-                        type="checkbox"
-                        checked={form.is_featured}
-                        onChange={(event) =>
-                          setForm((prev) => ({ ...prev, is_featured: event.target.checked }))
-                        }
-                      />
-                      Destacado
-                    </label>
-                    <label className="flex items-center gap-2 text-sm text-foreground">
-                      <input
-                        type="checkbox"
-                        checked={form.is_breaking}
-                        onChange={(event) =>
-                          setForm((prev) => ({ ...prev, is_breaking: event.target.checked }))
-                        }
-                      />
-                      Breaking
-                    </label>
-                  </div>
+                      <label className="space-y-2 md:col-span-2">
+                        <span className="text-sm font-medium text-foreground">SEO Title</span>
+                        <input
+                          value={form.seo_title}
+                          onChange={(event) =>
+                            setForm((prev) => ({ ...prev, seo_title: event.target.value }))
+                          }
+                          className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary"
+                        />
+                      </label>
 
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Users className="h-4 w-4" />
-                      {authors.length} autores disponibles
+                      <label className="space-y-2 md:col-span-2">
+                        <span className="text-sm font-medium text-foreground">SEO Description</span>
+                        <textarea
+                          value={form.seo_description}
+                          onChange={(event) =>
+                            setForm((prev) => ({ ...prev, seo_description: event.target.value }))
+                          }
+                          rows={2}
+                          className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none transition focus:border-primary"
+                        />
+                      </label>
+
+                      <div className="space-y-2 md:col-span-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-sm font-medium text-foreground">Contenido</span>
+                          <span className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                            Formato simple
+                          </span>
+                        </div>
+                        <RichTextToolbar
+                          onFormat={applyTextFormat}
+                          onInsertImage={() => insertTextMedia("image")}
+                          onInsertVideo={() => insertTextMedia("video")}
+                          onUploadMedia={() => mediaInputRef.current?.click()}
+                        />
+                        <input
+                          ref={mediaInputRef}
+                          type="file"
+                          accept="image/*,video/*"
+                          multiple
+                          className="hidden"
+                          onChange={handleInlineMediaUpload}
+                        />
+                        <div
+                          ref={attachEditor}
+                          role="textbox"
+                          aria-label="Contenido del artículo"
+                          tabIndex={0}
+                          suppressContentEditableWarning
+                          contentEditable={!saveMutation.isPending}
+                          dir="ltr"
+                          style={{ direction: "ltr", textAlign: "left" }}
+                          onKeyDown={(event) => {
+                            if (
+                              (event.key === "Backspace" || event.key === "Delete") &&
+                              removeSelectedMediaBlock()
+                            ) {
+                              event.preventDefault();
+                            }
+                          }}
+                          onInput={(event) => {
+                            const element = event.currentTarget;
+                            setForm((prev) => ({ ...prev, content: element.innerHTML }));
+                          }}
+                          className="min-h-[260px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm leading-7 text-foreground outline-none transition focus:border-primary empty:before:pointer-events-none empty:before:block empty:before:text-muted-foreground empty:before:content-[attr(data-placeholder)]"
+                          data-placeholder="Escribí la nota completa…"
+                        />
+                      </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {selectedArticle && (
+
+                    <div className="flex flex-wrap gap-3">
+                      <label className="flex items-center gap-2 text-sm text-foreground">
+                        <input
+                          type="checkbox"
+                          checked={form.is_featured}
+                          onChange={(event) =>
+                            setForm((prev) => ({ ...prev, is_featured: event.target.checked }))
+                          }
+                        />
+                        Destacado
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-foreground">
+                        <input
+                          type="checkbox"
+                          checked={form.is_breaking}
+                          onChange={(event) =>
+                            setForm((prev) => ({ ...prev, is_breaking: event.target.checked }))
+                          }
+                        />
+                        Breaking
+                      </label>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Users className="h-4 w-4" />
+                        {authors.length} autores disponibles
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {selectedArticle && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteArticle(selectedArticle.id)}
+                            className="rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
+                          >
+                            Eliminar artículo
+                          </button>
+                        )}
                         <button
-                          type="button"
-                          onClick={() => handleDeleteArticle(selectedArticle.id)}
-                          className="rounded-full border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100"
+                          type="submit"
+                          disabled={saveMutation.isPending}
+                          className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-70"
                         >
-                          Eliminar artículo
+                          <Save className="h-4 w-4" />
+                          {saveMutation.isPending
+                            ? "Guardando…"
+                            : selectedArticle
+                              ? "Guardar cambios"
+                              : "Publicar artículo"}
                         </button>
-                      )}
-                      <button
-                        type="submit"
-                        disabled={saveMutation.isPending}
-                        className="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-70"
-                      >
-                        <Save className="h-4 w-4" />
-                        {saveMutation.isPending
-                          ? "Guardando…"
-                          : selectedArticle
-                            ? "Guardar cambios"
-                            : "Publicar artículo"}
-                      </button>
+                      </div>
                     </div>
-                  </div>
                   </fieldset>
                 </form>
               </section>
@@ -3365,7 +3409,11 @@ function AdminPage() {
                                 try {
                                   await deleteCategory(category.id);
                                 } catch (error) {
-                                  window.alert(error instanceof Error ? error.message : "No se pudo eliminar la categoría.");
+                                  window.alert(
+                                    error instanceof Error
+                                      ? error.message
+                                      : "No se pudo eliminar la categoría.",
+                                  );
                                   return;
                                 }
                                 await queryClient.invalidateQueries({
@@ -3513,7 +3561,11 @@ function AdminPage() {
                               try {
                                 await deleteTag(tag.id);
                               } catch (error) {
-                                window.alert(error instanceof Error ? error.message : "No se pudo eliminar la etiqueta.");
+                                window.alert(
+                                  error instanceof Error
+                                    ? error.message
+                                    : "No se pudo eliminar la etiqueta.",
+                                );
                                 return;
                               }
                               await queryClient.invalidateQueries({ queryKey: ["admin", "tags"] });

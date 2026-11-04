@@ -36,7 +36,10 @@ function ProfilePage() {
       <div className="mx-auto flex min-h-[60vh] max-w-xl flex-col items-center justify-center gap-4 px-4 text-center">
         <h1 className="text-3xl font-black text-foreground">Iniciá sesión para ver tu perfil</h1>
         <p className="text-muted-foreground">Tu información personal aparecerá aquí.</p>
-        <Link to="/" className="rounded-full bg-primary px-5 py-2.5 font-semibold text-primary-foreground hover:bg-primary/90">
+        <Link
+          to="/"
+          className="rounded-full bg-primary px-5 py-2.5 font-semibold text-primary-foreground hover:bg-primary/90"
+        >
           Volver al inicio
         </Link>
       </div>
@@ -58,7 +61,10 @@ function ProfilePage() {
 
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button variant="outline" className="gap-2 border-input bg-background text-foreground hover:bg-accent">
+            <Button
+              variant="outline"
+              className="gap-2 border-input bg-background text-foreground hover:bg-accent"
+            >
               <LogOut className="h-4 w-4" />
               Cerrar sesión
             </Button>
@@ -68,17 +74,24 @@ function ProfilePage() {
               <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive">
                 <ShieldAlert className="h-5 w-5" />
               </div>
-              <AlertDialogTitle className="text-xl font-black text-foreground">¿Cerrar sesión?</AlertDialogTitle>
+              <AlertDialogTitle className="text-xl font-black text-foreground">
+                ¿Cerrar sesión?
+              </AlertDialogTitle>
               <AlertDialogDescription className="text-sm text-muted-foreground">
-                Si aceptás, saldrás de tu cuenta y tendrás que volver a iniciar sesión para continuar.
+                Si aceptás, saldrás de tu cuenta y tendrás que volver a iniciar sesión para
+                continuar.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="flex flex-row justify-end gap-2 border-t border-border bg-muted/20 px-6 py-4">
               <AlertDialogCancel asChild>
-                <Button variant="outline" size="sm">Cancelar</Button>
+                <Button variant="outline" size="sm">
+                  Cancelar
+                </Button>
               </AlertDialogCancel>
               <AlertDialogAction asChild>
-                <Button variant="destructive" size="sm" onClick={handleSignOut}>Aceptar</Button>
+                <Button variant="destructive" size="sm" onClick={handleSignOut}>
+                  Aceptar
+                </Button>
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -88,7 +101,11 @@ function ProfilePage() {
       <div className="grid gap-6 md:grid-cols-[180px_minmax(0,1fr)]">
         <div className="flex items-center justify-center rounded-3xl border bg-card p-4 shadow-sm">
           {user.avatar_url ? (
-            <img src={user.avatar_url} alt={user.full_name} className="h-24 w-24 rounded-full object-cover" />
+            <img
+              src={user.avatar_url}
+              alt={user.full_name}
+              className="h-24 w-24 rounded-full object-cover"
+            />
           ) : (
             <div className="grid h-24 w-24 place-items-center rounded-full bg-primary text-2xl font-black text-primary-foreground">
               {user.full_name.slice(0, 2).toUpperCase()}
@@ -108,7 +125,9 @@ function ProfilePage() {
             </div>
             <div>
               <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Rol</p>
-              <p className="mt-1 text-lg capitalize text-foreground">{profile?.role ?? user.role}</p>
+              <p className="mt-1 text-lg capitalize text-foreground">
+                {profile?.role ?? user.role}
+              </p>
             </div>
           </div>
         </div>

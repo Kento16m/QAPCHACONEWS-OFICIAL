@@ -1,4 +1,12 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import * as auth from "@/lib/auth";
 import { getProfileColor } from "@/lib/profile-colors";
 import { supabase } from "@/lib/supabase";
@@ -38,14 +46,28 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const toAuthUser = (sessionUser: { id: string; email?: string | null; user_metadata?: { full_name?: string; name?: string; avatar_url?: string | null; picture?: string | null } } | null, profile?: ProfileRow | null): AuthUser | null => {
+const toAuthUser = (
+  sessionUser: {
+    id: string;
+    email?: string | null;
+    user_metadata?: {
+      full_name?: string;
+      name?: string;
+      avatar_url?: string | null;
+      picture?: string | null;
+    };
+  } | null,
+  profile?: ProfileRow | null,
+): AuthUser | null => {
   if (!sessionUser) return null;
 
   const userMetadata = sessionUser.user_metadata ?? {};
-  const fallbackName = userMetadata.full_name ?? userMetadata.name ?? sessionUser.email?.split("@")[0] ?? "Lector";
+  const fallbackName =
+    userMetadata.full_name ?? userMetadata.name ?? sessionUser.email?.split("@")[0] ?? "Lector";
   const fallbackAvatar = userMetadata.avatar_url ?? userMetadata.picture ?? null;
 
-  const resolvedProfileColor = profile?.profile_color ?? getProfileColor(profile?.full_name ?? fallbackName);
+  const resolvedProfileColor =
+    profile?.profile_color ?? getProfileColor(profile?.full_name ?? fallbackName);
 
   return {
     id: sessionUser.id,
@@ -60,7 +82,8 @@ const toAuthUser = (sessionUser: { id: string; email?: string | null; user_metad
 async function loadProfile(userId: string | null): Promise<ProfileRow | null> {
   if (!userId || !supabase) return null;
 
-  const fallbackSelect = "id, full_name, avatar_url, profile_color, role, is_blocked, blocked_reason";
+  const fallbackSelect =
+    "id, full_name, avatar_url, profile_color, role, is_blocked, blocked_reason";
 
   try {
     const { data, error } = await supabase
@@ -112,7 +135,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    const syncUser = async (sessionUser: { id: string; email?: string | null; user_metadata?: { full_name?: string; avatar_url?: string | null } } | null) => {
+    const syncUser = async (
+      sessionUser: {
+        id: string;
+        email?: string | null;
+        user_metadata?: { full_name?: string; avatar_url?: string | null };
+      } | null,
+    ) => {
       if (!sessionUser) {
         loadedUserId.current = null;
         if (mounted) {
@@ -133,7 +162,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (sessionUser.id === loadedUserId.current) return;
 
       if (nextProfile?.is_blocked) {
-        const blockedMessage = nextProfile.blocked_reason?.trim() || "Tu cuenta fue suspendida por el administrador.";
+        const blockedMessage =
+          nextProfile.blocked_reason?.trim() || "Tu cuenta fue suspendida por el administrador.";
         auth.setBlockedAccountMessage(blockedMessage);
         await auth.forceBlockedAccountLogout(blockedMessage);
         if (mounted) {
@@ -169,7 +199,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const sessionUser = await auth.signInWithPassword(email, password);
     const nextProfile = await loadProfileOnce(sessionUser.id);
     if (nextProfile?.is_blocked) {
-      const blockedMessage = nextProfile.blocked_reason?.trim() || "Tu cuenta fue suspendida por el administrador.";
+      const blockedMessage =
+        nextProfile.blocked_reason?.trim() || "Tu cuenta fue suspendida por el administrador.";
       auth.setBlockedAccountMessage(blockedMessage);
       await auth.forceBlockedAccountLogout(blockedMessage);
       throw new Error(blockedMessage);
@@ -197,34 +228,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return nextUser;
   };
 
-  const value = useMemo<AuthContextValue>(() => ({
-    user,
-    profile,
-    loading,
-    signInWithEmail,
-    signUpWithEmail,
-    signInWithGoogle: () => auth.signInWithOAuth("google"),
-    signInWithFacebook: () => auth.signInWithOAuth("facebook"),
-    sendRecoveryCode: (email: string) => auth.sendPasswordRecoveryCode(email),
-    verifyRecoveryCode: (email: string, token: string) => auth.verifyPasswordRecoveryCode(email, token).then((user) => user ? { id: user.id } : null),
-    updatePassword: (password: string) => auth.updatePassword(password),
-    resetPassword: (email: string) => auth.resetPasswordForEmail(email),
-    signOut: async () => {
-      const ok = await auth.signOut();
-      loadedUserId.current = null;
-      setUser(null);
-      setProfile(null);
-      return ok;
-    },
-    dialogOpen,
-    dialogView,
-    openAuthDialog: (view = "login") => {
-      setDialogView(view);
-      setDialogOpen(true);
-    },
-    setDialogOpen,
-    setDialogView,
-  }), [user, profile, loading, dialogOpen, dialogView]);
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      user,
+      profile,
+      loading,
+      signInWithEmail,
+      signUpWithEmail,
+      signInWithGoogle: () => auth.signInWithOAuth("google"),
+      signInWithFacebook: () => auth.signInWithOAuth("facebook"),
+      sendRecoveryCode: (email: string) => auth.sendPasswordRecoveryCode(email),
+      verifyRecoveryCode: (email: string, token: string) =>
+        auth
+          .verifyPasswordRecoveryCode(email, token)
+          .then((user) => (user ? { id: user.id } : null)),
+      updatePassword: (password: string) => auth.updatePassword(password),
+      resetPassword: (email: string) => auth.resetPasswordForEmail(email),
+      signOut: async () => {
+        const ok = await auth.signOut();
+        loadedUserId.current = null;
+        setUser(null);
+        setProfile(null);
+        return ok;
+      },
+      dialogOpen,
+      dialogView,
+      openAuthDialog: (view = "login") => {
+        setDialogView(view);
+        setDialogOpen(true);
+      },
+      setDialogOpen,
+      setDialogView,
+    }),
+    [user, profile, loading, dialogOpen, dialogView],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -86,19 +86,30 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { name: "description", content: "QAP ChacoNews: noticias, análisis y actualidad del Chaco paraguayo, con enfoque local, institucional y de profundo impacto regional." },
+      {
+        name: "description",
+        content:
+          "QAP ChacoNews: noticias, análisis y actualidad del Chaco paraguayo, con enfoque local, institucional y de profundo impacto regional.",
+      },
       { name: "theme-color", content: "#0B1220" },
       { name: "application-name", content: "QAP ChacoNews" },
       { name: "robots", content: "index,follow" },
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "QAP ChacoNews" },
       { property: "og:title", content: "QAP ChacoNews — Noticias del Chaco paraguayo" },
-      { property: "og:description", content: "Cobertura local, análisis y actualidad del Chaco paraguayo con rigor editorial y mirada regional." },
+      {
+        property: "og:description",
+        content:
+          "Cobertura local, análisis y actualidad del Chaco paraguayo con rigor editorial y mirada regional.",
+      },
       { property: "og:image", content: "/og-image.svg" },
       { property: "og:image:alt", content: "QAP ChacoNews" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "QAP ChacoNews — Noticias del Chaco paraguayo" },
-      { name: "twitter:description", content: "Cobertura local, análisis y actualidad del Chaco paraguayo con rigor editorial." },
+      {
+        name: "twitter:description",
+        content: "Cobertura local, análisis y actualidad del Chaco paraguayo con rigor editorial.",
+      },
       { name: "twitter:image", content: "/og-image.svg" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
     ],
@@ -112,7 +123,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "manifest", href: "/site.webmanifest" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap",
+      },
     ],
   }),
   shellComponent: RootShell,

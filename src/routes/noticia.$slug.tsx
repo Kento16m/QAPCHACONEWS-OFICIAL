@@ -35,9 +35,14 @@ export const Route = createFileRoute("/noticia/$slug")({
     const siteUrl = getSiteUrl();
     const title = article ? (article.seo_title ?? article.title) : "Noticia — QAP ChacoNews";
     const description = article
-      ? (article.seo_description ?? article.excerpt ?? article.subtitle ?? "Leé la nota completa en QAP ChacoNews.")
+      ? (article.seo_description ??
+        article.excerpt ??
+        article.subtitle ??
+        "Leé la nota completa en QAP ChacoNews.")
       : "Leé la nota completa en QAP ChacoNews y seguí la actualidad del Chaco paraguayo.";
-    const image = article?.cover_image_url ? `${siteUrl}${article.cover_image_url.startsWith("/") ? article.cover_image_url : `/${article.cover_image_url}`}` : `${siteUrl}/og-image.svg`;
+    const image = article?.cover_image_url
+      ? `${siteUrl}${article.cover_image_url.startsWith("/") ? article.cover_image_url : `/${article.cover_image_url}`}`
+      : `${siteUrl}/og-image.svg`;
 
     return {
       meta: [
@@ -101,7 +106,8 @@ function normalizeArticleContent(html: string) {
 
   const normalized = trimmed.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n");
   const looksLikeHtml = /<\/?[a-z][\s\S]*>/i.test(normalized);
-  const blockTagPattern = /<\/?(?:p|div|h[1-6]|ul|ol|li|blockquote|figure|table|pre|section|article|iframe|img|video)\b/i;
+  const blockTagPattern =
+    /<\/?(?:p|div|h[1-6]|ul|ol|li|blockquote|figure|table|pre|section|article|iframe|img|video)\b/i;
 
   const wrapInlineText = (value: string) => {
     const cleanValue = value.trim();
@@ -152,7 +158,11 @@ function normalizeArticleContent(html: string) {
       return parts
         .map((part) => {
           if (!part) return "";
-          if (/^<\/?(?:figure|iframe|video|img|div|p|h[1-6]|ul|ol|li|blockquote|table|pre|section|article)\b/i.test(part)) {
+          if (
+            /^<\/?(?:figure|iframe|video|img|div|p|h[1-6]|ul|ol|li|blockquote|table|pre|section|article)\b/i.test(
+              part,
+            )
+          ) {
             return part;
           }
           return wrapInlineText(part);
@@ -170,7 +180,9 @@ function stripAdminMediaControls(html: string) {
 
   const doc = new DOMParser().parseFromString(baseClean, "text/html");
   doc.querySelectorAll("[data-remove-media]").forEach((node) => node.remove());
-  doc.querySelectorAll("[contenteditable='false']").forEach((node) => node.removeAttribute("contenteditable"));
+  doc
+    .querySelectorAll("[contenteditable='false']")
+    .forEach((node) => node.removeAttribute("contenteditable"));
   doc.querySelectorAll("[data-media-block='true']").forEach((node) => {
     const element = node as HTMLElement;
     if (element.tagName.toLowerCase() === "button") {
@@ -188,7 +200,16 @@ function SafeHtml({ html }: { html: string }) {
     const normalized = stripAdminMediaControls(normalizeArticleContent(html));
     const sanitized = DOMPurify.sanitize(normalized, {
       ADD_TAGS: ["iframe", "figure", "figcaption", "video"],
-      ADD_ATTR: ["allow", "allowfullscreen", "frameborder", "loading", "referrerpolicy", "playsinline", "webkitallowfullscreen", "mozallowfullscreen"],
+      ADD_ATTR: [
+        "allow",
+        "allowfullscreen",
+        "frameborder",
+        "loading",
+        "referrerpolicy",
+        "playsinline",
+        "webkitallowfullscreen",
+        "mozallowfullscreen",
+      ],
       ALLOWED_URI_REGEXP:
         /^(?:(?:(?:f|ht)tps?|mailto|tel|data):|[^a-z]|[\w\-._~!$&'()*+,;=:@/?%#[\]\\]*$)/i,
     });
@@ -294,14 +315,22 @@ function ArticlePage() {
       document.title = title;
       setMetaTag('meta[name="description"]', { name: "description" }, metaDescription);
       setMetaTag('meta[property="og:title"]', { property: "og:title" }, title);
-      setMetaTag('meta[property="og:description"]', { property: "og:description" }, metaDescription);
+      setMetaTag(
+        'meta[property="og:description"]',
+        { property: "og:description" },
+        metaDescription,
+      );
       setMetaTag('meta[property="og:type"]', { property: "og:type" }, "article");
       setMetaTag('meta[property="og:image"]', { property: "og:image" }, imageUrl);
       setMetaTag('meta[property="og:url"]', { property: "og:url" }, pageUrl);
       setMetaTag('meta[property="og:site_name"]', { property: "og:site_name" }, "QAP ChacoNews");
       setMetaTag('meta[name="twitter:card"]', { name: "twitter:card" }, "summary_large_image");
       setMetaTag('meta[name="twitter:title"]', { name: "twitter:title" }, title);
-      setMetaTag('meta[name="twitter:description"]', { name: "twitter:description" }, metaDescription);
+      setMetaTag(
+        'meta[name="twitter:description"]',
+        { name: "twitter:description" },
+        metaDescription,
+      );
       setMetaTag('meta[name="twitter:image"]', { name: "twitter:image" }, imageUrl);
       setMetaTag('meta[name="twitter:url"]', { name: "twitter:url" }, pageUrl);
 
@@ -318,9 +347,21 @@ function ArticlePage() {
       }
     } else if (!isLoading) {
       document.title = "Nota no encontrada — QAP ChacoNews";
-      setMetaTag('meta[name="description"]', { name: "description" }, "La nota que buscas no existe o fue removida.");
-      setMetaTag('meta[property="og:title"]', { property: "og:title" }, "Nota no encontrada — QAP ChacoNews");
-      setMetaTag('meta[property="og:description"]', { property: "og:description" }, "La nota que buscas no existe o fue removida.");
+      setMetaTag(
+        'meta[name="description"]',
+        { name: "description" },
+        "La nota que buscas no existe o fue removida.",
+      );
+      setMetaTag(
+        'meta[property="og:title"]',
+        { property: "og:title" },
+        "Nota no encontrada — QAP ChacoNews",
+      );
+      setMetaTag(
+        'meta[property="og:description"]',
+        { property: "og:description" },
+        "La nota que buscas no existe o fue removida.",
+      );
       setMetaTag('meta[property="og:image"]', { property: "og:image" }, "/og-image.svg");
     }
   }, [a, isLoading]);

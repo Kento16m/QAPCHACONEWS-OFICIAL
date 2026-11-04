@@ -73,10 +73,12 @@ export const buildArticlePayload = (form: EditorForm, existing: AdminArticle | n
   if (!title) throw new Error("El título es obligatorio.");
 
   const scheduledAt = form.status === "scheduled" ? fromDateTimeLocal(form.scheduled_at) : null;
-  if (form.status === "scheduled" && !scheduledAt) throw new Error("Elegí la fecha de publicación.");
+  if (form.status === "scheduled" && !scheduledAt)
+    throw new Error("Elegí la fecha de publicación.");
 
   // An article keeps its original date; only its first publication sets one.
-  const publishedAt = existing?.published_at ?? (form.status === "published" ? now.toISOString() : null);
+  const publishedAt =
+    existing?.published_at ?? (form.status === "published" ? now.toISOString() : null);
 
   return {
     title,

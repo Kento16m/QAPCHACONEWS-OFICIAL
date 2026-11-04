@@ -9,7 +9,9 @@ vi.mock("@/lib/supabase", () => {
   const client = {
     from: () => {
       fake.queries += 1;
-      return { select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) }) };
+      return {
+        select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: null }) }) }),
+      };
     },
     auth: {
       onAuthStateChange: (callback: (event: string, session: unknown) => void) => {

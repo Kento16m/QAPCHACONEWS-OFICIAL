@@ -6,10 +6,22 @@ import { useAuth } from "@/hooks/useAuth";
 function GoogleIcon() {
   return (
     <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.74 3.28-8.09z" />
-      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.76c-.98.66-2.23 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z" />
-      <path fill="#FBBC05" d="M5.84 14.11A6.6 6.6 0 0 1 5.5 12c0-.73.13-1.44.34-2.11V7.05H2.18A11 11 0 0 0 1 12c0 1.78.43 3.45 1.18 4.95l3.66-2.84z" />
-      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.05l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z" />
+      <path
+        fill="#4285F4"
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.74 3.28-8.09z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.76c-.98.66-2.23 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.84 14.11A6.6 6.6 0 0 1 5.5 12c0-.73.13-1.44.34-2.11V7.05H2.18A11 11 0 0 0 1 12c0 1.78.43 3.45 1.18 4.95l3.66-2.84z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.05l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z"
+      />
     </svg>
   );
 }
@@ -17,7 +29,10 @@ function GoogleIcon() {
 function FacebookIcon() {
   return (
     <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-      <path fill="#1877F2" d="M24 12.07C24 5.41 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.04V9.41c0-3.02 1.8-4.7 4.54-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.5c-1.5 0-1.96.93-1.96 1.89v2.26h3.33l-.53 3.5h-2.8V24C19.62 23.1 24 18.1 24 12.07" />
+      <path
+        fill="#1877F2"
+        d="M24 12.07C24 5.41 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.04V9.41c0-3.02 1.8-4.7 4.54-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.5c-1.5 0-1.96.93-1.96 1.89v2.26h3.33l-.53 3.5h-2.8V24C19.62 23.1 24 18.1 24 12.07"
+      />
     </svg>
   );
 }
@@ -36,17 +51,21 @@ export function SocialButtons() {
       setBusy(null);
     }
   };
-  const cls = "flex h-12 w-full items-center justify-center gap-3 rounded-xl border bg-card text-sm font-semibold transition hover:bg-secondary disabled:opacity-60";
+  const cls =
+    "flex h-12 w-full items-center justify-center gap-3 rounded-xl border bg-card text-sm font-semibold transition hover:bg-secondary disabled:opacity-60";
   return (
     <div className="space-y-3">
       <button type="button" className={cls} onClick={() => run("google")} disabled={!!busy}>
-        {busy === "google" ? <Loader2 className="h-5 w-5 animate-spin" /> : <GoogleIcon />} Continuar con Google
+        {busy === "google" ? <Loader2 className="h-5 w-5 animate-spin" /> : <GoogleIcon />}{" "}
+        Continuar con Google
       </button>
       <button type="button" className={cls} onClick={() => run("facebook")} disabled={!!busy}>
-        {busy === "facebook" ? <Loader2 className="h-5 w-5 animate-spin" /> : <FacebookIcon />} Continuar con Facebook
+        {busy === "facebook" ? <Loader2 className="h-5 w-5 animate-spin" /> : <FacebookIcon />}{" "}
+        Continuar con Facebook
       </button>
       <div className="flex items-center gap-3 py-1 text-xs text-muted-foreground">
-        <span className="h-px flex-1 bg-border" /> o continúa con tu correo <span className="h-px flex-1 bg-border" />
+        <span className="h-px flex-1 bg-border" /> o continúa con tu correo{" "}
+        <span className="h-px flex-1 bg-border" />
       </div>
     </div>
   );

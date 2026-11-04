@@ -19,10 +19,16 @@ describe("readFunctionError", () => {
   });
 
   it("returns no message when the body is not JSON", async () => {
-    expect(await readFunctionError(failure("<html>Bad gateway</html>", 502))).toEqual({ message: null, status: 502 });
+    expect(await readFunctionError(failure("<html>Bad gateway</html>", 502))).toEqual({
+      message: null,
+      status: 502,
+    });
   });
 
   it("handles network errors with no response", async () => {
-    expect(await readFunctionError({ message: "Failed to fetch" })).toEqual({ message: null, status: null });
+    expect(await readFunctionError({ message: "Failed to fetch" })).toEqual({
+      message: null,
+      status: null,
+    });
   });
 });

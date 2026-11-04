@@ -23,8 +23,8 @@ export function SiteFooter() {
           <div className="max-w-xs">
             <Logo className="h-16" variant="dark" />
             <p className="mt-5 text-sm leading-6 text-navy-muted">
-              El medio digital del Chaco paraguayo. Noticias de Filadelfia, Loma Plata,
-              Mariscal Estigarribia y todo el país, las 24 horas.
+              El medio digital del Chaco paraguayo. Noticias de Filadelfia, Loma Plata, Mariscal
+              Estigarribia y todo el país, las 24 horas.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               {socials.map(({ icon: I, label, href, color }) => (
@@ -86,13 +86,19 @@ export function SiteFooter() {
               </h3>
               <ul className="mt-5 space-y-3">
                 <li>
-                  <a href="tel:+595972438625" className="text-sm text-slate-100 transition hover:text-primary">
-                        +595 972 438 625
+                  <a
+                    href="tel:+595972438625"
+                    className="text-sm text-slate-100 transition hover:text-primary"
+                  >
+                    +595 972 438 625
                   </a>
                 </li>
                 <li>
-                      <a href="mailto:direccion@impetuseas.com" className="text-sm text-slate-100 transition hover:text-primary">
-                        direccion@impetuseas.com
+                  <a
+                    href="mailto:direccion@impetuseas.com"
+                    className="text-sm text-slate-100 transition hover:text-primary"
+                  >
+                    direccion@impetuseas.com
                   </a>
                 </li>
               </ul>
@@ -104,7 +110,11 @@ export function SiteFooter() {
       <div className="border-t border-navy-border">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-5 text-xs text-navy-muted sm:px-6 lg:flex-row lg:items-center lg:justify-between">
           <span>© 2026 QAP ChacoNews. Todos los derechos reservados.</span>
-          <button type="button" onClick={reopenCookieConsent} className="text-left transition hover:text-primary">
+          <button
+            type="button"
+            onClick={reopenCookieConsent}
+            className="text-left transition hover:text-primary"
+          >
             Preferencias de cookies
           </button>
           <span>Desarrollado por Kento Terakawa</span>

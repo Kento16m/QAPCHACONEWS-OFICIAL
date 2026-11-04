@@ -55,7 +55,14 @@ const renderAuth = async () => {
 };
 
 beforeEach(() => {
-  fake.profile = { id: "u1", full_name: "Ana", avatar_url: null, role: "reader", is_blocked: false, blocked_reason: null };
+  fake.profile = {
+    id: "u1",
+    full_name: "Ana",
+    avatar_url: null,
+    role: "reader",
+    is_blocked: false,
+    blocked_reason: null,
+  };
   fake.profileQueries = 0;
   fake.session = null;
   fake.signUpResult = { user: null, session: null };
@@ -98,7 +105,14 @@ describe("AuthProvider", () => {
     expect(result.current.user?.id).toBe("u1");
     expect(result.current.user?.role).toBe("reader");
 
-    fake.profile = { id: "u1", full_name: "Ana", avatar_url: null, role: "admin", is_blocked: false, blocked_reason: null };
+    fake.profile = {
+      id: "u1",
+      full_name: "Ana",
+      avatar_url: null,
+      role: "admin",
+      is_blocked: false,
+      blocked_reason: null,
+    };
     await act(async () => {
       fake.listener?.("TOKEN_REFRESHED", fake.session);
       await new Promise((resolve) => setTimeout(resolve, 20));
@@ -115,7 +129,14 @@ describe("AuthProvider", () => {
     });
     expect(result.current.user?.role).toBe("reader");
 
-    fake.profile = { id: "u1", full_name: "Ana", avatar_url: null, role: "editor", is_blocked: false, blocked_reason: null };
+    fake.profile = {
+      id: "u1",
+      full_name: "Ana",
+      avatar_url: null,
+      role: "editor",
+      is_blocked: false,
+      blocked_reason: null,
+    };
     await act(async () => {
       fake.listener?.("TOKEN_REFRESHED", { user: { id: "u1", email: "ana@test.invalid" } });
       await new Promise((resolve) => setTimeout(resolve, 20));
@@ -129,7 +150,9 @@ describe("AuthProvider", () => {
     const { result } = await renderAuth();
 
     await act(async () => {
-      await expect(result.current.signInWithEmail("ana@test.invalid", "password")).rejects.toThrow("Spam");
+      await expect(result.current.signInWithEmail("ana@test.invalid", "password")).rejects.toThrow(
+        "Spam",
+      );
     });
 
     expect(fake.signOutCalls).toBeGreaterThan(0);

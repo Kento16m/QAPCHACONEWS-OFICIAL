@@ -14,7 +14,8 @@ export const proxyWeather = async (requestUrl, apiKey, http = fetch) => {
   const { searchParams } = new URL(requestUrl);
   const endpoint = searchParams.get("endpoint") ?? "";
 
-  if (!ALLOWED_ENDPOINTS.has(endpoint)) return json({ message: "Consulta de clima no permitida." }, 400);
+  if (!ALLOWED_ENDPOINTS.has(endpoint))
+    return json({ message: "Consulta de clima no permitida." }, 400);
   if (!apiKey) return json({ message: "El servicio de clima no está configurado." }, 500);
 
   const upstream = new URLSearchParams();
@@ -25,7 +26,9 @@ export const proxyWeather = async (requestUrl, apiKey, http = fetch) => {
   upstream.set("appid", apiKey);
 
   try {
-    const response = await http(`${BASE_URL}${endpoint}?${upstream}`, { signal: AbortSignal.timeout(15_000) });
+    const response = await http(`${BASE_URL}${endpoint}?${upstream}`, {
+      signal: AbortSignal.timeout(15_000),
+    });
     const body = await response.text();
     return new Response(body, {
       status: response.status,

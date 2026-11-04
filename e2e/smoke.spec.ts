@@ -3,18 +3,30 @@
 import { readFileSync } from "node:fs";
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 
-const { E2E_SUPABASE_URL: BASE = "", E2E_ANON_KEY: ANON = "", E2E_SERVICE_KEY: SERVICE = "" } = process.env;
+const {
+  E2E_SUPABASE_URL: BASE = "",
+  E2E_ANON_KEY: ANON = "",
+  E2E_SERVICE_KEY: SERVICE = "",
+} = process.env;
 
-if (!BASE || !ANON || !SERVICE) throw new Error("Set E2E_SUPABASE_URL, E2E_ANON_KEY and E2E_SERVICE_KEY.");
+if (!BASE || !ANON || !SERVICE)
+  throw new Error("Set E2E_SUPABASE_URL, E2E_ANON_KEY and E2E_SERVICE_KEY.");
 // These tests create and delete data: they must never run against the live site's database.
 if (BASE.includes("nkkgwjvmdxggvyzehlzp")) throw new Error("Refusing to run against production.");
 
 const STAMP = Date.now();
 const PASSWORD = "Temp-e2e-Pass-92!";
-const svcHeaders = { apikey: SERVICE, Authorization: `Bearer ${SERVICE}`, "Content-Type": "application/json" };
+const svcHeaders = {
+  apikey: SERVICE,
+  Authorization: `Bearer ${SERVICE}`,
+  "Content-Type": "application/json",
+};
 
 const api = async (path: string, init: RequestInit = {}) => {
-  const response = await fetch(`${BASE}${path}`, { ...init, headers: { ...svcHeaders, ...init.headers } });
+  const response = await fetch(`${BASE}${path}`, {
+    ...init,
+    headers: { ...svcHeaders, ...init.headers },
+  });
   const text = await response.text();
   if (!response.ok) throw new Error(`${path} ${response.status}: ${text.slice(0, 200)}`);
   return text ? JSON.parse(text) : null;
@@ -26,11 +38,19 @@ const userIds: string[] = [];
 const makeUser = async (name: string, fullName: string, profile: Record<string, unknown> = {}) => {
   const user = await api("/auth/v1/admin/users", {
     method: "POST",
-    body: JSON.stringify({ email: email(name), password: PASSWORD, email_confirm: true, user_metadata: { full_name: fullName } }),
+    body: JSON.stringify({
+      email: email(name),
+      password: PASSWORD,
+      email_confirm: true,
+      user_metadata: { full_name: fullName },
+    }),
   });
   userIds.push(user.id);
   if (Object.keys(profile).length) {
-    await api(`/rest/v1/profiles?id=eq.${user.id}`, { method: "PATCH", body: JSON.stringify(profile) });
+    await api(`/rest/v1/profiles?id=eq.${user.id}`, {
+      method: "PATCH",
+      body: JSON.stringify(profile),
+    });
   }
   return user.id as string;
 };
@@ -45,17 +65,32 @@ test.beforeAll(async () => {
   await makeUser("other", "Otra Persona E2E");
   const editorId = await makeUser("editor", "Editor E2E", { role: "editor" });
   await makeUser("admin", "Admin E2E", { role: "admin" });
-  await makeUser("blocked", "Bloqueada E2E", { is_blocked: true, blocked_reason: "Motivo de prueba E2E" });
+  await makeUser("blocked", "Bloqueada E2E", {
+    is_blocked: true,
+    blocked_reason: "Motivo de prueba E2E",
+  });
 
   const [article] = await api("/rest/v1/articles", {
     method: "POST",
     headers: { Prefer: "return=representation" },
-    body: JSON.stringify({ title: articleTitle, slug: articleSlug, content: "<p>Cuerpo de la nota.</p>", status: "published", author_id: editorId, is_featured: true }),
+    body: JSON.stringify({
+      title: articleTitle,
+      slug: articleSlug,
+      content: "<p>Cuerpo de la nota.</p>",
+      status: "published",
+      author_id: editorId,
+      is_featured: true,
+    }),
   });
   articleId = article.id;
   const comment = await api("/rest/v1/rpc/service_post_comment", {
     method: "POST",
-    body: JSON.stringify({ p_user_id: readerId, p_article_id: articleId, p_parent_id: null, p_body: "Comentario existente E2E" }),
+    body: JSON.stringify({
+      p_user_id: readerId,
+      p_article_id: articleId,
+      p_parent_id: null,
+      p_body: "Comentario existente E2E",
+    }),
   });
   commentId = comment.id;
 });
@@ -71,10 +106,16 @@ const EXTERNAL_DATA = ["**/api/clima*", "**/api/cotizaciones*", "**/cotizaciones
 
 // Every test runs with weather and exchange-rate services down: the site must not depend on them.
 const prepare = async (page: Page | BrowserContext, consent: string | null = "false") => {
-  for (const pattern of EXTERNAL_DATA) await page.route(pattern, (route) => route.fulfill({ status: 500, body: "down" }));
-  await page.route("**/www.googletagmanager.com/**", (route) => route.fulfill({ contentType: "text/javascript", body: "" }));
+  for (const pattern of EXTERNAL_DATA)
+    await page.route(pattern, (route) => route.fulfill({ status: 500, body: "down" }));
+  await page.route("**/www.googletagmanager.com/**", (route) =>
+    route.fulfill({ contentType: "text/javascript", body: "" }),
+  );
   if (consent !== null) {
-    await page.addInitScript((value) => window.localStorage.setItem("legal_consent_accepted", value), consent);
+    await page.addInitScript(
+      (value) => window.localStorage.setItem("legal_consent_accepted", value),
+      consent,
+    );
   }
 };
 
@@ -122,7 +163,8 @@ test.describe("public site", () => {
     test(`search handles ${JSON.stringify(term)}`, async ({ page }) => {
       let failedSearch = 0;
       page.on("response", (response) => {
-        if (response.url().includes("/rest/v1/articles") && response.status() >= 400) failedSearch += 1;
+        if (response.url().includes("/rest/v1/articles") && response.status() >= 400)
+          failedSearch += 1;
       });
       await prepare(page);
 
@@ -141,14 +183,18 @@ test.describe("public site", () => {
 });
 
 test.describe("cookies", () => {
-  const csp = /Content-Security-Policy = "([^"]+)"/.exec(readFileSync("netlify.toml", "utf8"))?.[1] ?? "";
+  const csp =
+    /Content-Security-Policy = "([^"]+)"/.exec(readFileSync("netlify.toml", "utf8"))?.[1] ?? "";
 
   // Serves pages with the production CSP; upgrade-insecure-requests would break the local http server.
   const withProductionCsp = async (page: Page) => {
     await page.route("**/*", async (route) => {
       if (route.request().resourceType() !== "document") return route.fallback();
       const response = await route.fetch();
-      const headers = { ...response.headers(), "content-security-policy": csp.replace("upgrade-insecure-requests;", "") };
+      const headers = {
+        ...response.headers(),
+        "content-security-policy": csp.replace("upgrade-insecure-requests;", ""),
+      };
       return route.fulfill({ response, headers });
     });
   };
@@ -166,7 +212,9 @@ test.describe("cookies", () => {
     const banner = page.getByRole("region", { name: "Preferencias de cookies" });
     await expect(banner).toBeVisible();
 
-    const gaRequest = page.waitForRequest((request) => request.url().includes("googletagmanager.com/gtag/js"));
+    const gaRequest = page.waitForRequest((request) =>
+      request.url().includes("googletagmanager.com/gtag/js"),
+    );
     await banner.getByRole("button", { name: "Aceptar" }).click();
     await gaRequest;
     await page.waitForLoadState("networkidle");
@@ -182,7 +230,10 @@ test.describe("cookies", () => {
     await prepare(page, null);
 
     await page.goto("/");
-    await page.getByRole("region", { name: "Preferencias de cookies" }).getByRole("button", { name: "Rechazar" }).click();
+    await page
+      .getByRole("region", { name: "Preferencias de cookies" })
+      .getByRole("button", { name: "Rechazar" })
+      .click();
     await page.reload();
     await page.waitForLoadState("networkidle");
 
@@ -199,12 +250,21 @@ test.describe("cookies", () => {
 });
 
 test.describe("accounts", () => {
-  test("registering with confirmation pending shows a notice and stays signed out", async ({ page }) => {
+  test("registering with confirmation pending shows a notice and stays signed out", async ({
+    page,
+  }) => {
     await prepare(page);
     await page.route("**/auth/v1/signup*", (route) =>
       route.fulfill({
         contentType: "application/json",
-        body: JSON.stringify({ id: "00000000-0000-0000-0000-0000000000aa", aud: "authenticated", email: email("pending"), user_metadata: {}, app_metadata: {}, created_at: new Date().toISOString() }),
+        body: JSON.stringify({
+          id: "00000000-0000-0000-0000-0000000000aa",
+          aud: "authenticated",
+          email: email("pending"),
+          user_metadata: {},
+          app_metadata: {},
+          created_at: new Date().toISOString(),
+        }),
       }),
     );
     await page.goto("/");
@@ -219,7 +279,9 @@ test.describe("accounts", () => {
     await dialog.getByRole("button", { name: "Crear cuenta" }).click();
 
     await expect(page.getByText("Te enviamos un correo")).toBeVisible();
-    await expect(page.locator("button:visible", { hasText: "Iniciar sesión" }).first()).toBeVisible();
+    await expect(
+      page.locator("button:visible", { hasText: "Iniciar sesión" }).first(),
+    ).toBeVisible();
   });
 
   test("a blocked person sees the reason and stays out", async ({ page }) => {
@@ -228,7 +290,9 @@ test.describe("accounts", () => {
     await login(page, "blocked");
     await expect(page.getByText("Motivo de prueba E2E").first()).toBeVisible();
     await page.reload();
-    await expect(page.locator("button:visible", { hasText: "Iniciar sesión" }).first()).toBeVisible();
+    await expect(
+      page.locator("button:visible", { hasText: "Iniciar sesión" }).first(),
+    ).toBeVisible();
   });
 
   test("a reader cannot open the panel", async ({ page }) => {
@@ -242,7 +306,9 @@ test.describe("accounts", () => {
 });
 
 test.describe("comments", () => {
-  test("a comment that fails moderation shows why, is not published and keeps the draft", async ({ page }) => {
+  test("a comment that fails moderation shows why, is not published and keeps the draft", async ({
+    page,
+  }) => {
     await prepare(page);
     await page.goto(`/noticia/${articleSlug}`);
     await loginAndWait(page, "reader");
@@ -257,7 +323,9 @@ test.describe("comments", () => {
     // The draft stays in the text boxes to retry, but must not appear as a published comment.
     await expect(page.getByText(draft).and(page.locator(":not(textarea)"))).toHaveCount(0);
     await expect(box).toHaveValue(draft);
-    const stored = await api(`/rest/v1/comments?select=id&article_id=eq.${articleId}&body=like.*${STAMP}*`);
+    const stored = await api(
+      `/rest/v1/comments?select=id&article_id=eq.${articleId}&body=like.*${STAMP}*`,
+    );
     expect(stored).toHaveLength(0);
   });
 
@@ -266,7 +334,11 @@ test.describe("comments", () => {
     let sent: { body?: string; user_id?: string } = {};
     await page.route("**/functions/v1/moderate-comment", async (route) => {
       sent = route.request().postDataJSON();
-      await route.fulfill({ status: 400, contentType: "application/json", body: JSON.stringify({ error: "Respuesta de prueba." }) });
+      await route.fulfill({
+        status: 400,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "Respuesta de prueba." }),
+      });
     });
     await page.goto(`/noticia/${articleSlug}`);
     await loginAndWait(page, "reader");
@@ -285,13 +357,21 @@ test.describe("comments", () => {
     await page.goto(`/noticia/${articleSlug}`);
     await loginAndWait(page, "other");
 
-    const comment = page.locator("article, li, div").filter({ hasText: "Comentario existente E2E" }).last();
+    const comment = page
+      .locator("article, li, div")
+      .filter({ hasText: "Comentario existente E2E" })
+      .last();
     await expect(comment).toBeVisible();
-    await page.locator('button:has(svg.lucide-heart)').first().click();
-    await expect.poll(async () => (await api(`/rest/v1/comments?select=like_count&id=eq.${commentId}`))[0].like_count).toBe(1);
+    await page.locator("button:has(svg.lucide-heart)").first().click();
+    await expect
+      .poll(
+        async () =>
+          (await api(`/rest/v1/comments?select=like_count&id=eq.${commentId}`))[0].like_count,
+      )
+      .toBe(1);
 
     await page.reload();
-    await expect(page.locator('button:has(svg.lucide-heart)').first()).toContainText("1");
+    await expect(page.locator("button:has(svg.lucide-heart)").first()).toContainText("1");
   });
 });
 
@@ -334,9 +414,18 @@ test.describe("editorial panel", () => {
 
   test("saving does not remove tags that could not be loaded", async ({ page }) => {
     await prepare(page);
-    const [tag] = await api("/rest/v1/tags", { method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify({ name: `E2E ${STAMP}`, slug: `e2e-${STAMP}` }) });
-    await api("/rest/v1/article_tags", { method: "POST", body: JSON.stringify({ article_id: articleId, tag_id: tag.id }) });
-    await page.route("**/rest/v1/article_tags?select=tag_id*", (route) => route.fulfill({ status: 500, contentType: "application/json", body: "{}" }));
+    const [tag] = await api("/rest/v1/tags", {
+      method: "POST",
+      headers: { Prefer: "return=representation" },
+      body: JSON.stringify({ name: `E2E ${STAMP}`, slug: `e2e-${STAMP}` }),
+    });
+    await api("/rest/v1/article_tags", {
+      method: "POST",
+      body: JSON.stringify({ article_id: articleId, tag_id: tag.id }),
+    });
+    await page.route("**/rest/v1/article_tags?select=tag_id*", (route) =>
+      route.fulfill({ status: 500, contentType: "application/json", body: "{}" }),
+    );
 
     await page.goto("/");
     await loginAndWait(page, "editor");
@@ -362,7 +451,9 @@ test.describe("editorial panel", () => {
     await titleInput(page).fill(`E2E Lenta ${STAMP}`);
 
     let release = () => {};
-    const held = new Promise<void>((resolve) => { release = resolve; });
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
     await page.route("**/rest/v1/articles*", async (route) => {
       if (route.request().method() === "POST") await held;
       await route.fallback();
@@ -370,15 +461,24 @@ test.describe("editorial panel", () => {
     await page.getByRole("button", { name: "Publicar artículo" }).click();
 
     await expect(titleInput(page)).toBeDisabled();
-    await expect(page.getByLabel("Contenido del artículo")).toHaveAttribute("contenteditable", "false");
+    await expect(page.getByLabel("Contenido del artículo")).toHaveAttribute(
+      "contenteditable",
+      "false",
+    );
 
     release();
     await expect(page.getByRole("button", { name: "Guardar cambios" })).toBeVisible();
     await expect(titleInput(page)).toBeEnabled();
-    await expect(page.getByLabel("Contenido del artículo")).toHaveAttribute("contenteditable", "true");
+    await expect(page.getByLabel("Contenido del artículo")).toHaveAttribute(
+      "contenteditable",
+      "true",
+    );
   });
 
-  test("an editor publishes an article that keeps its data through edits", async ({ page, context }) => {
+  test("an editor publishes an article that keeps its data through edits", async ({
+    page,
+    context,
+  }) => {
     await prepare(page);
     await page.goto("/");
     await loginAndWait(page, "editor");
@@ -400,7 +500,9 @@ test.describe("editorial panel", () => {
 
     await titleInput(page).fill(`${title} editada`);
     await page.getByRole("button", { name: "Guardar cambios" }).click();
-    await expect.poll(async () => (await api(`/rest/v1/articles?select=title&slug=eq.${slug}`))[0].title).toBe(`${title} editada`);
+    await expect
+      .poll(async () => (await api(`/rest/v1/articles?select=title&slug=eq.${slug}`))[0].title)
+      .toBe(`${title} editada`);
     const [edited] = await api(`/rest/v1/articles?select=published_at,seo_title&slug=eq.${slug}`);
     expect(edited.seo_title).toBe("Título SEO E2E");
     expect(edited.published_at).toBe(first.published_at);
@@ -409,7 +511,9 @@ test.describe("editorial panel", () => {
     const visitorPage = await visitor.newPage();
     await prepare(visitorPage);
     await visitorPage.goto(`/buscar?q=${encodeURIComponent(`${title} editada`)}`);
-    await expect(visitorPage.getByRole("heading", { name: `${title} editada` }).first()).toBeVisible();
+    await expect(
+      visitorPage.getByRole("heading", { name: `${title} editada` }).first(),
+    ).toBeVisible();
     await visitor.close();
   });
 
@@ -420,7 +524,12 @@ test.describe("editorial panel", () => {
     await page.goto("/admin");
 
     await page.getByRole("button", { name: "Control de Acceso" }).click();
-    await expect.poll(async () => (await api(`/rest/v1/admin_access_logs?select=id&email=eq.${email("admin")}`)).length).toBeGreaterThan(0);
+    await expect
+      .poll(
+        async () =>
+          (await api(`/rest/v1/admin_access_logs?select=id&email=eq.${email("admin")}`)).length,
+      )
+      .toBeGreaterThan(0);
     await page.reload();
     await page.getByRole("button", { name: "Control de Acceso" }).click();
     await expect(page.getByText("Admin E2E").first()).toBeVisible();

@@ -28,13 +28,18 @@ const article = (id: string, title = `Nota ${id}`, views = 0, updatedAt = "v1"):
 const loadTags = () => Promise.resolve(["t1"]);
 
 const render = (initial: AdminArticle | null, load: (id: string) => Promise<string[]> = loadTags) =>
-  renderHook(({ current }) => useArticleForm(current, load), { initialProps: { current: initial } });
+  renderHook(({ current }) => useArticleForm(current, load), {
+    initialProps: { current: initial },
+  });
 
 const type = (result: { current: ReturnType<typeof useArticleForm> }, title: string) =>
   act(() => result.current.setForm((form) => ({ ...form, title })));
 
 const flushDraft = () => act(() => vi.advanceTimersByTime(1000));
-const settle = () => act(async () => { await vi.advanceTimersByTimeAsync(0); });
+const settle = () =>
+  act(async () => {
+    await vi.advanceTimersByTimeAsync(0);
+  });
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -102,7 +107,9 @@ describe("useArticleForm", () => {
   it("restores unsaved edits and keeps drafted tags", async () => {
     const first = render(article("a"));
     await settle();
-    act(() => first.result.current.setForm((form) => ({ ...form, title: "Edición", tag_ids: ["t9"] })));
+    act(() =>
+      first.result.current.setForm((form) => ({ ...form, title: "Edición", tag_ids: ["t9"] })),
+    );
     flushDraft();
     first.unmount();
 

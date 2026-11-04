@@ -1,6 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ArticleCard } from "@/components/news/ArticleCard";
-import { BentoGrid, CategoryBlocks, HeroArticle, LatestPanel, MiniStrip, MostRead, Newsletter } from "@/components/news/HomeSections";
+import {
+  BentoGrid,
+  CategoryBlocks,
+  HeroArticle,
+  LatestPanel,
+  MiniStrip,
+  MostRead,
+  Newsletter,
+} from "@/components/news/HomeSections";
 import { CardSkeleton, SectionTitle, StateMessage } from "@/components/news/primitives";
 import { useSearchContext } from "@/contexts/SearchContext";
 import { useSearch } from "@/hooks/use-news";
@@ -9,9 +17,16 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "QAP ChacoNews — Noticias del Chaco paraguayo" },
-      { name: "description", content: "Últimas noticias de Filadelfia, Loma Plata, Mariscal Estigarribia, el Chaco y todo Paraguay." },
+      {
+        name: "description",
+        content:
+          "Últimas noticias de Filadelfia, Loma Plata, Mariscal Estigarribia, el Chaco y todo Paraguay.",
+      },
       { property: "og:title", content: "QAP ChacoNews — Noticias del Chaco paraguayo" },
-      { property: "og:description", content: "Últimas noticias del Chaco y de todo Paraguay, las 24 horas." },
+      {
+        property: "og:description",
+        content: "Últimas noticias del Chaco y de todo Paraguay, las 24 horas.",
+      },
     ],
   }),
   component: Index,
@@ -29,7 +44,9 @@ function Index() {
         <div className="mt-8">
           {isLoading ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, index) => <CardSkeleton key={index} className="h-80" />)}
+              {Array.from({ length: 6 }).map((_, index) => (
+                <CardSkeleton key={index} className="h-80" />
+              ))}
             </div>
           ) : isError ? (
             <StateMessage error>Ocurrió un error al buscar noticias.</StateMessage>
@@ -37,7 +54,9 @@ function Index() {
             <StateMessage>{`No se encontraron noticias que coinciden con '${normalized}'`}</StateMessage>
           ) : (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {data.items.map((article) => <ArticleCard key={article.id} article={article} />)}
+              {data.items.map((article) => (
+                <ArticleCard key={article.id} article={article} />
+              ))}
             </div>
           )}
         </div>
@@ -57,7 +76,9 @@ function Index() {
           <SectionTitle>No te pierdas</SectionTitle>
           <BentoGrid />
         </section>
-        <div className="lg:pt-14"><MostRead /></div>
+        <div className="lg:pt-14">
+          <MostRead />
+        </div>
       </div>
       <CategoryBlocks />
       <Newsletter />

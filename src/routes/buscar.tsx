@@ -3,7 +3,9 @@ import { ArticleListPage } from "@/components/news/ArticleList";
 import { useSearch } from "@/hooks/use-news";
 
 export const Route = createFileRoute("/buscar")({
-  validateSearch: (s: Record<string, unknown>) => ({ q: typeof s["q"] === "string" ? s["q"].slice(0, 100) : "" }),
+  validateSearch: (s: Record<string, unknown>) => ({
+    q: typeof s["q"] === "string" ? s["q"].slice(0, 100) : "",
+  }),
   head: () => ({
     meta: [
       { title: "Buscar — QAP ChacoNews" },
@@ -18,5 +20,14 @@ export const Route = createFileRoute("/buscar")({
 function SearchPage() {
   const { q } = Route.useSearch();
   const r = useSearch(q);
-  return <ArticleListPage eyebrow="Búsqueda" title={q ? `“${q}”` : "Buscar noticias"} items={r.data?.items} isLoading={r.isLoading} isError={r.isError} empty={q ? "No encontramos resultados." : "Escribí un término en el buscador."} />;
+  return (
+    <ArticleListPage
+      eyebrow="Búsqueda"
+      title={q ? `“${q}”` : "Buscar noticias"}
+      items={r.data?.items}
+      isLoading={r.isLoading}
+      isError={r.isError}
+      empty={q ? "No encontramos resultados." : "Escribí un término en el buscador."}
+    />
+  );
 }

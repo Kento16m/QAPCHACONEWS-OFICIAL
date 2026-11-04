@@ -10,15 +10,20 @@ const card = (code, buy, sell, label = "Moneda") =>
     <p>${label}</p>
   </div>`;
 
-const page = (...cards) => `<html><body><div id="cotizacion-carousel">${cards.join("")}</div></body></html>`;
+const page = (...cards) =>
+  `<html><body><div id="cotizacion-carousel">${cards.join("")}</div></body></html>`;
 
 describe("parseMaxicambiosHtml", () => {
   it("reads guaraní amounts with thousands separators", () => {
-    expect(parseMaxicambiosHtml(page(card("USD", "5.700", "5.950")))).toEqual({ USD: { buy: 5700, sell: 5950 } });
+    expect(parseMaxicambiosHtml(page(card("USD", "5.700", "5.950")))).toEqual({
+      USD: { buy: 5700, sell: 5950 },
+    });
   });
 
   it("reads decimals with a comma", () => {
-    expect(parseMaxicambiosHtml(page(card("ARS", "3,40", "3,80")))).toEqual({ ARS: { buy: 3.4, sell: 3.8 } });
+    expect(parseMaxicambiosHtml(page(card("ARS", "3,40", "3,80")))).toEqual({
+      ARS: { buy: 3.4, sell: 3.8 },
+    });
   });
 
   it("falls back to the label when the flag is unknown", () => {
@@ -61,7 +66,10 @@ describe("createRatesFetcher", () => {
 
   it("uses Maxicambios first and names the source", async () => {
     const fetcher = createRatesFetcher(vi.fn().mockResolvedValue(ok(html)));
-    expect(await fetcher()).toMatchObject({ source: "maxicambios.com.py", rates: { USD: { buy: 5700 } } });
+    expect(await fetcher()).toMatchObject({
+      source: "maxicambios.com.py",
+      rates: { USD: { buy: 5700 } },
+    });
   });
 
   it("reuses the result for 20 minutes", async () => {
@@ -82,7 +90,10 @@ describe("createRatesFetcher", () => {
       if (url.includes("maxicambios")) throw new Error("down");
       return ok({ rates: { PYG: 7000, USD: 1 } });
     });
-    expect(await createRatesFetcher(http)()).toMatchObject({ source: "open.er-api.com", rates: { USD: { buy: 7000 } } });
+    expect(await createRatesFetcher(http)()).toMatchObject({
+      source: "open.er-api.com",
+      rates: { USD: { buy: 7000 } },
+    });
   });
 
   it("keeps the last good rates when every source fails", async () => {

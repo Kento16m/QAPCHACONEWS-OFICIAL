@@ -18,7 +18,10 @@ describe("CookieBanner", () => {
   it("asks when there is no decision and links to the policy", () => {
     render(<CookieBanner />);
     expect(screen.getByRole("region", { name: "Preferencias de cookies" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Política de Cookies" })).toHaveAttribute("href", "/cookies");
+    expect(screen.getByRole("link", { name: "Política de Cookies" })).toHaveAttribute(
+      "href",
+      "/cookies",
+    );
   });
 
   it("stores acceptance and closes", () => {

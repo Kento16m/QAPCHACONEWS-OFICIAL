@@ -19,5 +19,14 @@ function CategoryPage() {
   const { data: cats } = useCategories();
   const q = useArticlesByCategory(slug, 1, 12);
   const name = cats?.find((c) => c.slug === slug)?.name ?? slug;
-  return <ArticleListPage eyebrow="Sección" title={name} items={q.data?.items} isLoading={q.isLoading} isError={q.isError} empty="No hay noticias en esta sección." />;
+  return (
+    <ArticleListPage
+      eyebrow="Sección"
+      title={name}
+      items={q.data?.items}
+      isLoading={q.isLoading}
+      isError={q.isError}
+      empty="No hay noticias en esta sección."
+    />
+  );
 }

@@ -21,20 +21,21 @@ const makeArticleSelect = (includeContent = true) => {
     "category:categories(id,name,slug,color,sort_order)",
     "author:public_profiles(full_name,avatar_url)",
     "tags:article_tags(tag:tags(id,name,slug))",
-  ].filter(Boolean).join(",");
+  ]
+    .filter(Boolean)
+    .join(",");
 
   return fields;
 };
 
-const normalizePublishedAt = (value: string | null | undefined) => value ?? new Date().toISOString();
+const normalizePublishedAt = (value: string | null | undefined) =>
+  value ?? new Date().toISOString();
 
-const escapeLikeValue = (value: string) =>
-  value
-    .replace(/\\/g, "\\\\")
-    .replace(/[%_]/g, "\\$&");
+const escapeLikeValue = (value: string) => value.replace(/\\/g, "\\\\").replace(/[%_]/g, "\\$&");
 
 // PostgREST treats , . : ( ) as syntax inside or(): double quotes keep them as plain text.
-const quoteFilterValue = (value: string) => `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+const quoteFilterValue = (value: string) =>
+  `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
 
 export const buildSearchFilter = (term: string, categoryIds: string[]) => {
   const pattern = quoteFilterValue(`%${escapeLikeValue(term)}%`);
@@ -43,7 +44,10 @@ export const buildSearchFilter = (term: string, categoryIds: string[]) => {
   return clauses.join(",");
 };
 
-type ArticleRow = Omit<Article, "tags" | "category" | "author" | "published_at" | "content" | "views_count"> & {
+type ArticleRow = Omit<
+  Article,
+  "tags" | "category" | "author" | "published_at" | "content" | "views_count"
+> & {
   content?: string | null;
   views_count?: number | null;
   published_at?: string | null;
@@ -60,7 +64,11 @@ const mapRow = (input: unknown): Article => {
         .map((entry) => {
           const tag = entry?.tag;
           if (!tag?.id || !tag?.name) return null;
-          return { id: tag.id, name: tag.name, slug: tag.slug ?? tag.name.toLowerCase().replace(/\s+/g, "-") };
+          return {
+            id: tag.id,
+            name: tag.name,
+            slug: tag.slug ?? tag.name.toLowerCase().replace(/\s+/g, "-"),
+          };
         })
         .filter((tag): tag is Tag => tag !== null)
     : [];
@@ -119,7 +127,9 @@ export const getFeaturedArticle = async (): Promise<Article | null> => {
       .order("published_at", { ascending: false })
       .limit(1);
 
-  const { data: featured, error: featuredError } = await latestPublished().eq("is_featured", true).maybeSingle();
+  const { data: featured, error: featuredError } = await latestPublished()
+    .eq("is_featured", true)
+    .maybeSingle();
   handleSupabaseError(featuredError);
   if (featured) return mapRow(featured);
 
@@ -171,7 +181,11 @@ export const getLatestArticles = async (limit = 6): Promise<Article[]> => {
   return (data ?? []).map(mapRow);
 };
 
-export const getArticlesByCategory = async (slug: string, page = 1, pageSize = 4): Promise<Paginated<Article>> => {
+export const getArticlesByCategory = async (
+  slug: string,
+  page = 1,
+  pageSize = 4,
+): Promise<Paginated<Article>> => {
   const client = requireSupabaseClient();
   const pageIndex = Math.max(page, 1) - 1;
   const from = pageIndex * pageSize;
@@ -179,7 +193,10 @@ export const getArticlesByCategory = async (slug: string, page = 1, pageSize = 4
 
   const { data, error, count } = await client
     .from("articles")
-    .select("id, title, slug, subtitle, excerpt, cover_image_url, is_featured, is_breaking, reading_time_minutes, seo_title, seo_description, views_count, published_at, category:categories!inner(id,name,slug,color,sort_order), author:public_profiles(full_name,avatar_url), tags:article_tags(tag:tags(id,name,slug))", { count: "exact" })
+    .select(
+      "id, title, slug, subtitle, excerpt, cover_image_url, is_featured, is_breaking, reading_time_minutes, seo_title, seo_description, views_count, published_at, category:categories!inner(id,name,slug,color,sort_order), author:public_profiles(full_name,avatar_url), tags:article_tags(tag:tags(id,name,slug))",
+      { count: "exact" },
+    )
     .eq("status", "published")
     .lte("published_at", new Date().toISOString())
     .eq("category.slug", slug)
@@ -195,7 +212,11 @@ export const getArticlesByCategory = async (slug: string, page = 1, pageSize = 4
   };
 };
 
-export const getArticlesByTag = async (slug: string, page = 1, pageSize = 12): Promise<Paginated<Article>> => {
+export const getArticlesByTag = async (
+  slug: string,
+  page = 1,
+  pageSize = 12,
+): Promise<Paginated<Article>> => {
   const client = requireSupabaseClient();
   const pageIndex = Math.max(page, 1) - 1;
   const from = pageIndex * pageSize;
@@ -203,7 +224,10 @@ export const getArticlesByTag = async (slug: string, page = 1, pageSize = 12): P
 
   const { data, error, count } = await client
     .from("articles")
-    .select("id, title, slug, subtitle, excerpt, cover_image_url, is_featured, is_breaking, reading_time_minutes, seo_title, seo_description, views_count, published_at, category:categories(id,name,slug,color,sort_order), author:public_profiles(full_name,avatar_url), tags:article_tags!inner(tag:tags!inner(id,name,slug))", { count: "exact" })
+    .select(
+      "id, title, slug, subtitle, excerpt, cover_image_url, is_featured, is_breaking, reading_time_minutes, seo_title, seo_description, views_count, published_at, category:categories(id,name,slug,color,sort_order), author:public_profiles(full_name,avatar_url), tags:article_tags!inner(tag:tags!inner(id,name,slug))",
+      { count: "exact" },
+    )
     .eq("status", "published")
     .lte("published_at", new Date().toISOString())
     .eq("tags.tag.slug", slug)
@@ -236,7 +260,10 @@ export const getArticleBySlug = async (slug: string): Promise<Article | null> =>
   return data ? mapRow(data) : null;
 };
 
-export const getRelatedArticles = async (articleId: string, categoryId: string | null): Promise<Article[]> => {
+export const getRelatedArticles = async (
+  articleId: string,
+  categoryId: string | null,
+): Promise<Article[]> => {
   if (!categoryId) return [];
   const client = requireSupabaseClient();
   const { data, error } = await client
@@ -264,7 +291,11 @@ export const getCategories = async (): Promise<Category[]> => {
   return (data ?? []) as Category[];
 };
 
-export const searchArticles = async (term: string, page = 1, pageSize = 12): Promise<Paginated<Article>> => {
+export const searchArticles = async (
+  term: string,
+  page = 1,
+  pageSize = 12,
+): Promise<Paginated<Article>> => {
   const query = term.trim();
   const client = requireSupabaseClient();
   const pageIndex = Math.max(page, 1) - 1;
@@ -273,7 +304,10 @@ export const searchArticles = async (term: string, page = 1, pageSize = 12): Pro
 
   const baseQuery = client
     .from("articles")
-    .select("id, title, slug, subtitle, excerpt, cover_image_url, is_featured, is_breaking, reading_time_minutes, seo_title, seo_description, views_count, published_at, category:categories(id,name,slug,color,sort_order), author:public_profiles(full_name,avatar_url), tags:article_tags(tag:tags(id,name,slug))", { count: "exact" })
+    .select(
+      "id, title, slug, subtitle, excerpt, cover_image_url, is_featured, is_breaking, reading_time_minutes, seo_title, seo_description, views_count, published_at, category:categories(id,name,slug,color,sort_order), author:public_profiles(full_name,avatar_url), tags:article_tags(tag:tags(id,name,slug))",
+      { count: "exact" },
+    )
     .eq("status", "published")
     .lte("published_at", new Date().toISOString());
 
@@ -374,6 +408,9 @@ export const registerArticleView = async (articleId: string): Promise<void> => {
 
     console.error("No se pudo registrar la vista del artículo via RPC:", error);
   } catch (error) {
-    console.warn("Fallback de vista no disponible; la vista quedará controlada solo por deduplicación local.", error);
+    console.warn(
+      "Fallback de vista no disponible; la vista quedará controlada solo por deduplicación local.",
+      error,
+    );
   }
 };

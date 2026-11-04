@@ -6,7 +6,11 @@ const safeString = (value: unknown, fallback = ""): string => {
   if (typeof value === "string") return value;
   if (typeof value === "number" || typeof value === "boolean") return String(value);
   if (value instanceof Date) return value.toISOString();
-  if (Array.isArray(value)) return value.map((item) => safeString(item, "")).filter(Boolean).join(",");
+  if (Array.isArray(value))
+    return value
+      .map((item) => safeString(item, ""))
+      .filter(Boolean)
+      .join(",");
   if (value && typeof value === "object") {
     try {
       return JSON.stringify(value);
@@ -24,7 +28,10 @@ const sanitizeAnalyticsValue = (value: unknown): string | number | boolean | und
   }
   if (value instanceof Date) return value.toISOString();
   if (Array.isArray(value)) {
-    return value.map((item) => sanitizeAnalyticsValue(item)).filter((item) => item !== undefined && item !== null).join(",");
+    return value
+      .map((item) => sanitizeAnalyticsValue(item))
+      .filter((item) => item !== undefined && item !== null)
+      .join(",");
   }
   if (typeof value === "object") {
     try {
@@ -69,7 +76,8 @@ export const getCookieConsent = (): CookieConsent | null => {
 };
 
 const setGaDisabled = (disabled: boolean) => {
-  if (trackingId) (window as unknown as Record<string, unknown>)[`ga-disable-${trackingId}`] = disabled;
+  if (trackingId)
+    (window as unknown as Record<string, unknown>)[`ga-disable-${trackingId}`] = disabled;
 };
 
 const isMeasuring = () => gaStarted && getCookieConsent() === "accepted";
@@ -121,7 +129,11 @@ export const analytics = {
     startIfAllowed();
   },
 
-  pageView: (pathname: string | unknown, search: string | unknown = "", title?: string | unknown) => {
+  pageView: (
+    pathname: string | unknown,
+    search: string | unknown = "",
+    title?: string | unknown,
+  ) => {
     if (typeof window === "undefined" || !isMeasuring()) return;
 
     const safePathname = safeString(pathname, window.location.pathname || "/");
@@ -195,7 +207,12 @@ export const analytics = {
     });
   },
 
-  searchResultClick: (term: string, articleTitle: string, position: number, source: "desktop" | "mobile" | "results" = "desktop") => {
+  searchResultClick: (
+    term: string,
+    articleTitle: string,
+    position: number,
+    source: "desktop" | "mobile" | "results" = "desktop",
+  ) => {
     const normalized = term.trim();
     if (!normalized) return;
 

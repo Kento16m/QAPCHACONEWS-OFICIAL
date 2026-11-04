@@ -145,11 +145,17 @@ const mapArticleRow = (row: ArticleRow): AdminArticle => ({
   seo_title: row.seo_title ?? null,
   seo_description: row.seo_description ?? null,
   updated_at: row.updated_at ?? "",
-  category: row.category ? { id: row.category.id, name: row.category.name, slug: row.category.slug } : null,
-  author: row.author ? { id: row.author.id ?? "", full_name: row.author.full_name ?? "Redacción" } : null,
+  category: row.category
+    ? { id: row.category.id, name: row.category.name, slug: row.category.slug }
+    : null,
+  author: row.author
+    ? { id: row.author.id ?? "", full_name: row.author.full_name ?? "Redacción" }
+    : null,
 });
 
-const expectRemoved = async (query: PromiseLike<{ data: unknown[] | null; error: PostgrestError | null }>) => {
+const expectRemoved = async (
+  query: PromiseLike<{ data: unknown[] | null; error: PostgrestError | null }>,
+) => {
   const { data, error } = await query;
   if (error) throw error;
   if (!data?.length) throw new Error("No se pudo eliminar: ya no existe o no tenés permiso.");
@@ -158,7 +164,10 @@ const expectRemoved = async (query: PromiseLike<{ data: unknown[] | null; error:
 export async function getAdminArticles(): Promise<AdminArticle[]> {
   const client = requireSupabaseClient();
 
-  const { data, error } = await client.from("articles").select(selectArticleQuery).order("published_at", { ascending: false });
+  const { data, error } = await client
+    .from("articles")
+    .select(selectArticleQuery)
+    .order("published_at", { ascending: false });
 
   if (error) throw error;
 
@@ -188,7 +197,10 @@ export async function getAdminAuthors(): Promise<AdminAuthor[]> {
 export async function getAdminCategories(): Promise<AdminCategory[]> {
   const client = requireSupabaseClient();
 
-  const { data, error } = await client.from("categories").select("id, name, slug, color, sort_order").order("sort_order", { ascending: true });
+  const { data, error } = await client
+    .from("categories")
+    .select("id, name, slug, color, sort_order")
+    .order("sort_order", { ascending: true });
 
   if (error) throw error;
 
@@ -204,7 +216,10 @@ export async function getAdminCategories(): Promise<AdminCategory[]> {
 export async function getAdminTags(): Promise<AdminTag[]> {
   const client = requireSupabaseClient();
 
-  const { data, error } = await client.from("tags").select("id, name, slug").order("name", { ascending: true });
+  const { data, error } = await client
+    .from("tags")
+    .select("id, name, slug")
+    .order("name", { ascending: true });
 
   if (error) throw error;
 
@@ -218,7 +233,10 @@ export async function getAdminTags(): Promise<AdminTag[]> {
 export async function getArticleTagIds(articleId: string): Promise<string[]> {
   const client = requireSupabaseClient();
 
-  const { data, error } = await client.from("article_tags").select("tag_id").eq("article_id", articleId);
+  const { data, error } = await client
+    .from("article_tags")
+    .select("tag_id")
+    .eq("article_id", articleId);
 
   if (error) throw error;
 
@@ -229,7 +247,10 @@ export async function syncArticleTags(articleId: string, tagIds: string[]): Prom
   const client = requireSupabaseClient();
   const normalizedTagIds = [...new Set((tagIds ?? []).filter(Boolean))];
 
-  const { error: deleteError } = await client.from("article_tags").delete().eq("article_id", articleId);
+  const { error: deleteError } = await client
+    .from("article_tags")
+    .delete()
+    .eq("article_id", articleId);
   if (deleteError) throw deleteError;
 
   if (normalizedTagIds.length === 0) return;
@@ -264,7 +285,7 @@ export async function getAdminAccessLogs(): Promise<AdminAccessLog[]> {
   const { data, error } = await client
     .from("admin_access_logs")
     .select(
-      "id, user_id, email, full_name, role, user_agent, browser, operating_system, language, timezone, referrer, page_url, session_id, ip_address, accessed_at, status, event_type"
+      "id, user_id, email, full_name, role, user_agent, browser, operating_system, language, timezone, referrer, page_url, session_id, ip_address, accessed_at, status, event_type",
     )
     .order("accessed_at", { ascending: false })
     .limit(500);
@@ -316,7 +337,9 @@ export async function recordAdminAccessLog(input: {
   }
 }
 
-export async function getArticleCommentsForAdmin(articleId: string): Promise<AdminArticleComment[]> {
+export async function getArticleCommentsForAdmin(
+  articleId: string,
+): Promise<AdminArticleComment[]> {
   const client = requireSupabaseClient();
 
   const { data, error } = await client
@@ -348,7 +371,9 @@ export async function getArticleCommentsForAdmin(articleId: string): Promise<Adm
 
     if (profilesError) throw profilesError;
 
-    profilesById = (profiles ?? []).reduce<Record<string, { full_name: string | null; avatar_url: string | null }>>((acc, profile) => {
+    profilesById = (profiles ?? []).reduce<
+      Record<string, { full_name: string | null; avatar_url: string | null }>
+    >((acc, profile) => {
       if (!profile.id) return acc;
       acc[profile.id] = {
         full_name: profile.full_name,
@@ -372,7 +397,9 @@ export async function getArticleCommentsForAdmin(articleId: string): Promise<Adm
 }
 
 export async function deleteCommentForAdmin(commentId: number): Promise<void> {
-  await expectRemoved(requireSupabaseClient().from("comments").delete().eq("id", commentId).select("id"));
+  await expectRemoved(
+    requireSupabaseClient().from("comments").delete().eq("id", commentId).select("id"),
+  );
 }
 
 type CategoryInput = { name: string; slug?: string; color: string | null; sort_order: number };
@@ -390,7 +417,11 @@ const cleanCategory = (input: CategoryInput) => {
 
 export async function createCategory(input: CategoryInput): Promise<AdminCategory> {
   const client = requireSupabaseClient();
-  const { data, error } = await client.from("categories").insert(cleanCategory(input)).select("id, name, slug, color, sort_order").single();
+  const { data, error } = await client
+    .from("categories")
+    .insert(cleanCategory(input))
+    .select("id, name, slug, color, sort_order")
+    .single();
   if (error) throw error;
 
   return {
@@ -405,7 +436,12 @@ export async function createCategory(input: CategoryInput): Promise<AdminCategor
 export async function updateCategory(id: string, updates: CategoryInput): Promise<AdminCategory> {
   const client = requireSupabaseClient();
 
-  const { data, error } = await client.from("categories").update(cleanCategory(updates)).eq("id", id).select("id, name, slug, color, sort_order").single();
+  const { data, error } = await client
+    .from("categories")
+    .update(cleanCategory(updates))
+    .eq("id", id)
+    .select("id, name, slug, color, sort_order")
+    .single();
   if (error) throw error;
 
   return {
@@ -418,7 +454,9 @@ export async function updateCategory(id: string, updates: CategoryInput): Promis
 }
 
 export async function deleteCategory(id: string): Promise<void> {
-  await expectRemoved(requireSupabaseClient().from("categories").delete().eq("id", id).select("id"));
+  await expectRemoved(
+    requireSupabaseClient().from("categories").delete().eq("id", id).select("id"),
+  );
 }
 
 type TagInput = { name: string; slug?: string };
@@ -431,7 +469,11 @@ const cleanTag = (input: TagInput) => {
 
 export async function createTag(input: TagInput): Promise<AdminTag> {
   const client = requireSupabaseClient();
-  const { data, error } = await client.from("tags").insert(cleanTag(input)).select("id, name, slug").single();
+  const { data, error } = await client
+    .from("tags")
+    .insert(cleanTag(input))
+    .select("id, name, slug")
+    .single();
   if (error) throw error;
 
   return { id: data.id, name: data.name, slug: data.slug };
@@ -439,7 +481,12 @@ export async function createTag(input: TagInput): Promise<AdminTag> {
 
 export async function updateTag(id: string, updates: TagInput): Promise<AdminTag> {
   const client = requireSupabaseClient();
-  const { data, error } = await client.from("tags").update(cleanTag(updates)).eq("id", id).select("id, name, slug").single();
+  const { data, error } = await client
+    .from("tags")
+    .update(cleanTag(updates))
+    .eq("id", id)
+    .select("id, name, slug")
+    .single();
   if (error) throw error;
 
   return { id: data.id, name: data.name, slug: data.slug };
@@ -523,8 +570,14 @@ export async function uploadArticleCover(file: File): Promise<string> {
 
   if (error) {
     const message = String(error.message ?? "").toLowerCase();
-    if (message.includes("bucket") || message.includes("not found") || message.includes("does not exist")) {
-      throw new Error("El bucket de imágenes no existe en Supabase Storage. Creá el bucket `article-covers` y dejalo público.");
+    if (
+      message.includes("bucket") ||
+      message.includes("not found") ||
+      message.includes("does not exist")
+    ) {
+      throw new Error(
+        "El bucket de imágenes no existe en Supabase Storage. Creá el bucket `article-covers` y dejalo público.",
+      );
     }
     throw error;
   }
@@ -555,8 +608,14 @@ export async function uploadArticleMedia(file: File): Promise<string> {
 
   if (error) {
     const message = String(error.message ?? "").toLowerCase();
-    if (message.includes("bucket") || message.includes("not found") || message.includes("does not exist")) {
-      throw new Error("El bucket `article-media` no existe en Supabase Storage. Creá el bucket y dejalo público para poder subir imágenes o videos dentro de los artículos.");
+    if (
+      message.includes("bucket") ||
+      message.includes("not found") ||
+      message.includes("does not exist")
+    ) {
+      throw new Error(
+        "El bucket `article-media` no existe en Supabase Storage. Creá el bucket y dejalo público para poder subir imágenes o videos dentro de los artículos.",
+      );
     }
     throw error;
   }
@@ -589,14 +648,20 @@ const mapAdminProfile = (data: Database["public"]["Tables"]["profiles"]["Row"]):
   blocked_reason: data.blocked_reason ?? null,
 });
 
-export async function updateAuthorRole(id: string, role: AdminAuthor["role"]): Promise<AdminAuthor> {
+export async function updateAuthorRole(
+  id: string,
+  role: AdminAuthor["role"],
+): Promise<AdminAuthor> {
   const client = requireSupabaseClient();
   const { data, error } = await client.rpc("admin_set_user_role", { p_user_id: id, p_role: role });
   if (error) throw profileChangeError(error);
   return mapAdminProfile(data);
 }
 
-export async function updateUserAccess(id: string, payload: { is_blocked: boolean; blocked_reason: string | null }): Promise<AdminAuthor> {
+export async function updateUserAccess(
+  id: string,
+  payload: { is_blocked: boolean; blocked_reason: string | null },
+): Promise<AdminAuthor> {
   const client = requireSupabaseClient();
   const { data, error } = await client.rpc("admin_set_user_block", {
     p_user_id: id,
@@ -610,14 +675,26 @@ export async function updateUserAccess(id: string, payload: { is_blocked: boolea
 
 export async function createArticle(payload: ArticlePayload): Promise<AdminArticle> {
   const client = requireSupabaseClient();
-  const { data, error } = await client.from("articles").insert(payload).select(selectArticleQuery).single();
+  const { data, error } = await client
+    .from("articles")
+    .insert(payload)
+    .select(selectArticleQuery)
+    .single();
   if (error) throw error;
   return mapArticleRow(data);
 }
 
-export async function updateArticle(id: string, updates: Partial<ArticlePayload>): Promise<AdminArticle> {
+export async function updateArticle(
+  id: string,
+  updates: Partial<ArticlePayload>,
+): Promise<AdminArticle> {
   const client = requireSupabaseClient();
-  const { data, error } = await client.from("articles").update(updates).eq("id", id).select(selectArticleQuery).single();
+  const { data, error } = await client
+    .from("articles")
+    .update(updates)
+    .eq("id", id)
+    .select(selectArticleQuery)
+    .single();
   if (error) throw error;
   return mapArticleRow(data);
 }

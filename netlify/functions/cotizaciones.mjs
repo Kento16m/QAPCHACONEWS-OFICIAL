@@ -21,6 +21,9 @@ export default async function handler(request) {
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : "No se pudo cargar la cotización.";
-    return Response.json({ error: message }, { status: 502, headers: { ...CORS_HEADERS, "cache-control": "no-store" } });
+    return Response.json(
+      { error: message },
+      { status: 502, headers: { ...CORS_HEADERS, "cache-control": "no-store" } },
+    );
   }
 }

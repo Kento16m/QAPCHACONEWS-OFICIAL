@@ -3,7 +3,20 @@ import { load } from "cheerio";
 
 const MAXICAMBIOS_URLS = ["https://www.maxicambios.com.py", "https://maxicambios.com.py"];
 const PUBLIC_RATES_URL = "https://open.er-api.com/v6/latest/USD";
-const PUBLIC_CODES = ["USD", "ARS", "BRL", "EUR", "UYU", "GBP", "JPY", "CAD", "AUD", "CHF", "CLP", "PYG"];
+const PUBLIC_CODES = [
+  "USD",
+  "ARS",
+  "BRL",
+  "EUR",
+  "UYU",
+  "GBP",
+  "JPY",
+  "CAD",
+  "AUD",
+  "CHF",
+  "CLP",
+  "PYG",
+];
 const CACHE_MS = 20 * 60 * 1000;
 const TIMEOUT_MS = 20_000;
 
@@ -31,12 +44,17 @@ const normalizeNumber = (value) => {
 
 const flagCode = (card) => {
   const src = card.find("img[src*='flags/']").first().attr("src") ?? "";
-  return src.match(/[/\\](USD|EUR|BRL|ARS|UYU|JPY|GBP|CLP|CHF|CAD|AUD|CNY)\.(?:png|jpg|jpeg|svg)/i)?.[1]?.toUpperCase() ?? null;
+  return (
+    src
+      .match(/[/\\](USD|EUR|BRL|ARS|UYU|JPY|GBP|CLP|CHF|CAD|AUD|CNY)\.(?:png|jpg|jpeg|svg)/i)?.[1]
+      ?.toUpperCase() ?? null
+  );
 };
 
 const parseCard = (card) => {
   const label = card.find("p").last().text().trim().toLowerCase();
-  const code = flagCode(card) ?? Object.entries(CODE_BY_LABEL).find(([key]) => label.includes(key))?.[1];
+  const code =
+    flagCode(card) ?? Object.entries(CODE_BY_LABEL).find(([key]) => label.includes(key))?.[1];
   if (!code) return null;
 
   const amounts = Array.from(card.text().matchAll(/\d+(?:[.,]\d+)?/g))
@@ -50,9 +68,12 @@ const parseCard = (card) => {
 export const parseMaxicambiosHtml = (html) => {
   const $ = load(html);
   const root =
-    [$("#cotizacion-carousel").first(), $("#cotizacion-carousel-xs").first(), $("#monedas").first(), $(".cotizDivSmall").first().closest(".row")].find(
-      (node) => node.length > 0,
-    ) ?? $.root();
+    [
+      $("#cotizacion-carousel").first(),
+      $("#cotizacion-carousel-xs").first(),
+      $("#monedas").first(),
+      $(".cotizDivSmall").first().closest(".row"),
+    ].find((node) => node.length > 0) ?? $.root();
 
   const rates = {};
   root.find(".cotizDivSmall").each((_, element) => {
@@ -102,12 +123,16 @@ const fromMaxicambios = async (http) => {
 };
 
 const fromPublicApi = async (http) => {
-  const response = await http(PUBLIC_RATES_URL, { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(TIMEOUT_MS) });
+  const response = await http(PUBLIC_RATES_URL, {
+    headers: { Accept: "application/json" },
+    signal: AbortSignal.timeout(TIMEOUT_MS),
+  });
   if (!response.ok) throw new Error("La API pública de cotizaciones no respondió correctamente.");
 
   const payload = await response.json();
   const rates = convertUsdRatesToPyg(payload.rates ?? {});
-  if (Object.keys(rates).length === 0) throw new Error("La API pública no devolvió cotizaciones válidas.");
+  if (Object.keys(rates).length === 0)
+    throw new Error("La API pública no devolvió cotizaciones válidas.");
   return rates;
 };
 
@@ -126,7 +151,8 @@ export const createRatesFetcher = (http = fetch) => {
       } catch {
         // Slightly old rates are better than none for a header widget.
         if (last) return last;
-        const reason = maxicambiosError instanceof Error ? maxicambiosError.message : "error desconocido";
+        const reason =
+          maxicambiosError instanceof Error ? maxicambiosError.message : "error desconocido";
         throw new Error(`No se pudo cargar la cotización: ${reason}`);
       }
     }

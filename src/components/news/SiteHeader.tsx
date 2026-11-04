@@ -13,7 +13,12 @@ import { SheetClose } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { searchArticles } from "@/lib/api";
 import { useSearchContext } from "@/contexts/SearchContext";
-import { trackCategoryView, trackMobileSearchOpen, trackSearch, trackSearchResultClick } from "@/lib/analytics";
+import {
+  trackCategoryView,
+  trackMobileSearchOpen,
+  trackSearch,
+  trackSearchResultClick,
+} from "@/lib/analytics";
 import {
   Dialog,
   DialogClose,
@@ -29,11 +34,7 @@ import {
   type WeatherCurrent,
 } from "@/lib/weather";
 import { WeatherDashboard } from "@/components/weather/WeatherDashboard";
-import {
-  CURRENCY_MODAL_LIST,
-  CURRENCY_PREVIEW,
-  fetchExchangeRates,
-} from "@/lib/exchange-rate";
+import { CURRENCY_MODAL_LIST, CURRENCY_PREVIEW, fetchExchangeRates } from "@/lib/exchange-rate";
 
 function AuthControl() {
   const { user, loading, openAuthDialog } = useAuth();
@@ -107,10 +108,25 @@ function YouTubeIcon() {
 }
 
 export const socials = [
-  { icon: FacebookIcon, label: "Facebook", href: "https://www.facebook.com/qapchaconews", color: "bg-[#1877F2]" },
+  {
+    icon: FacebookIcon,
+    label: "Facebook",
+    href: "https://www.facebook.com/qapchaconews",
+    color: "bg-[#1877F2]",
+  },
   { icon: XIcon, label: "X", href: "https://x.com/qapchaconews", color: "bg-[#0F172A]" },
-  { icon: InstagramIcon, label: "Instagram", href: "https://www.instagram.com/qapchaco/", color: "bg-gradient-to-br from-[#F9CE34] via-[#EE2A7B] to-[#6228D7]" },
-  { icon: YouTubeIcon, label: "YouTube", href: "https://www.youtube.com/@QAPChacoNews-26", color: "bg-[#FF0000]" },
+  {
+    icon: InstagramIcon,
+    label: "Instagram",
+    href: "https://www.instagram.com/qapchaco/",
+    color: "bg-gradient-to-br from-[#F9CE34] via-[#EE2A7B] to-[#6228D7]",
+  },
+  {
+    icon: YouTubeIcon,
+    label: "YouTube",
+    href: "https://www.youtube.com/@QAPChacoNews-26",
+    color: "bg-[#FF0000]",
+  },
 ];
 
 function useToday() {
@@ -199,7 +215,9 @@ export function CurrencyTicker({ className = "" }: { className?: string }) {
         setRates(result);
       } catch (catchError) {
         if (!isMounted) return;
-        setError(catchError instanceof Error ? catchError.message : "No se pudo cargar la cotización.");
+        setError(
+          catchError instanceof Error ? catchError.message : "No se pudo cargar la cotización.",
+        );
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -258,7 +276,9 @@ export function CurrencyTicker({ className = "" }: { className?: string }) {
         >
           <div className="flex items-center justify-between border-b border-[#e9e2d9] bg-white/60 px-5 py-4 backdrop-blur-sm">
             <DialogHeader className="space-y-2 text-left">
-              <DialogTitle className="text-[2rem] font-black tracking-[-0.05em] text-slate-900">Cotización en PYG</DialogTitle>
+              <DialogTitle className="text-[2rem] font-black tracking-[-0.05em] text-slate-900">
+                Cotización en PYG
+              </DialogTitle>
               <DialogDescription className="text-sm text-slate-600">
                 Valor de cada moneda frente al guaraní.
               </DialogDescription>
@@ -287,10 +307,16 @@ export function CurrencyTicker({ className = "" }: { className?: string }) {
                   >
                     <div className="flex items-center gap-3">
                       <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-100 via-white to-slate-200 shadow-inner ring-1 ring-slate-200">
-                        <CountryFlag className={currency.flagClass} label={currency.name} size="lg" />
+                        <CountryFlag
+                          className={currency.flagClass}
+                          label={currency.name}
+                          size="lg"
+                        />
                       </div>
                       <div className="min-w-0">
-                        <p className="text-base font-black tracking-[0.09em] text-slate-900">{currency.code}</p>
+                        <p className="text-base font-black tracking-[0.09em] text-slate-900">
+                          {currency.code}
+                        </p>
                         <p className="truncate text-[11px] text-slate-500">{currency.name}</p>
                       </div>
                     </div>
@@ -301,13 +327,17 @@ export function CurrencyTicker({ className = "" }: { className?: string }) {
                           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#0f766e]">
                             Compra
                           </p>
-                          <p className="mt-1 text-lg font-black tracking-[-0.04em] text-slate-900">₲ {formatPyg(rate.buy)}</p>
+                          <p className="mt-1 text-lg font-black tracking-[-0.04em] text-slate-900">
+                            ₲ {formatPyg(rate.buy)}
+                          </p>
                         </div>
                         <div className="rounded-[18px] border border-[#f0dfad] bg-[#fff8de] px-2.5 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.95)]">
                           <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#b45309]">
                             Venta
                           </p>
-                          <p className="mt-1 text-lg font-black tracking-[-0.04em] text-slate-900">₲ {formatPyg(rate.sell)}</p>
+                          <p className="mt-1 text-lg font-black tracking-[-0.04em] text-slate-900">
+                            ₲ {formatPyg(rate.sell)}
+                          </p>
                         </div>
                       </div>
                     ) : (
@@ -334,11 +364,14 @@ function getWeatherFontIcon(icon: string): string {
   if (normalized === "02d" || normalized === "sun-cloud") return "wi wi-day-cloudy";
   if (normalized === "02n" || normalized === "cloud-moon") return "wi wi-night-alt-cloudy";
   if (normalized === "03d" || normalized === "03n" || normalized === "cloud") return "wi wi-cloud";
-  if (normalized === "04d" || normalized === "04n" || normalized === "overcast") return "wi wi-cloudy";
-  if (normalized === "09d" || normalized === "09n" || normalized === "rain-light") return "wi wi-showers";
+  if (normalized === "04d" || normalized === "04n" || normalized === "overcast")
+    return "wi wi-cloudy";
+  if (normalized === "09d" || normalized === "09n" || normalized === "rain-light")
+    return "wi wi-showers";
   if (normalized === "10d" || normalized === "rain") return "wi wi-day-rain";
   if (normalized === "10n") return "wi wi-night-alt-rain";
-  if (normalized === "11d" || normalized === "11n" || normalized === "storm-electric") return "wi wi-thunderstorm";
+  if (normalized === "11d" || normalized === "11n" || normalized === "storm-electric")
+    return "wi wi-thunderstorm";
   if (normalized === "13d" || normalized === "13n" || normalized === "snow") return "wi wi-snow";
   if (normalized === "50d" || normalized === "50n" || normalized === "fog") return "wi wi-fog";
   if (normalized === "storm") return "wi wi-storm-showers";
@@ -448,7 +481,9 @@ function WeatherForecastModal() {
   const [forecast, setForecast] = useState<ForecastDay[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(() => document.documentElement.classList.contains("dark"));
+  const [isDarkMode, setIsDarkMode] = useState(() =>
+    document.documentElement.classList.contains("dark"),
+  );
 
   useEffect(() => {
     const syncTheme = () => {
@@ -534,7 +569,14 @@ function WeatherForecastModal() {
                 )}
               >
                 <div className="space-y-1 text-left">
-                  <div className={cn("text-lg font-bold sm:text-xl", isDarkMode ? "text-slate-100" : "text-slate-900")}>Pronóstico del tiempo</div>
+                  <div
+                    className={cn(
+                      "text-lg font-bold sm:text-xl",
+                      isDarkMode ? "text-slate-100" : "text-slate-900",
+                    )}
+                  >
+                    Pronóstico del tiempo
+                  </div>
                 </div>
 
                 <button
@@ -553,19 +595,41 @@ function WeatherForecastModal() {
               </div>
 
               {loading || error ? (
-                <div className={cn("space-y-4 p-4 sm:p-5", isDarkMode ? "bg-slate-950" : "bg-slate-50")}>
+                <div
+                  className={cn(
+                    "space-y-4 p-4 sm:p-5",
+                    isDarkMode ? "bg-slate-950" : "bg-slate-50",
+                  )}
+                >
                   {loading ? (
                     <div
                       className={cn(
                         "space-y-5 rounded-[24px] border p-4",
-                        isDarkMode ? "border-slate-800 bg-slate-900/40" : "border-slate-200 bg-white",
+                        isDarkMode
+                          ? "border-slate-800 bg-slate-900/40"
+                          : "border-slate-200 bg-white",
                       )}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={cn("h-12 w-12 animate-pulse rounded-full", isDarkMode ? "bg-slate-800" : "bg-slate-200")} />
+                        <div
+                          className={cn(
+                            "h-12 w-12 animate-pulse rounded-full",
+                            isDarkMode ? "bg-slate-800" : "bg-slate-200",
+                          )}
+                        />
                         <div className="flex-1 space-y-2">
-                          <div className={cn("h-4 w-24 animate-pulse rounded-full", isDarkMode ? "bg-slate-800" : "bg-slate-200")} />
-                          <div className={cn("h-3 w-36 animate-pulse rounded-full", isDarkMode ? "bg-slate-800" : "bg-slate-200")} />
+                          <div
+                            className={cn(
+                              "h-4 w-24 animate-pulse rounded-full",
+                              isDarkMode ? "bg-slate-800" : "bg-slate-200",
+                            )}
+                          />
+                          <div
+                            className={cn(
+                              "h-3 w-36 animate-pulse rounded-full",
+                              isDarkMode ? "bg-slate-800" : "bg-slate-200",
+                            )}
+                          />
                         </div>
                       </div>
                       <div className="grid gap-3 sm:grid-cols-2">
@@ -574,7 +638,9 @@ function WeatherForecastModal() {
                             key={index}
                             className={cn(
                               "h-24 animate-pulse rounded-2xl border",
-                              isDarkMode ? "border-slate-800 bg-slate-900/50" : "border-slate-200 bg-slate-100",
+                              isDarkMode
+                                ? "border-slate-800 bg-slate-900/50"
+                                : "border-slate-200 bg-slate-100",
                             )}
                           />
                         ))}
@@ -584,7 +650,9 @@ function WeatherForecastModal() {
                     <div
                       className={cn(
                         "rounded-[24px] border p-4 text-sm",
-                        isDarkMode ? "border-red-500/20 bg-red-500/5 text-red-300" : "border-red-200 bg-red-50 text-red-700",
+                        isDarkMode
+                          ? "border-red-500/20 bg-red-500/5 text-red-300"
+                          : "border-red-200 bg-red-50 text-red-700",
                       )}
                     >
                       {error}
@@ -592,7 +660,12 @@ function WeatherForecastModal() {
                   )}
                 </div>
               ) : (
-                <div className={cn("flex-1 overflow-y-auto", isDarkMode ? "bg-slate-950" : "bg-slate-50")}>
+                <div
+                  className={cn(
+                    "flex-1 overflow-y-auto",
+                    isDarkMode ? "bg-slate-950" : "bg-slate-50",
+                  )}
+                >
                   <WeatherDashboard theme={isDarkMode ? "dark" : "light"} variant="modal" />
                 </div>
               )}
@@ -707,7 +780,10 @@ function SearchModal() {
               {searchQuery.isLoading ? (
                 <div className="space-y-3 pt-1">
                   {Array.from({ length: 4 }).map((_, index) => (
-                    <div key={index} className="h-20 animate-pulse rounded-2xl border border-border bg-muted/40" />
+                    <div
+                      key={index}
+                      className="h-20 animate-pulse rounded-2xl border border-border bg-muted/40"
+                    />
                   ))}
                 </div>
               ) : searchQuery.data?.items.length === 0 ? (
@@ -727,12 +803,17 @@ function SearchModal() {
                     }}
                   >
                     <img
-                      src={article.cover_image_url ?? "https://images.unsplash.com/photo-1495020689067-958852a7765e?auto=format&fit=crop&w=600&q=80"}
+                      src={
+                        article.cover_image_url ??
+                        "https://images.unsplash.com/photo-1495020689067-958852a7765e?auto=format&fit=crop&w=600&q=80"
+                      }
                       alt={article.title}
                       className="h-16 w-20 rounded-xl object-cover"
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="line-clamp-2 text-sm font-semibold text-foreground">{article.title}</p>
+                      <p className="line-clamp-2 text-sm font-semibold text-foreground">
+                        {article.title}
+                      </p>
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
                         <span>{article.category?.name ?? "General"}</span>
                         <span>•</span>
@@ -977,7 +1058,10 @@ export function SiteHeader() {
                   <SheetTitle className="sr-only">Menú</SheetTitle>
                   <Logo className="h-12" variant="dark" />
                   <DrawerAuth />
-                  <SearchBox className="mt-6 text-foreground" onOpenMobileSearch={() => setMobileMenuOpen(false)} />
+                  <SearchBox
+                    className="mt-6 text-foreground"
+                    onOpenMobileSearch={() => setMobileMenuOpen(false)}
+                  />
                   <div className="mt-6 space-y-3">
                     <div className="flex items-center gap-2">
                       <CurrencyTicker className="flex-1 justify-center border border-white/10 bg-slate-800/70 text-slate-100 shadow-[0_0_0_1px_rgba(255,255,255,0.02)]" />
@@ -1024,7 +1108,12 @@ export function SiteHeader() {
             </div>
 
             <div className="flex flex-1 justify-start">
-              <button type="button" onClick={goHome} aria-label="QAP ChacoNews, inicio" className="inline-flex">
+              <button
+                type="button"
+                onClick={goHome}
+                aria-label="QAP ChacoNews, inicio"
+                className="inline-flex"
+              >
                 <Logo className="h-9" variant="auto" />
               </button>
             </div>
@@ -1069,7 +1158,11 @@ export function SiteHeader() {
                 className="inline-flex items-center gap-1 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold text-muted-foreground transition hover:text-foreground"
               >
                 <span>Más</span>
-                <span className={cn("transition-transform duration-200", moreMenuOpen && "rotate-180")}>▾</span>
+                <span
+                  className={cn("transition-transform duration-200", moreMenuOpen && "rotate-180")}
+                >
+                  ▾
+                </span>
               </button>
             </div>
           )}

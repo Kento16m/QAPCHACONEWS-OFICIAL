@@ -2,7 +2,17 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import DOMPurify from "dompurify";
 import { readFunctionError } from "@/lib/function-error";
-import { ChevronDown, ChevronUp, Heart, LogIn, MessageSquare, MoreHorizontal, Reply, Send, Trash2 } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Heart,
+  LogIn,
+  MessageSquare,
+  MoreHorizontal,
+  Reply,
+  Send,
+  Trash2,
+} from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,7 +47,9 @@ type ProfileSummary = {
 };
 
 const formatDate = (iso: string) =>
-  new Intl.DateTimeFormat("es-PY", { dateStyle: "medium", timeStyle: "short" }).format(new Date(iso));
+  new Intl.DateTimeFormat("es-PY", { dateStyle: "medium", timeStyle: "short" }).format(
+    new Date(iso),
+  );
 
 const sanitizeText = (value: string) =>
   DOMPurify.sanitize(value, {
@@ -45,11 +57,15 @@ const sanitizeText = (value: string) =>
     ALLOWED_ATTR: [],
   }).trim();
 
-const offensiveContentMessage = "Tu comentario no es apto para esta comunidad. Por favor, elimina palabras ofensivas o contenido inapropiado y vuelve a intentarlo.";
-const rateLimitMessage = "Superaste el límite de mensajes. Por favor, esperá 1 minuto antes de comentar otra vez.";
+const offensiveContentMessage =
+  "Tu comentario no es apto para esta comunidad. Por favor, elimina palabras ofensivas o contenido inapropiado y vuelve a intentarlo.";
+const rateLimitMessage =
+  "Superaste el límite de mensajes. Por favor, esperá 1 minuto antes de comentar otra vez.";
 
 const isOffensiveContentMessage = (message: string) =>
-  /no es apto para esta comunidad|palabras ofensivas|contenido inapropiado|comentario fue bloqueado/i.test(message);
+  /no es apto para esta comunidad|palabras ofensivas|contenido inapropiado|comentario fue bloqueado/i.test(
+    message,
+  );
 
 const isRateLimitMessage = (message: string) =>
   /límite|limite|espera 1 minuto|esperá 1 minuto|429|rate limit|too many requests/i.test(message);
@@ -90,7 +106,9 @@ const normalizeErrorMessage = (error: unknown): string => {
   }
 
   if (error instanceof Error) {
-    const raw = parseJsonStringCandidate(error.message) ?? (error.message || "No se pudo publicar el comentario.");
+    const raw =
+      parseJsonStringCandidate(error.message) ??
+      (error.message || "No se pudo publicar el comentario.");
     if (isOffensiveContentMessage(raw)) return offensiveContentMessage;
     if (isRateLimitMessage(raw)) return rateLimitMessage;
     return raw;
@@ -237,16 +255,19 @@ export function CommentsSection({ articleId }: { articleId: string }) {
 
     if (profileError) return;
 
-    const nextProfiles = (profileRows ?? []).reduce<Record<string, ProfileSummary>>((acc, profile) => {
-      if (!profile.id) return acc;
-      acc[profile.id] = {
-        id: profile.id,
-        full_name: profile.full_name,
-        avatar_url: profile.avatar_url,
-        profile_color: profile.profile_color ?? getProfileColor(profile.full_name),
-      };
-      return acc;
-    }, {});
+    const nextProfiles = (profileRows ?? []).reduce<Record<string, ProfileSummary>>(
+      (acc, profile) => {
+        if (!profile.id) return acc;
+        acc[profile.id] = {
+          id: profile.id,
+          full_name: profile.full_name,
+          avatar_url: profile.avatar_url,
+          profile_color: profile.profile_color ?? getProfileColor(profile.full_name),
+        };
+        return acc;
+      },
+      {},
+    );
 
     setProfiles((current) => ({ ...current, ...nextProfiles }));
   };
@@ -328,7 +349,7 @@ export function CommentsSection({ articleId }: { articleId: string }) {
           setPage(0);
           setComments([]);
           void fetchComments(0, false);
-        }
+        },
       )
       .subscribe();
 
@@ -382,13 +403,13 @@ export function CommentsSection({ articleId }: { articleId: string }) {
     }
 
     return Object.fromEntries(
-      Object.entries(grouped).map(([parentId, items]) => [Number(parentId), sortComments(items)])
+      Object.entries(grouped).map(([parentId, items]) => [Number(parentId), sortComments(items)]),
     );
   }, [comments, session, sortMode, replyCounts]);
 
   const rootComments = useMemo(
     () => sortComments(comments.filter((comment) => comment.parent_id === null)),
-    [comments, session, sortMode, replyCounts]
+    [comments, session, sortMode, replyCounts],
   );
 
   const submitComment = async () => {
@@ -398,7 +419,9 @@ export function CommentsSection({ articleId }: { articleId: string }) {
     }
 
     if (!session?.access_token || !session?.user?.id) {
-      setError("Tu sesión de Supabase está vencida o no está iniciada. Volvé a iniciar sesión para comentar.");
+      setError(
+        "Tu sesión de Supabase está vencida o no está iniciada. Volvé a iniciar sesión para comentar.",
+      );
       return;
     }
 
@@ -446,8 +469,12 @@ export function CommentsSection({ articleId }: { articleId: string }) {
 
       const functionError = await readFunctionError(invokeError);
       const payloadError =
-        data && typeof data === "object" && "error" in data ? (data as { error?: unknown }).error : functionError.message;
-      const payloadMessage = payloadError ? normalizeErrorMessage(payloadError) : normalizeErrorMessage(invokeError);
+        data && typeof data === "object" && "error" in data
+          ? (data as { error?: unknown }).error
+          : functionError.message;
+      const payloadMessage = payloadError
+        ? normalizeErrorMessage(payloadError)
+        : normalizeErrorMessage(invokeError);
 
       if (payloadError || invokeError) {
         const statusCode = functionError.status;
@@ -459,15 +486,16 @@ export function CommentsSection({ articleId }: { articleId: string }) {
           typeof invokeError.message === "string" &&
           /jwt|unauthorized|401|token/i.test(invokeError.message);
 
-        const friendlyMessage = statusCode === 429 || isRateLimitMessage(payloadMessage)
-          ? rateLimitMessage
-          : isOffensiveContentMessage(payloadMessage)
-            ? offensiveContentMessage
-            : authIssue
-              ? "La sesión de Supabase no es válida o expiró. Volvé a iniciar sesión e intentá nuevamente."
-              : payloadMessage === "Edge Function returned a non-2xx status code"
-                ? "No se pudo publicar el comentario. Intentalo nuevamente en unos segundos."
-                : payloadMessage;
+        const friendlyMessage =
+          statusCode === 429 || isRateLimitMessage(payloadMessage)
+            ? rateLimitMessage
+            : isOffensiveContentMessage(payloadMessage)
+              ? offensiveContentMessage
+              : authIssue
+                ? "La sesión de Supabase no es válida o expiró. Volvé a iniciar sesión e intentá nuevamente."
+                : payloadMessage === "Edge Function returned a non-2xx status code"
+                  ? "No se pudo publicar el comentario. Intentalo nuevamente en unos segundos."
+                  : payloadMessage;
 
         // Nothing was published, so the comment shown while waiting must go; the draft stays to retry.
         setComments((current) => current.filter((item) => item.id !== optimisticComment.id));
@@ -494,7 +522,9 @@ export function CommentsSection({ articleId }: { articleId: string }) {
         });
         setHighlightedCommentId(insertedComment.id);
       } else {
-        setComments((current) => dedupeComments(current.filter((item) => item.id !== optimisticComment.id)));
+        setComments((current) =>
+          dedupeComments(current.filter((item) => item.id !== optimisticComment.id)),
+        );
       }
 
       setPage(0);
@@ -511,7 +541,7 @@ export function CommentsSection({ articleId }: { articleId: string }) {
       setError(
         /jwt|unauthorized|401|token/i.test(message)
           ? "La sesión de Supabase no es válida o expiró. Volvé a iniciar sesión e intentá nuevamente."
-          : message
+          : message,
       );
     } finally {
       setIsSubmitting(false);
@@ -551,8 +581,8 @@ export function CommentsSection({ articleId }: { articleId: string }) {
 
     setComments((current) =>
       current.map((comment) =>
-        comment.id === commentId ? { ...comment, like_count: comment.like_count + 1 } : comment
-      )
+        comment.id === commentId ? { ...comment, like_count: comment.like_count + 1 } : comment,
+      ),
     );
     setError("");
   };
@@ -564,7 +594,11 @@ export function CommentsSection({ articleId }: { articleId: string }) {
     setDeleteTargetId(null);
     setRemovingCommentIds((current) => ({ ...current, [commentId]: true }));
 
-    const { error } = await supabase.from("comments").delete().eq("id", commentId).eq("user_id", session.user.id);
+    const { error } = await supabase
+      .from("comments")
+      .delete()
+      .eq("id", commentId)
+      .eq("user_id", session.user.id);
     if (error) {
       setRemovingCommentIds((current) => ({ ...current, [commentId]: false }));
       setError("No se pudo eliminar el comentario.");
@@ -912,19 +946,27 @@ export function CommentsSection({ articleId }: { articleId: string }) {
         }
       `}</style>
 
-      <AlertDialog open={deleteTargetId !== null} onOpenChange={(open) => !open && setDeleteTargetId(null)}>
+      <AlertDialog
+        open={deleteTargetId !== null}
+        onOpenChange={(open) => !open && setDeleteTargetId(null)}
+      >
         <AlertDialogContent className="max-w-md rounded-[24px] border border-border bg-white p-6 shadow-[0_25px_60px_rgba(15,23,42,0.18)]">
           <AlertDialogHeader>
             <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-600">
               <Trash2 className="h-5 w-5" />
             </div>
-            <AlertDialogTitle className="text-xl font-bold text-slate-900">¿Eliminar comentario?</AlertDialogTitle>
+            <AlertDialogTitle className="text-xl font-bold text-slate-900">
+              ¿Eliminar comentario?
+            </AlertDialogTitle>
             <AlertDialogDescription className="text-sm text-slate-600">
               Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="mt-4 sm:justify-end">
-            <AlertDialogCancel onClick={() => setDeleteTargetId(null)} className="rounded-xl border-slate-200 bg-white text-slate-700 hover:bg-slate-50">
+            <AlertDialogCancel
+              onClick={() => setDeleteTargetId(null)}
+              className="rounded-xl border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+            >
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction
@@ -945,7 +987,9 @@ export function CommentsSection({ articleId }: { articleId: string }) {
         <div className="mb-5 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-[#5b4de6]" />
-            <h3 className="text-[1.55rem] font-black tracking-[-0.04em] text-slate-900 sm:text-[2rem]">Comentarios</h3>
+            <h3 className="text-[1.55rem] font-black tracking-[-0.04em] text-slate-900 sm:text-[2rem]">
+              Comentarios
+            </h3>
           </div>
 
           <div className="flex w-full items-center gap-1 rounded-full border border-[#e8e5f7] bg-[#f7f7fb] p-1 sm:w-auto">
@@ -968,17 +1012,27 @@ export function CommentsSection({ articleId }: { articleId: string }) {
 
         {!session ? (
           <div className="rounded-[26px] border border-dashed border-[#e8e5f7] bg-[#f9f9fd] p-5 text-center">
-            <p className="mb-3 text-sm text-slate-600">Debés iniciar sesión para publicar o responder comentarios.</p>
-            <Button variant="default" onClick={() => openAuthDialog("login")} className="rounded-xl bg-[#5b4de6] text-white hover:bg-[#4d40d8]">
+            <p className="mb-3 text-sm text-slate-600">
+              Debés iniciar sesión para publicar o responder comentarios.
+            </p>
+            <Button
+              variant="default"
+              onClick={() => openAuthDialog("login")}
+              className="rounded-xl bg-[#5b4de6] text-white hover:bg-[#4d40d8]"
+            >
               <LogIn className="h-4 w-4" /> Iniciar sesión
             </Button>
           </div>
         ) : (
           !replyTo && (
             <div className="mb-6 flex flex-col gap-3 rounded-[24px] border border-[#eceaf8] bg-[#f7f7fb] p-3 shadow-[inset_0_0_0_1px_rgba(91,77,230,0.03)] sm:flex-row sm:items-center">
-              {session?.user?.user_metadata?.["avatar_url"] || session?.user?.user_metadata?.["picture"] ? (
+              {session?.user?.user_metadata?.["avatar_url"] ||
+              session?.user?.user_metadata?.["picture"] ? (
                 <img
-                  src={session.user.user_metadata?.["avatar_url"] || session.user.user_metadata?.["picture"]}
+                  src={
+                    session.user.user_metadata?.["avatar_url"] ||
+                    session.user.user_metadata?.["picture"]
+                  }
                   alt={session.user.user_metadata?.["full_name"] || session.user.email || "Usuario"}
                   className="h-10 w-10 rounded-full object-cover ring-2 ring-white sm:h-11 sm:w-11"
                 />
@@ -1014,7 +1068,11 @@ export function CommentsSection({ articleId }: { articleId: string }) {
           )
         )}
 
-        {error && <p className="mb-4 rounded-xl border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">{error}</p>}
+        {error && (
+          <p className="mb-4 rounded-xl border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+            {error}
+          </p>
+        )}
 
         {loading ? (
           <div className="space-y-3">
@@ -1056,7 +1114,10 @@ export function CommentsSection({ articleId }: { articleId: string }) {
                 expandedReplies={expandedReplies}
                 visibleReplyCounts={visibleReplyCounts}
                 onToggleReplies={(commentId) => {
-                  setExpandedReplies((current) => ({ ...current, [commentId]: !current[commentId] }));
+                  setExpandedReplies((current) => ({
+                    ...current,
+                    [commentId]: !current[commentId],
+                  }));
                 }}
                 onLoadMoreReplies={(commentId) => {
                   setVisibleReplyCounts((current) => ({
@@ -1171,7 +1232,9 @@ function CommentThread({
   const profileFallbackName =
     profile?.full_name?.trim() ||
     (comment.user_id === session?.user?.id
-      ? sessionUserMeta["full_name"] || sessionUserMeta["name"] || session?.user?.email?.split("@")[0]
+      ? sessionUserMeta["full_name"] ||
+        sessionUserMeta["name"] ||
+        session?.user?.email?.split("@")[0]
       : null) ||
     "Usuario";
   const avatarUrl =
@@ -1180,12 +1243,13 @@ function CommentThread({
       ? sessionUserMeta["avatar_url"] || sessionUserMeta["picture"] || null
       : null);
   const authorName = profileFallbackName;
-  const initials = authorName
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part: string) => part[0]?.toUpperCase() ?? "")
-    .join("") || "U";
+  const initials =
+    authorName
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part: string) => part[0]?.toUpperCase() ?? "")
+      .join("") || "U";
   const profileColor = profile?.profile_color ?? getProfileColor(authorName);
   const isAnimating = Boolean(animatedLikes[comment.id]);
   const isRemoving = Boolean(removingCommentIds[comment.id]);
@@ -1197,14 +1261,20 @@ function CommentThread({
   return (
     <div
       className={`relative rounded-[24px] border bg-white p-3 transition-all duration-300 sm:p-4 ${
-        highlighted ? "border-[#5b4de6]/30 shadow-[0_0_0_2px_rgba(91,77,230,0.12)] animate-[comment-pop_0.7s_ease-out]" : "border-[#eef0f8]"
+        highlighted
+          ? "border-[#5b4de6]/30 shadow-[0_0_0_2px_rgba(91,77,230,0.12)] animate-[comment-pop_0.7s_ease-out]"
+          : "border-[#eef0f8]"
       } ${isRemoving ? "comment-card-removing" : ""}`}
       style={{ marginLeft: depth > 0 ? `${depth * 18}px` : 0 }}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3">
           {avatarUrl ? (
-            <img src={avatarUrl} alt={authorName} className="h-10 w-10 rounded-full object-cover ring-2 ring-[#f0f1f8] sm:h-11 sm:w-11" />
+            <img
+              src={avatarUrl}
+              alt={authorName}
+              className="h-10 w-10 rounded-full object-cover ring-2 ring-[#f0f1f8] sm:h-11 sm:w-11"
+            />
           ) : (
             <div
               className="flex h-10 w-10 items-center justify-center rounded-full text-xs font-bold text-white ring-2 ring-[#f0f1f8] sm:h-11 sm:w-11 sm:text-sm"
@@ -1232,7 +1302,10 @@ function CommentThread({
         )}
       </div>
 
-      <div className="mt-3 whitespace-pre-wrap text-[15px] leading-6 text-slate-700 sm:leading-7" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(safeBody) }} />
+      <div
+        className="mt-3 whitespace-pre-wrap text-[15px] leading-6 text-slate-700 sm:leading-7"
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(safeBody) }}
+      />
 
       <div className="mt-4 flex flex-wrap items-center gap-2 sm:gap-3">
         <button
@@ -1266,7 +1339,9 @@ function CommentThread({
           }`}
         >
           <div className="rounded-[20px] border border-[#eceaf8] bg-[#f9f9fd] p-3 shadow-[inset_0_0_0_1px_rgba(91,77,230,0.02)]">
-            <div className="mb-2 text-xs font-medium text-slate-500">Respondiendo a {replyTargetName || "este comentario"}</div>
+            <div className="mb-2 text-xs font-medium text-slate-500">
+              Respondiendo a {replyTargetName || "este comentario"}
+            </div>
             <Textarea
               value={draft}
               onChange={(event) => onDraftChange(event.target.value)}
@@ -1277,10 +1352,22 @@ function CommentThread({
             />
 
             <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:justify-end">
-              <Button type="button" variant="outline" size="sm" onClick={onCancelReply} className="w-full rounded-full border-slate-200 bg-white text-slate-700 hover:bg-slate-50 sm:w-auto">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onCancelReply}
+                className="w-full rounded-full border-slate-200 bg-white text-slate-700 hover:bg-slate-50 sm:w-auto"
+              >
                 Cancelar
               </Button>
-              <Button type="button" size="sm" disabled={isSubmitting || !draft.trim()} onClick={onSubmitReply} className="w-full rounded-full bg-[#5b4de6] text-white hover:bg-[#4d40d8] sm:w-auto">
+              <Button
+                type="button"
+                size="sm"
+                disabled={isSubmitting || !draft.trim()}
+                onClick={onSubmitReply}
+                className="w-full rounded-full bg-[#5b4de6] text-white hover:bg-[#4d40d8] sm:w-auto"
+              >
                 <Send className="h-4 w-4" /> Responder
               </Button>
             </div>
@@ -1295,8 +1382,16 @@ function CommentThread({
             onClick={() => onToggleReplies(comment.id)}
             className="inline-flex items-center gap-2 text-sm font-semibold text-[#5b4de6] transition-transform hover:translate-x-0.5"
           >
-            {isRepliesExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            <span>{isRepliesExpanded ? `Ocultar ${children.length} respuestas` : `Ver ${children.length} respuesta${children.length === 1 ? "" : "s"}`}</span>
+            {isRepliesExpanded ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+            <span>
+              {isRepliesExpanded
+                ? `Ocultar ${children.length} respuestas`
+                : `Ver ${children.length} respuesta${children.length === 1 ? "" : "s"}`}
+            </span>
           </button>
 
           <div

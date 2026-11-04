@@ -112,7 +112,10 @@ function writeWeatherCache<T>(cacheKey: string, data: T) {
   }
 }
 
-async function fetchJsonWithWeatherCache<T>(cacheKey: string, loader: () => Promise<T>): Promise<T> {
+async function fetchJsonWithWeatherCache<T>(
+  cacheKey: string,
+  loader: () => Promise<T>,
+): Promise<T> {
   const cached = readWeatherCache<T>(cacheKey);
   if (cached !== null) {
     return cached;
@@ -228,21 +231,24 @@ export async function fetchUvIndexForCoordinates(lat: number, lon: number): Prom
 
 export async function fetchAirQualityForCoordinates(lat: number, lon: number): Promise<number> {
   const cacheKey = `weather:air-quality:${lat}:${lon}`;
-  const data = await fetchJsonWithWeatherCache<{ list?: Array<{ main?: { aqi?: number } }> }>(cacheKey, async () => {
-    const params = new URLSearchParams({
-      lat: String(lat),
-      lon: String(lon),
-    });
+  const data = await fetchJsonWithWeatherCache<{ list?: Array<{ main?: { aqi?: number } }> }>(
+    cacheKey,
+    async () => {
+      const params = new URLSearchParams({
+        lat: String(lat),
+        lon: String(lon),
+      });
 
-    const response = await fetch(buildWeatherUrl("/air_pollution", params));
-    if (!response.ok) {
-      throw await parseWeatherError(response);
-    }
+      const response = await fetch(buildWeatherUrl("/air_pollution", params));
+      if (!response.ok) {
+        throw await parseWeatherError(response);
+      }
 
-    return (await response.json()) as {
-      list?: Array<{ main?: { aqi?: number } }>;
-    };
-  });
+      return (await response.json()) as {
+        list?: Array<{ main?: { aqi?: number } }>;
+      };
+    },
+  );
 
   return typeof data.list?.[0]?.main?.aqi === "number" ? data.list[0].main.aqi : 0;
 }
@@ -254,8 +260,12 @@ export async function fetchWeatherSnapshotForCity(city: string): Promise<Weather
     fetchHourlyForecastForCity(city),
   ]);
 
-  const uvIndex = current.coordinates ? await fetchUvIndexForCoordinates(current.coordinates.lat, current.coordinates.lon) : 0;
-  const airQuality = current.coordinates ? await fetchAirQualityForCoordinates(current.coordinates.lat, current.coordinates.lon) : 0;
+  const uvIndex = current.coordinates
+    ? await fetchUvIndexForCoordinates(current.coordinates.lat, current.coordinates.lon)
+    : 0;
+  const airQuality = current.coordinates
+    ? await fetchAirQualityForCoordinates(current.coordinates.lat, current.coordinates.lon)
+    : 0;
 
   return {
     current,

@@ -8,7 +8,8 @@ const DEFAULT_BLOCKED_ACCOUNT_MESSAGE = "Tu cuenta fue suspendida por el adminis
 export function setBlockedAccountMessage(reason?: string | null) {
   if (typeof window === "undefined") return;
 
-  const message = (reason ?? DEFAULT_BLOCKED_ACCOUNT_MESSAGE).trim() || DEFAULT_BLOCKED_ACCOUNT_MESSAGE;
+  const message =
+    (reason ?? DEFAULT_BLOCKED_ACCOUNT_MESSAGE).trim() || DEFAULT_BLOCKED_ACCOUNT_MESSAGE;
   sessionStorage.setItem(BLOCKED_ACCOUNT_MESSAGE_KEY, message);
   localStorage.setItem(BLOCKED_ACCOUNT_MESSAGE_KEY, message);
 }
@@ -16,7 +17,9 @@ export function setBlockedAccountMessage(reason?: string | null) {
 export function readBlockedAccountMessage() {
   if (typeof window === "undefined") return null;
 
-  const message = sessionStorage.getItem(BLOCKED_ACCOUNT_MESSAGE_KEY) ?? localStorage.getItem(BLOCKED_ACCOUNT_MESSAGE_KEY);
+  const message =
+    sessionStorage.getItem(BLOCKED_ACCOUNT_MESSAGE_KEY) ??
+    localStorage.getItem(BLOCKED_ACCOUNT_MESSAGE_KEY);
   if (!message) return null;
 
   sessionStorage.removeItem(BLOCKED_ACCOUNT_MESSAGE_KEY);
@@ -26,7 +29,9 @@ export function readBlockedAccountMessage() {
 
 export async function forceBlockedAccountLogout(reason?: string | null) {
   const client = requireSupabaseClient();
-  const message = (reason ?? "Tu cuenta fue suspendida por el administrador.").trim() || "Tu cuenta fue suspendida por el administrador.";
+  const message =
+    (reason ?? "Tu cuenta fue suspendida por el administrador.").trim() ||
+    "Tu cuenta fue suspendida por el administrador.";
 
   setBlockedAccountMessage(message);
 
@@ -46,25 +51,43 @@ export async function forceBlockedAccountLogout(reason?: string | null) {
   return message;
 }
 
-const mapAuthError = (error: { code?: string | undefined; message?: string | undefined } | null) => {
+const mapAuthError = (
+  error: { code?: string | undefined; message?: string | undefined } | null,
+) => {
   if (!error) return new Error("Ocurrió un error inesperado.");
 
   const code = error.code ?? "";
   const message = error.message?.toLowerCase() ?? "";
 
-  if (code === "invalid_credentials" || message.includes("invalid login credentials") || message.includes("credenciales invalidas")) {
+  if (
+    code === "invalid_credentials" ||
+    message.includes("invalid login credentials") ||
+    message.includes("credenciales invalidas")
+  ) {
     return new Error("Correo o contraseña incorrectos.");
   }
 
-  if (code === "user_already_exists" || message.includes("already registered") || message.includes("ya está registrado")) {
+  if (
+    code === "user_already_exists" ||
+    message.includes("already registered") ||
+    message.includes("ya está registrado")
+  ) {
     return new Error("Este correo ya está registrado.");
   }
 
-  if (code === "email_not_confirmed" || message.includes("not confirmed") || message.includes("sin confirmar")) {
+  if (
+    code === "email_not_confirmed" ||
+    message.includes("not confirmed") ||
+    message.includes("sin confirmar")
+  ) {
     return new Error("Debés confirmar tu correo antes de iniciar sesión.");
   }
 
-  if (code === "over_email_send_rate_limit" || message.includes("too many requests") || message.includes("demasiados intentos")) {
+  if (
+    code === "over_email_send_rate_limit" ||
+    message.includes("too many requests") ||
+    message.includes("demasiados intentos")
+  ) {
     return new Error("Demasiados intentos. Esperá unos minutos e intentá nuevamente.");
   }
 
@@ -72,7 +95,13 @@ const mapAuthError = (error: { code?: string | undefined; message?: string | und
     return new Error("Demasiados intentos. Esperá unos minutos e intentá nuevamente.");
   }
 
-  if (message.includes("otp") || message.includes("codigo") || message.includes("verification code") || message.includes("token") || message.includes("inválido")) {
+  if (
+    message.includes("otp") ||
+    message.includes("codigo") ||
+    message.includes("verification code") ||
+    message.includes("token") ||
+    message.includes("inválido")
+  ) {
     return new Error("El código de verificación es inválido o expiró. Pedí uno nuevo.");
   }
 

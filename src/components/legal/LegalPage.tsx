@@ -23,7 +23,9 @@ export function LegalPage({
         <div className="mb-8 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-5">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Legal</p>
-            <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">{title}</h1>
+            <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+              {title}
+            </h1>
           </div>
           <Link
             to="/"

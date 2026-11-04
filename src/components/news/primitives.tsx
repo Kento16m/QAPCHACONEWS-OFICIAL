@@ -13,8 +13,8 @@ export function Logo({
   variant?: "auto" | "dark" | "light";
 }) {
   const [failed, setFailed] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(() =>
-    typeof document !== "undefined" && document.documentElement.classList.contains("dark"),
+  const [isDarkMode, setIsDarkMode] = useState(
+    () => typeof document !== "undefined" && document.documentElement.classList.contains("dark"),
   );
 
   useEffect(() => {
@@ -31,8 +31,7 @@ export function Logo({
     return () => observer.disconnect();
   }, []);
 
-  const resolvedVariant =
-    variant === "auto" ? (isDarkMode ? "dark" : "light") : variant;
+  const resolvedVariant = variant === "auto" ? (isDarkMode ? "dark" : "light") : variant;
 
   const src = resolvedVariant === "dark" ? "/logo%201.png" : "/logo%202.png";
 
@@ -69,7 +68,13 @@ export function timeAgo(iso: string) {
   return `Hace ${d} ${d === 1 ? "día" : "días"}`;
 }
 
-export function CategoryBadge({ category, className }: { category: Category | null; className?: string }) {
+export function CategoryBadge({
+  category,
+  className,
+}: {
+  category: Category | null;
+  className?: string;
+}) {
   if (!category) return null;
   return (
     <Link
@@ -101,7 +106,14 @@ export function CoverImage({
   const [failed, setFailed] = useState(false);
   if (!src || failed) {
     return (
-      <div className={cn("grid h-full w-full place-items-center bg-transparent text-muted-foreground", className)} role="img" aria-label={alt}>
+      <div
+        className={cn(
+          "grid h-full w-full place-items-center bg-transparent text-muted-foreground",
+          className,
+        )}
+        role="img"
+        aria-label={alt}
+      >
         <Logo className="h-1/3 max-h-16 opacity-60" />
       </div>
     );
@@ -140,7 +152,12 @@ export function CardSkeleton({ className }: { className?: string }) {
 
 export function StateMessage({ children, error }: { children: ReactNode; error?: boolean }) {
   return (
-    <div className={cn("rounded-2xl border border-dashed p-8 text-center text-sm", error ? "text-destructive" : "text-muted-foreground")}>
+    <div
+      className={cn(
+        "rounded-2xl border border-dashed p-8 text-center text-sm",
+        error ? "text-destructive" : "text-muted-foreground",
+      )}
+    >
       {children}
     </div>
   );

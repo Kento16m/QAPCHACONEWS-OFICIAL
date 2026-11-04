@@ -17,14 +17,18 @@ afterEach(() => {
 
 describe("fetchExchangeRates", () => {
   it("prefers live rates over the file generated at build time", async () => {
-    http.mockImplementation(async (url: string) => json({ rates: rates(url === "/api/cotizaciones" ? 7000 : 5000) }));
+    http.mockImplementation(async (url: string) =>
+      json({ rates: rates(url === "/api/cotizaciones" ? 7000 : 5000) }),
+    );
 
     expect(await fetchExchangeRates()).toEqual(rates(7000));
     expect(http).toHaveBeenCalledTimes(1);
   });
 
   it("uses the generated file when the live service fails", async () => {
-    http.mockImplementation(async (url: string) => (url === "/api/cotizaciones" ? json({}, false) : json({ rates: rates(5000) })));
+    http.mockImplementation(async (url: string) =>
+      url === "/api/cotizaciones" ? json({}, false) : json({ rates: rates(5000) }),
+    );
 
     expect(await fetchExchangeRates()).toEqual(rates(5000));
   });
@@ -39,7 +43,9 @@ describe("fetchExchangeRates", () => {
   });
 
   it("treats an empty answer as a failure", async () => {
-    http.mockImplementation(async (url: string) => json({ rates: url === "/api/cotizaciones" ? {} : rates(5000) }));
+    http.mockImplementation(async (url: string) =>
+      json({ rates: url === "/api/cotizaciones" ? {} : rates(5000) }),
+    );
 
     expect(await fetchExchangeRates()).toEqual(rates(5000));
   });
@@ -54,6 +60,9 @@ describe("fetchExchangeRates", () => {
     http.mockResolvedValue(json({}, false));
     await fetchExchangeRates().catch(() => {});
 
-    expect(http.mock.calls.map(([url]) => url)).toEqual(["/api/cotizaciones", "/cotizaciones.json"]);
+    expect(http.mock.calls.map(([url]) => url)).toEqual([
+      "/api/cotizaciones",
+      "/cotizaciones.json",
+    ]);
   });
 });

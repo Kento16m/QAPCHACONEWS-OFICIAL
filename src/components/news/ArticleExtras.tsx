@@ -21,11 +21,25 @@ export function ReadingProgress() {
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
-    return () => { window.removeEventListener("scroll", onScroll); window.removeEventListener("resize", onScroll); };
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
   }, []);
   return (
-    <div className="fixed inset-x-0 z-50 h-1 bg-transparent" style={{ top }} role="progressbar" aria-label="Progreso de lectura" aria-valuenow={Math.round(p)} aria-valuemin={0} aria-valuemax={100}>
-      <div className="h-full bg-primary transition-[width] duration-150" style={{ width: `${p}%` }} />
+    <div
+      className="fixed inset-x-0 z-50 h-1 bg-transparent"
+      style={{ top }}
+      role="progressbar"
+      aria-label="Progreso de lectura"
+      aria-valuenow={Math.round(p)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+    >
+      <div
+        className="h-full bg-primary transition-[width] duration-150"
+        style={{ width: `${p}%` }}
+      />
     </div>
   );
 }
@@ -46,8 +60,16 @@ export function ShareButtons({ title, vertical }: { title: string; vertical?: bo
   const t = encodeURIComponent(title);
   const links = [
     { label: "Compartir en WhatsApp", href: `https://wa.me/?text=${t}%20${u}`, icon: WhatsAppIcon },
-    { label: "Compartir en Facebook", href: `https://www.facebook.com/sharer/sharer.php?u=${u}`, icon: Facebook },
-    { label: "Compartir en X", href: `https://twitter.com/intent/tweet?text=${t}&url=${u}`, icon: Twitter },
+    {
+      label: "Compartir en Facebook",
+      href: `https://www.facebook.com/sharer/sharer.php?u=${u}`,
+      icon: Facebook,
+    },
+    {
+      label: "Compartir en X",
+      href: `https://twitter.com/intent/tweet?text=${t}&url=${u}`,
+      icon: Twitter,
+    },
   ];
   const copy = async () => {
     try {
@@ -60,10 +82,18 @@ export function ShareButtons({ title, vertical }: { title: string; vertical?: bo
       toast.error("No se pudo copiar el enlace");
     }
   };
-  const btn = "grid h-11 w-11 place-items-center rounded-full border bg-card text-foreground shadow-soft transition hover:-translate-y-0.5 hover:border-primary hover:bg-primary hover:text-primary-foreground";
+  const btn =
+    "grid h-11 w-11 place-items-center rounded-full border bg-card text-foreground shadow-soft transition hover:-translate-y-0.5 hover:border-primary hover:bg-primary hover:text-primary-foreground";
   return (
     <div className={cn("flex gap-2", vertical ? "flex-col" : "flex-row items-center")}>
-      <span className={cn("text-[10px] font-bold uppercase tracking-widest text-muted-foreground", vertical ? "mb-1 text-center" : "mr-1")}>Compartir</span>
+      <span
+        className={cn(
+          "text-[10px] font-bold uppercase tracking-widest text-muted-foreground",
+          vertical ? "mb-1 text-center" : "mr-1",
+        )}
+      >
+        Compartir
+      </span>
       {links.map(({ label, href, icon: I }) => (
         <a
           key={label}
@@ -73,7 +103,11 @@ export function ShareButtons({ title, vertical }: { title: string; vertical?: bo
           aria-label={label}
           className={btn}
           onClick={() => {
-            const platform = label.includes("WhatsApp") ? "whatsapp" : label.includes("Facebook") ? "facebook" : "x";
+            const platform = label.includes("WhatsApp")
+              ? "whatsapp"
+              : label.includes("Facebook")
+                ? "facebook"
+                : "x";
             trackArticleShare(platform, title, "");
           }}
         >
@@ -95,7 +129,10 @@ export function NewsletterCompact() {
   const submit = (e: FormEvent) => {
     e.preventDefault();
     const parsed = emailSchema.safeParse(email);
-    if (!parsed.success) { toast.error("Ingresá un correo electrónico válido."); return; }
+    if (!parsed.success) {
+      toast.error("Ingresá un correo electrónico válido.");
+      return;
+    }
     sub.mutate(parsed.data, {
       onSuccess: () => {
         trackNewsletterSignup("article_compact");
@@ -109,10 +146,19 @@ export function NewsletterCompact() {
       <h3 className="font-display text-xl font-bold">El Chaco en tu correo</h3>
       <p className="mt-1 text-sm text-navy-muted">Las noticias más importantes, cada mañana.</p>
       <form onSubmit={submit} noValidate className="mt-4 space-y-2">
-        <label className="block"><span className="sr-only">Correo electrónico</span>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@correo.com" className="h-11 w-full rounded-full bg-card px-4 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary" />
+        <label className="block">
+          <span className="sr-only">Correo electrónico</span>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="tu@correo.com"
+            className="h-11 w-full rounded-full bg-card px-4 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+          />
         </label>
-        <Button type="submit" className="h-11 w-full rounded-full" disabled={sub.isPending}>{sub.isPending ? "Enviando…" : "Suscribirme"}</Button>
+        <Button type="submit" className="h-11 w-full rounded-full" disabled={sub.isPending}>
+          {sub.isPending ? "Enviando…" : "Suscribirme"}
+        </Button>
       </form>
     </div>
   );

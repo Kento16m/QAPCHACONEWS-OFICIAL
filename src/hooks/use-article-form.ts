@@ -38,7 +38,10 @@ const removeDraft = (key: string) => {
 // The author is filled in automatically, so on its own it does not count as an edit.
 const contentOf = ({ author_id: _author, ...rest }: EditorForm) => JSON.stringify(rest);
 
-export function useArticleForm(article: AdminArticle | null, loadTagIds: (articleId: string) => Promise<string[]>) {
+export function useArticleForm(
+  article: AdminArticle | null,
+  loadTagIds: (articleId: string) => Promise<string[]>,
+) {
   const key = article?.id ?? "new";
   const [form, setForm] = useState<EditorForm>(emptyForm);
   const [hasRestoredDraft, setHasRestoredDraft] = useState(false);
@@ -105,7 +108,10 @@ export function useArticleForm(article: AdminArticle | null, loadTagIds: (articl
 
     pendingDraft.current = window.setTimeout(() => {
       const { tag_ids, ...withoutTags } = form;
-      writeDraft(key, { form: tagsKnown.current ? { ...withoutTags, tag_ids } : withoutTags, version: version.current });
+      writeDraft(key, {
+        form: tagsKnown.current ? { ...withoutTags, tag_ids } : withoutTags,
+        version: version.current,
+      });
       staleDraft.current = null;
       setHasStaleDraft(false);
     }, DRAFT_DELAY_MS);
@@ -146,5 +152,14 @@ export function useArticleForm(article: AdminArticle | null, loadTagIds: (articl
     setHasRestoredDraft(true);
   }, []);
 
-  return { form, setForm, clearDraft, reset, recoverDraft, hasRestoredDraft, hasStaleDraft, tagsReady };
+  return {
+    form,
+    setForm,
+    clearDraft,
+    reset,
+    recoverDraft,
+    hasRestoredDraft,
+    hasStaleDraft,
+    tagsReady,
+  };
 }

@@ -57,7 +57,8 @@ function ResetPasswordPage() {
       setPassword("");
       setConfirmPassword("");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "No se pudo actualizar la contraseña.";
+      const message =
+        error instanceof Error ? error.message : "No se pudo actualizar la contraseña.";
       toast.error(message);
     } finally {
       setSubmitting(false);
@@ -80,7 +81,9 @@ function ResetPasswordPage() {
         <div className="w-full rounded-3xl border bg-card p-6 shadow-sm sm:p-8">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">Seguridad</p>
           <h1 className="mt-3 font-display text-3xl font-bold">Enlace inválido o vencido</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Volvé al inicio de sesión y pedí un nuevo código de verificación.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Volvé al inicio de sesión y pedí un nuevo código de verificación.
+          </p>
         </div>
       </div>
     );
@@ -91,16 +94,29 @@ function ResetPasswordPage() {
       <div className="w-full rounded-3xl border bg-card p-6 shadow-sm sm:p-8">
         <p className="text-sm font-semibold uppercase tracking-[0.2em] text-primary">Seguridad</p>
         <h1 className="mt-3 font-display text-3xl font-bold">Restablecer contraseña</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Ingresá tu nueva contraseña para finalizar el cambio.</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Ingresá tu nueva contraseña para finalizar el cambio.
+        </p>
 
         <form className="mt-6 space-y-4" onSubmit={onSubmit}>
           <div>
             <label className="mb-2 block text-sm font-medium">Nueva contraseña</label>
-            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mínimo 8 caracteres" autoFocus />
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Mínimo 8 caracteres"
+              autoFocus
+            />
           </div>
           <div>
             <label className="mb-2 block text-sm font-medium">Confirmar contraseña</label>
-            <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repetí la contraseña" />
+            <Input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Repetí la contraseña"
+            />
           </div>
           <Button type="submit" className="w-full" disabled={submitting}>
             {submitting ? "Guardando..." : "Guardar nueva contraseña"}

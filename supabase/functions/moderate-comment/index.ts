@@ -70,7 +70,8 @@ Deno.serve(async (req) => {
     }
 
     const openAiKey = Deno.env.get("OPENAI_API_KEY");
-    if (!openAiKey) return json({ error: "La moderación no está configurada en el servidor." }, 500);
+    if (!openAiKey)
+      return json({ error: "La moderación no está configurada en el servidor." }, 500);
 
     const moderationResponse = await fetch("https://api.openai.com/v1/moderations", {
       method: "POST",
@@ -88,7 +89,10 @@ Deno.serve(async (req) => {
 
     if (result.flagged) {
       return json(
-        { error: "Tu comentario fue bloqueado por la moderación por contener contenido inapropiado, odio o spam." },
+        {
+          error:
+            "Tu comentario fue bloqueado por la moderación por contener contenido inapropiado, odio o spam.",
+        },
         400,
       );
     }

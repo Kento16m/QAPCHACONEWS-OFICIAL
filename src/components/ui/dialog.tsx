@@ -54,9 +54,7 @@ const DialogContent = React.forwardRef<
           className,
         )}
         style={
-          hasCenteredOverlayClasses
-            ? { ...style, left: "0", top: "0", transform: "none" }
-            : style
+          hasCenteredOverlayClasses ? { ...style, left: "0", top: "0", transform: "none" } : style
         }
         {...props}
       >

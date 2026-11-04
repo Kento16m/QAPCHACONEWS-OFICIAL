@@ -72,7 +72,10 @@ describe("dates in the editor", () => {
 
 describe("formFromArticle", () => {
   it("loads SEO fields and tags", () => {
-    const loaded = formFromArticle(article({ seo_title: "Título SEO", seo_description: "Descripción" }), ["t1"]);
+    const loaded = formFromArticle(
+      article({ seo_title: "Título SEO", seo_description: "Descripción" }),
+      ["t1"],
+    );
     expect(loaded.seo_title).toBe("Título SEO");
     expect(loaded.seo_description).toBe("Descripción");
     expect(loaded.tag_ids).toEqual(["t1"]);
@@ -99,24 +102,37 @@ describe("buildArticlePayload", () => {
   });
 
   it("uses now for a brand new published article", () => {
-    expect(buildArticlePayload(form({ status: "published" }), null, NOW).published_at).toBe(NOW.toISOString());
+    expect(buildArticlePayload(form({ status: "published" }), null, NOW).published_at).toBe(
+      NOW.toISOString(),
+    );
   });
 
   it("requires a date to schedule", () => {
-    expect(() => buildArticlePayload(form({ status: "scheduled" }), null, NOW)).toThrow("Elegí la fecha de publicación.");
+    expect(() => buildArticlePayload(form({ status: "scheduled" }), null, NOW)).toThrow(
+      "Elegí la fecha de publicación.",
+    );
   });
 
   it("stores the chosen schedule as an instant", () => {
-    const payload = buildArticlePayload(form({ status: "scheduled", scheduled_at: "2026-11-05T09:30" }), null, NOW);
+    const payload = buildArticlePayload(
+      form({ status: "scheduled", scheduled_at: "2026-11-05T09:30" }),
+      null,
+      NOW,
+    );
     expect(payload.scheduled_at).toBe("2026-11-05T12:30:00.000Z");
   });
 
   it("clears the schedule for other statuses", () => {
-    expect(buildArticlePayload(form({ status: "draft", scheduled_at: "2026-11-05T09:30" }), null, NOW).scheduled_at).toBeNull();
+    expect(
+      buildArticlePayload(form({ status: "draft", scheduled_at: "2026-11-05T09:30" }), null, NOW)
+        .scheduled_at,
+    ).toBeNull();
   });
 
   it("requires a title", () => {
-    expect(() => buildArticlePayload(form({ title: "   " }), null, NOW)).toThrow("El título es obligatorio.");
+    expect(() => buildArticlePayload(form({ title: "   " }), null, NOW)).toThrow(
+      "El título es obligatorio.",
+    );
   });
 
   it("derives the slug from the title when empty", () => {
@@ -124,7 +140,9 @@ describe("buildArticlePayload", () => {
   });
 
   it("falls back to a unique slug when the title has no usable characters", () => {
-    expect(buildArticlePayload(form({ title: "¿¿??" }), null, NOW).slug).toBe(`articulo-${NOW.getTime()}`);
+    expect(buildArticlePayload(form({ title: "¿¿??" }), null, NOW).slug).toBe(
+      `articulo-${NOW.getTime()}`,
+    );
   });
 });
 

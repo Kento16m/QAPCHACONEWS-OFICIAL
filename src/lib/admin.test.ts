@@ -26,7 +26,13 @@ vi.mock("@/lib/supabase", () => {
   return { requireSupabaseClient: () => client };
 });
 
-import { deleteArticle, deleteCategory, deleteCommentForAdmin, deleteTag, getAdminAccessLogs } from "@/lib/admin";
+import {
+  deleteArticle,
+  deleteCategory,
+  deleteCommentForAdmin,
+  deleteTag,
+  getAdminAccessLogs,
+} from "@/lib/admin";
 
 beforeEach(() => {
   fake.result = { data: [], error: null };
@@ -35,8 +41,13 @@ beforeEach(() => {
 
 describe("getAdminAccessLogs", () => {
   it("shows a permission error instead of an empty list", async () => {
-    fake.result = { data: null, error: { message: "permission denied for table admin_access_logs" } };
-    await expect(getAdminAccessLogs()).rejects.toMatchObject({ message: expect.stringContaining("permission denied") });
+    fake.result = {
+      data: null,
+      error: { message: "permission denied for table admin_access_logs" },
+    };
+    await expect(getAdminAccessLogs()).rejects.toMatchObject({
+      message: expect.stringContaining("permission denied"),
+    });
   });
 
   it("limits how many entries it downloads", async () => {

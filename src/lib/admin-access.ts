@@ -54,7 +54,9 @@ export const isAdminHostAllowed = (hostname?: string) => {
 
 export const getAdminRedirectUrl = () => {
   const allowedHosts = getAllowedAdminHosts();
-  const [firstAllowedHost] = allowedHosts.filter((host) => !host.includes("localhost") && !host.includes("127.0.0.1") && !host.startsWith("*."));
+  const [firstAllowedHost] = allowedHosts.filter(
+    (host) => !host.includes("localhost") && !host.includes("127.0.0.1") && !host.startsWith("*."),
+  );
 
   if (firstAllowedHost) return `https://${firstAllowedHost}/`;
   return "/";
