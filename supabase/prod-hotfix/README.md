@@ -4,15 +4,21 @@ Se aplica **solo en el proyecto actual de producción**, desde el panel de Supab
 
 ## 1. Comprobar qué hay hoy
 
-En **SQL Editor**, ejecuta esto y guarda el resultado:
+En **SQL Editor** del proyecto de producción, pega **solo este bloque**, no esta guía completa. No cambia nada: solo lee la configuración, sin datos de personas.
 
 ```sql
-select tablename, policyname, cmd, roles, qual, with_check from pg_policies where schemaname = 'public' order by 1, 2;
-select tgname from pg_trigger where tgrelid = 'public.profiles'::regclass and not tgisinternal;
-select column_name from information_schema.columns where table_schema = 'public' and table_name = 'profiles';
+select 'politica' as tipo, tablename || ' / ' || policyname as nombre, cmd || ' | roles=' || roles::text || ' | using=' || coalesce(qual, '-') || ' | check=' || coalesce(with_check, '-') as detalle
+from pg_policies where schemaname = 'public'
+union all
+select 'trigger', tgname::text, pg_get_triggerdef(oid)
+from pg_trigger where tgrelid = 'public.profiles'::regclass and not tgisinternal
+union all
+select 'columna', column_name::text, udt_name::text
+from information_schema.columns where table_schema = 'public' and table_name = 'profiles'
+order by 1, 2;
 ```
 
-Compárteme el resultado **antes de aplicar nada**. Con eso confirmo si cualquier usuario puede hacerse administrador y que el parche encaja con tu base. La tabla `profiles` debe tener las columnas `role`, `is_blocked` y `blocked_reason`.
+Copia el resultado (botón **Export → Copy as Markdown** o **CSV**) y compártelo **antes de aplicar nada**. Con eso confirmo si cualquier usuario puede hacerse administrador y que el parche encaja con tu base.
 
 ## 2. Aplicar el parche de la base
 
