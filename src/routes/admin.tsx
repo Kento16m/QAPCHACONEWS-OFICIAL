@@ -282,37 +282,9 @@ function UserAvatar({
 }
 
 function AdminPage() {
-  const { profile, loading, user, signOut } = useAuth();
+  const { profile, loading, user } = useAuth();
   const queryClient = useQueryClient();
   const { data: categories = [] } = useCategories();
-
-  const blockedAccountMessage = profile?.is_blocked
-    ? profile.blocked_reason?.trim() || "Tu cuenta fue suspendida por el administrador."
-    : null;
-
-  if (blockedAccountMessage) {
-    return (
-      <div className="mx-auto flex min-h-[60vh] max-w-xl items-center justify-center px-4 py-12">
-        <div className="w-full rounded-[28px] border border-red-200 bg-red-50 p-6 shadow-[0_18px_44px_rgba(127,29,29,0.12)]">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-red-600">
-            Acceso restringido
-          </p>
-          <h1 className="mt-3 text-3xl font-black text-red-900">Usuario suspendido</h1>
-          <p className="mt-4 text-base leading-7 text-red-800">{blockedAccountMessage}</p>
-          <button
-            type="button"
-            onClick={async () => {
-              await signOut();
-              window.location.href = "/";
-            }}
-            className="mt-6 inline-flex items-center rounded-full bg-red-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-red-500"
-          >
-            Cerrar sesión
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   const isMasterAdmin = isProtectedAdminEmail(user?.email);
   const canAccess = Boolean(
@@ -368,7 +340,7 @@ function AdminPage() {
       const { data, error } = await client.from("comments").select("id, article_id, like_count");
       if (error) throw error;
 
-      return (data ?? []).map((row: any) => ({
+      return (data ?? []).map((row) => ({
         id: Number(row.id),
         article_id: String(row.article_id),
         like_count: Number(row.like_count ?? 0),
@@ -845,9 +817,8 @@ function AdminPage() {
     accessLogMutationRef.current = true;
     void recordAdminAccessLog({
       user_id: user.id,
-      email: user.email ?? profile?.email ?? null,
-      full_name:
-        profile?.full_name ?? user.user_metadata?.full_name ?? user.user_metadata?.name ?? null,
+      email: user.email,
+      full_name: profile?.full_name ?? user.full_name,
       role: profile?.role ?? null,
       user_agent: typeof navigator !== "undefined" ? navigator.userAgent : null,
       browser:
@@ -1303,7 +1274,7 @@ function AdminPage() {
 
       setCoverGallery(mergedGallery);
       setActiveCoverIndex(0);
-      setForm((prev) => ({ ...prev, cover_image_url: mergedGallery[0] }));
+      setForm((prev) => ({ ...prev, cover_image_url: mergedGallery[0] ?? "" }));
     } catch (error) {
       const message = error instanceof Error ? error.message : "No se pudo subir la imagen.";
       window.alert(message);
@@ -2679,7 +2650,7 @@ function AdminPage() {
 
                             setCoverGallery(urls);
                             setActiveCoverIndex(0);
-                            setForm((prev) => ({ ...prev, cover_image_url: urls[0] }));
+                            setForm((prev) => ({ ...prev, cover_image_url: urls[0] ?? "" }));
                           }}
                           className="h-11 flex-1 rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary"
                           placeholder="https://... o pegar URL de la imagen"

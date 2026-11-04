@@ -46,7 +46,7 @@ export async function forceBlockedAccountLogout(reason?: string | null) {
   return message;
 }
 
-const mapAuthError = (error: { code?: string; message?: string } | null) => {
+const mapAuthError = (error: { code?: string | undefined; message?: string | undefined } | null) => {
   if (!error) return new Error("Ocurrió un error inesperado.");
 
   const code = error.code ?? "";
@@ -132,12 +132,12 @@ export async function sendPasswordRecoveryCode(email: string) {
     email: email.trim(),
     options: {
       shouldCreateUser: false,
-      emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/restablecer-contrasena` : undefined,
+      emailRedirectTo: `${window.location.origin}/restablecer-contrasena`,
     },
   });
 
   if (error) throw mapAuthError(error);
-  return { ok: true };
+  return { ok: true as const };
 }
 
 export async function verifyPasswordRecoveryCode(email: string, token: string) {
@@ -182,7 +182,7 @@ export async function resetPasswordForEmail(email: string) {
   });
 
   if (error) throw mapAuthError(error);
-  return { ok: true };
+  return { ok: true as const };
 }
 
 export async function signOut() {

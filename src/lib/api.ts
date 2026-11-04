@@ -43,15 +43,26 @@ export const buildSearchFilter = (term: string, categoryIds: string[]) => {
   return clauses.join(",");
 };
 
-const mapRow = (row: any): Article => {
+type ArticleRow = Omit<Article, "tags" | "category" | "author" | "published_at" | "content" | "views_count"> & {
+  content?: string | null;
+  views_count?: number | null;
+  published_at?: string | null;
+  category?: Category | null;
+  author?: { full_name: string | null; avatar_url: string | null } | null;
+  tags?: Array<{ tag?: { id?: string; name?: string; slug?: string | null } | null }> | null;
+};
+
+// The select list is built at run time, so the client cannot infer these rows.
+const mapRow = (input: unknown): Article => {
+  const row = input as ArticleRow;
   const tags: Tag[] = Array.isArray(row?.tags)
     ? row.tags
-        .map((entry: any) => {
-          const tag = entry?.tag ?? entry;
+        .map((entry) => {
+          const tag = entry?.tag;
           if (!tag?.id || !tag?.name) return null;
           return { id: tag.id, name: tag.name, slug: tag.slug ?? tag.name.toLowerCase().replace(/\s+/g, "-") };
         })
-        .filter(Boolean)
+        .filter((tag): tag is Tag => tag !== null)
     : [];
 
   const category = row?.category

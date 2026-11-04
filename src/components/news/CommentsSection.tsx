@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
 import DOMPurify from "dompurify";
 import { readFunctionError } from "@/lib/function-error";
 import { ChevronDown, ChevronUp, Heart, LogIn, MessageSquare, MoreHorizontal, Reply, Send, Trash2 } from "lucide-react";
@@ -63,10 +64,10 @@ const parseJsonStringCandidate = (value: unknown): string | null => {
     const parsed = JSON.parse(trimmed);
     if (parsed && typeof parsed === "object") {
       const message =
-        (parsed as Record<string, unknown>).error ??
-        (parsed as Record<string, unknown>).message ??
-        (parsed as Record<string, unknown>).detail ??
-        (parsed as Record<string, unknown>).details ??
+        (parsed as Record<string, unknown>)["error"] ??
+        (parsed as Record<string, unknown>)["message"] ??
+        (parsed as Record<string, unknown>)["detail"] ??
+        (parsed as Record<string, unknown>)["details"] ??
         null;
 
       if (typeof message === "string" && message.trim()) {
@@ -160,7 +161,7 @@ const PAGE_SIZE = 10;
 
 export function CommentsSection({ articleId }: { articleId: string }) {
   const { openAuthDialog } = useAuth();
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [comments, setComments] = useState<CommentRecord[]>([]);
   const [profiles, setProfiles] = useState<Record<string, ProfileSummary>>({});
   const [draft, setDraft] = useState("");
@@ -237,6 +238,7 @@ export function CommentsSection({ articleId }: { articleId: string }) {
     if (profileError) return;
 
     const nextProfiles = (profileRows ?? []).reduce<Record<string, ProfileSummary>>((acc, profile) => {
+      if (!profile.id) return acc;
       acc[profile.id] = {
         id: profile.id,
         full_name: profile.full_name,
@@ -259,6 +261,7 @@ export function CommentsSection({ articleId }: { articleId: string }) {
 
   useEffect(() => {
     if (!supabase || !articleId) return;
+    const client = supabase;
 
     const fetchComments = async (pageIndex = 0, append = false) => {
       if (pageIndex === 0) {
@@ -270,7 +273,7 @@ export function CommentsSection({ articleId }: { articleId: string }) {
       const from = pageIndex * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
 
-      const { data, error: fetchError } = await supabase
+      const { data, error: fetchError } = await client
         .from("comments")
         .select("*")
         .eq("article_id", articleId)
@@ -374,8 +377,7 @@ export function CommentsSection({ articleId }: { articleId: string }) {
 
     for (const comment of sortComments(comments)) {
       if (comment.parent_id !== null) {
-        grouped[comment.parent_id] = grouped[comment.parent_id] ?? [];
-        grouped[comment.parent_id].push(comment);
+        (grouped[comment.parent_id] ??= []).push(comment);
       }
     }
 
@@ -974,7 +976,7 @@ export function CommentsSection({ articleId }: { articleId: string }) {
         ) : (
           !replyTo && (
             <div className="mb-6 flex flex-col gap-3 rounded-[24px] border border-[#eceaf8] bg-[#f7f7fb] p-3 shadow-[inset_0_0_0_1px_rgba(91,77,230,0.03)] sm:flex-row sm:items-center">
-              {session?.user?.user_metadata?.avatar_url || session?.user?.user_metadata?.picture ? (
+              {session?.user?.user_metadata?.["avatar_url"] || session?.user?.user_metadata?.["picture"] ? (
                 <img
                   src={session.user.user_metadata.avatar_url || session.user.user_metadata.picture}
                   alt={session.user.user_metadata.full_name || session.user.email || "Usuario"}
@@ -1072,6 +1074,7 @@ export function CommentsSection({ articleId }: { articleId: string }) {
                   type="button"
                   variant="outline"
                   onClick={async () => {
+                    if (!supabase) return;
                     const nextPage = page + 1;
                     setPage(nextPage);
                     setLoadingMore(true);
@@ -1141,7 +1144,7 @@ function CommentThread({
   comment: CommentRecord;
   children: CommentRecord[];
   childrenMap: Record<number, CommentRecord[]>;
-  session: any;
+  session: Session | null;
   profiles: Record<string, ProfileSummary>;
   onReply: (id: number, authorName?: string) => void;
   onLike: (id: number) => void;
@@ -1181,7 +1184,7 @@ function CommentThread({
     .split(" ")
     .filter(Boolean)
     .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? "")
+    .map((part: string) => part[0]?.toUpperCase() ?? "")
     .join("") || "U";
   const profileColor = profile?.profile_color ?? getProfileColor(authorName);
   const isAnimating = Boolean(animatedLikes[comment.id]);

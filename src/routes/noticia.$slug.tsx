@@ -190,7 +190,7 @@ function SafeHtml({ html }: { html: string }) {
       ADD_TAGS: ["iframe", "figure", "figcaption", "video"],
       ADD_ATTR: ["allow", "allowfullscreen", "frameborder", "loading", "referrerpolicy", "playsinline", "webkitallowfullscreen", "mozallowfullscreen"],
       ALLOWED_URI_REGEXP:
-        /^(?:(?:(?:f|ht)tps?|mailto|tel|data):|[^a-z]|[\w\-._~!$&'()*+,;=:@/?%#\[\]\\]*$)/i,
+        /^(?:(?:(?:f|ht)tps?|mailto|tel|data):|[^a-z]|[\w\-._~!$&'()*+,;=:@/?%#[\]\\]*$)/i,
     });
     setClean(sanitized);
   }, [html]);

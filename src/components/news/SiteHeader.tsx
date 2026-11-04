@@ -220,7 +220,7 @@ export function CurrencyTicker({ className = "" }: { className?: string }) {
     return () => window.clearInterval(interval);
   }, [loading]);
 
-  const current = CURRENCY_PREVIEW[activeIndex];
+  const current = CURRENCY_PREVIEW[activeIndex % CURRENCY_PREVIEW.length]!;
   const currentRate = rates[current.code];
   const currentValue = currentRate ? currentRate.sell : undefined;
 

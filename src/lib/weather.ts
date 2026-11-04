@@ -197,9 +197,9 @@ export async function fetchCurrentWeatherForCity(city: string): Promise<WeatherC
     visibility: data.visibility ?? 10000,
     sunrise: data.sys?.sunrise ?? Math.floor(Date.now() / 1000),
     sunset: data.sys?.sunset ?? Math.floor(Date.now() / 1000),
-    coordinates: data.coord && typeof data.coord.lat === "number" && typeof data.coord.lon === "number"
-      ? { lat: data.coord.lat, lon: data.coord.lon }
-      : undefined,
+    ...(typeof data.coord?.lat === "number" && typeof data.coord.lon === "number"
+      ? { coordinates: { lat: data.coord.lat, lon: data.coord.lon } }
+      : {}),
   };
 }
 

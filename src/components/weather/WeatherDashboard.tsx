@@ -1,3 +1,5 @@
+import type { ReactElement } from "react";
+import type { HourlyForecastPoint } from "@/lib/weather";
 import { useMemo, useState } from "react";
 import { useQuery, useQueries } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -46,13 +48,6 @@ type WeatherGlyph =
   | "wind"
   | "droplet"
   | "sparkles";
-
-type HourlyForecast = {
-  label: string;
-  time: string;
-  temp: number;
-  icon: WeatherGlyph;
-};
 
 type DailyForecast = {
   day: string;
@@ -205,7 +200,7 @@ const weatherIcons = {
       <path d="M12 2.5 13.8 8l5.7 1.8-5.7 1.8L12 18.5l-1.8-6.9L4.5 9.8 10.2 8 12 2.5Z" />
     </svg>
   ),
-} satisfies Record<string, JSX.Element>;
+} satisfies Record<string, ReactElement>;
 
 function mapWeatherCodeToIcon(code?: string): WeatherGlyph {
   const normalized = (code ?? "01d").toLowerCase();
@@ -378,7 +373,7 @@ function mapWeatherCodeToFontIcon(code?: string): string {
   return normalized.endsWith("n") ? "wi wi-night-clear" : "wi wi-day-sunny";
 }
 
-function HourlyCard({ item, isDark }: { item: HourlyForecast; isDark: boolean }) {
+function HourlyCard({ item, isDark }: { item: HourlyForecastPoint; isDark: boolean }) {
   return (
     <div
       className={cn(
@@ -469,7 +464,7 @@ export function WeatherDashboard({
     const map = new Map<string, Awaited<ReturnType<typeof fetchWeatherSnapshotForCity>>>();
     cityWeatherQueries.forEach((result, index) => {
       if (result.data) {
-        map.set(cities[index].id, result.data);
+        map.set(cities[index]!.id, result.data);
       }
     });
     return map;
@@ -569,7 +564,7 @@ export function WeatherDashboard({
     );
   }
 
-  if (weatherQuery.isError || !currentWeather || !daily.length || !hourly.length) {
+  if (weatherQuery.isError || !currentWeather || !currentDisplay || !daily.length || !hourly.length) {
     return (
       <div className={cn("flex h-full w-full items-center justify-center p-6", isDark ? "bg-slate-950 text-slate-100" : "bg-slate-100 text-slate-900")}>
         <div className="max-w-md rounded-2xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-200">

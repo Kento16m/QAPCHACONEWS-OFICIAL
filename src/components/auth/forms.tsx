@@ -205,7 +205,7 @@ export function ForgotPasswordForm() {
         <form onSubmit={onPasswordSubmit} className="mt-6 space-y-4">
           <Field label="Nueva contraseña" type="password" autoComplete="new-password" autoFocus placeholder="Mínimo 8 caracteres" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
           <Field label="Confirmar contraseña" type="password" autoComplete="new-password" placeholder="Repetí la contraseña" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
-          <SubmitButton>Guardar nueva contraseña</SubmitButton>
+          <SubmitButton loading={false}>Guardar nueva contraseña</SubmitButton>
         </form>
         <p className="mt-6 text-center text-sm"><TextLink onClick={() => setDialogView("login")}>Volver a iniciar sesión</TextLink></p>
       </div>

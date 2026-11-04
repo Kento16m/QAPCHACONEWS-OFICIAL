@@ -23,14 +23,13 @@ function FacebookIcon() {
 }
 
 export function SocialButtons() {
-  const { signInWithGoogle, signInWithFacebook, setDialogOpen } = useAuth();
+  const { signInWithGoogle, signInWithFacebook } = useAuth();
   const [busy, setBusy] = useState<"google" | "facebook" | null>(null);
   const run = async (p: "google" | "facebook") => {
     setBusy(p);
     try {
-      const u = p === "google" ? await signInWithGoogle() : await signInWithFacebook();
-      toast.success(`¡Bienvenido, ${u.full_name}!`);
-      setDialogOpen(false);
+      // The provider takes over the page here; the session starts when it returns.
+      await (p === "google" ? signInWithGoogle() : signInWithFacebook());
     } catch {
       toast.error("No pudimos iniciar sesión. Intentá de nuevo.");
     } finally {

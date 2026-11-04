@@ -1,3 +1,6 @@
+import type { PostgrestError } from "@supabase/supabase-js";
+import type { ArticlePayload } from "@/lib/article-form";
+import type { Database } from "@/types/database";
 import { createSlug } from "@/lib/slug";
 import { requireSupabaseClient } from "@/lib/supabase";
 
@@ -118,7 +121,13 @@ const selectArticleQuery = `
   author:public_profiles(id,full_name,avatar_url)
 `;
 
-const mapArticleRow = (row: any): AdminArticle => ({
+type ArticleRow = Omit<AdminArticle, "category" | "author" | "views_count"> & {
+  views_count: number | null;
+  category: { id: string; name: string; slug: string } | null;
+  author: { id: string | null; full_name: string | null } | null;
+};
+
+const mapArticleRow = (row: ArticleRow): AdminArticle => ({
   id: row.id,
   title: row.title,
   slug: row.slug,
@@ -137,35 +146,11 @@ const mapArticleRow = (row: any): AdminArticle => ({
   seo_description: row.seo_description ?? null,
   updated_at: row.updated_at ?? "",
   category: row.category ? { id: row.category.id, name: row.category.name, slug: row.category.slug } : null,
-  author: row.author ? { id: row.author.id, full_name: row.author.full_name ?? "Redacción" } : null,
+  author: row.author ? { id: row.author.id ?? "", full_name: row.author.full_name ?? "Redacción" } : null,
 });
 
-async function ensureAdminAccess(): Promise<void> {
-  const client = requireSupabaseClient();
-
-  const {
-    data: { user },
-    error: userError,
-  } = await client.auth.getUser();
-
-  if (userError || !user) {
-    throw new Error("Necesitás iniciar sesión para realizar esta acción.");
-  }
-
-  const { data, error } = await client.from("profiles").select("role").eq("id", user.id).maybeSingle();
-
-  if (error) {
-    throw error;
-  }
-
-  if (data?.role !== "admin") {
-    throw new Error("Esta acción solo está permitida para administradores.");
-  }
-}
-
-const removeRow = async (table: string, column: string, value: string | number) => {
-  const client = requireSupabaseClient();
-  const { data, error } = await client.from(table).delete().eq(column, value).select(column);
+const expectRemoved = async (query: PromiseLike<{ data: unknown[] | null; error: PostgrestError | null }>) => {
+  const { data, error } = await query;
   if (error) throw error;
   if (!data?.length) throw new Error("No se pudo eliminar: ya no existe o no tenés permiso.");
 };
@@ -190,7 +175,7 @@ export async function getAdminAuthors(): Promise<AdminAuthor[]> {
 
   if (error) throw error;
 
-  return (data ?? []).map((row: any) => ({
+  return (data ?? []).map((row) => ({
     id: row.id,
     full_name: row.full_name,
     avatar_url: row.avatar_url ?? null,
@@ -207,7 +192,7 @@ export async function getAdminCategories(): Promise<AdminCategory[]> {
 
   if (error) throw error;
 
-  return (data ?? []).map((row: any) => ({
+  return (data ?? []).map((row) => ({
     id: row.id,
     name: row.name,
     slug: row.slug,
@@ -223,7 +208,7 @@ export async function getAdminTags(): Promise<AdminTag[]> {
 
   if (error) throw error;
 
-  return (data ?? []).map((row: any) => ({
+  return (data ?? []).map((row) => ({
     id: row.id,
     name: row.name,
     slug: row.slug,
@@ -237,7 +222,7 @@ export async function getArticleTagIds(articleId: string): Promise<string[]> {
 
   if (error) throw error;
 
-  return (data ?? []).map((row: any) => row.tag_id).filter(Boolean);
+  return (data ?? []).map((row) => row.tag_id).filter(Boolean);
 }
 
 export async function syncArticleTags(articleId: string, tagIds: string[]): Promise<void> {
@@ -264,7 +249,7 @@ export async function getAdminNewsletterSubscribers(): Promise<AdminNewsletterSu
 
   if (error) throw error;
 
-  return (data ?? []).map((row: any) => ({
+  return (data ?? []).map((row) => ({
     id: row.id,
     email: row.email ?? "",
     confirmed: Boolean(row.confirmed),
@@ -364,6 +349,7 @@ export async function getArticleCommentsForAdmin(articleId: string): Promise<Adm
     if (profilesError) throw profilesError;
 
     profilesById = (profiles ?? []).reduce<Record<string, { full_name: string | null; avatar_url: string | null }>>((acc, profile) => {
+      if (!profile.id) return acc;
       acc[profile.id] = {
         full_name: profile.full_name,
         avatar_url: profile.avatar_url,
@@ -386,24 +372,25 @@ export async function getArticleCommentsForAdmin(articleId: string): Promise<Adm
 }
 
 export async function deleteCommentForAdmin(commentId: number): Promise<void> {
-  await ensureAdminAccess();
-  await removeRow("comments", "id", commentId);
+  await expectRemoved(requireSupabaseClient().from("comments").delete().eq("id", commentId).select("id"));
 }
 
-export async function createCategory(input: Partial<{ name: string; slug: string; color: string | null; sort_order: number }>): Promise<AdminCategory> {
-  await ensureAdminAccess();
-  const client = requireSupabaseClient();
-  const name = (input.name ?? "").trim();
+type CategoryInput = { name: string; slug?: string; color: string | null; sort_order: number };
+
+const cleanCategory = (input: CategoryInput) => {
+  const name = input.name.trim();
   if (!name) throw new Error("El nombre de la categoría es obligatorio.");
-
-  const payload = {
+  return {
     name,
-    slug: (input.slug ?? createSlug(name)).trim() || createSlug(name),
+    slug: input.slug?.trim() || createSlug(name),
     color: input.color?.trim() || null,
-    sort_order: Number(input.sort_order ?? 0),
+    sort_order: Number(input.sort_order),
   };
+};
 
-  const { data, error } = await client.from("categories").insert(payload).select("id, name, slug, color, sort_order").single();
+export async function createCategory(input: CategoryInput): Promise<AdminCategory> {
+  const client = requireSupabaseClient();
+  const { data, error } = await client.from("categories").insert(cleanCategory(input)).select("id, name, slug, color, sort_order").single();
   if (error) throw error;
 
   return {
@@ -415,23 +402,10 @@ export async function createCategory(input: Partial<{ name: string; slug: string
   };
 }
 
-export async function updateCategory(
-  id: string,
-  updates: Partial<{ name: string; slug: string; color: string | null; sort_order: number }>
-): Promise<AdminCategory> {
-  await ensureAdminAccess();
+export async function updateCategory(id: string, updates: CategoryInput): Promise<AdminCategory> {
   const client = requireSupabaseClient();
 
-  const nextUpdates: Record<string, any> = { ...updates };
-  if (nextUpdates.name !== undefined) nextUpdates.name = nextUpdates.name.trim();
-  if (nextUpdates.slug !== undefined) nextUpdates.slug = nextUpdates.slug.trim();
-  if (nextUpdates.color !== undefined) nextUpdates.color = nextUpdates.color?.trim() || null;
-  if (nextUpdates.sort_order !== undefined) nextUpdates.sort_order = Number(nextUpdates.sort_order ?? 0);
-
-  if (!nextUpdates.name) throw new Error("El nombre de la categoría es obligatorio.");
-  if (!nextUpdates.slug) nextUpdates.slug = createSlug(nextUpdates.name);
-
-  const { data, error } = await client.from("categories").update(nextUpdates).eq("id", id).select("id, name, slug, color, sort_order").single();
+  const { data, error } = await client.from("categories").update(cleanCategory(updates)).eq("id", id).select("id, name, slug, color, sort_order").single();
   if (error) throw error;
 
   return {
@@ -444,47 +418,35 @@ export async function updateCategory(
 }
 
 export async function deleteCategory(id: string): Promise<void> {
-  await ensureAdminAccess();
-  await removeRow("categories", "id", id);
+  await expectRemoved(requireSupabaseClient().from("categories").delete().eq("id", id).select("id"));
 }
 
-export async function createTag(input: Partial<{ name: string; slug: string }>): Promise<AdminTag> {
-  await ensureAdminAccess();
-  const client = requireSupabaseClient();
-  const name = (input.name ?? "").trim();
+type TagInput = { name: string; slug?: string };
+
+const cleanTag = (input: TagInput) => {
+  const name = input.name.trim();
   if (!name) throw new Error("El nombre de la etiqueta es obligatorio.");
+  return { name, slug: input.slug?.trim() || createSlug(name) };
+};
 
-  const payload = {
-    name,
-    slug: (input.slug ?? createSlug(name)).trim() || createSlug(name),
-  };
-
-  const { data, error } = await client.from("tags").insert(payload).select("id, name, slug").single();
+export async function createTag(input: TagInput): Promise<AdminTag> {
+  const client = requireSupabaseClient();
+  const { data, error } = await client.from("tags").insert(cleanTag(input)).select("id, name, slug").single();
   if (error) throw error;
 
   return { id: data.id, name: data.name, slug: data.slug };
 }
 
-export async function updateTag(id: string, updates: Partial<{ name: string; slug: string }>): Promise<AdminTag> {
-  await ensureAdminAccess();
+export async function updateTag(id: string, updates: TagInput): Promise<AdminTag> {
   const client = requireSupabaseClient();
-  const nextUpdates: Record<string, any> = { ...updates };
-
-  if (nextUpdates.name !== undefined) nextUpdates.name = nextUpdates.name.trim();
-  if (nextUpdates.slug !== undefined) nextUpdates.slug = nextUpdates.slug.trim();
-
-  if (!nextUpdates.name) throw new Error("El nombre de la etiqueta es obligatorio.");
-  if (!nextUpdates.slug) nextUpdates.slug = createSlug(nextUpdates.name);
-
-  const { data, error } = await client.from("tags").update(nextUpdates).eq("id", id).select("id, name, slug").single();
+  const { data, error } = await client.from("tags").update(cleanTag(updates)).eq("id", id).select("id, name, slug").single();
   if (error) throw error;
 
   return { id: data.id, name: data.name, slug: data.slug };
 }
 
 export async function deleteTag(id: string): Promise<void> {
-  await ensureAdminAccess();
-  await removeRow("tags", "id", id);
+  await expectRemoved(requireSupabaseClient().from("tags").delete().eq("id", id).select("id"));
 }
 
 async function prepareWebpFile(file: File): Promise<File> {
@@ -608,8 +570,7 @@ export async function uploadArticleMedia(file: File): Promise<string> {
 }
 
 export async function deleteArticle(id: string): Promise<void> {
-  await ensureAdminAccess();
-  await removeRow("articles", "id", id);
+  await expectRemoved(requireSupabaseClient().from("articles").delete().eq("id", id).select("id"));
 }
 
 const profileChangeError = (error: { code?: string; message: string }) =>
@@ -619,7 +580,7 @@ const profileChangeError = (error: { code?: string; message: string }) =>
       : error.message,
   );
 
-const mapAdminProfile = (data: any): AdminAuthor => ({
+const mapAdminProfile = (data: Database["public"]["Tables"]["profiles"]["Row"]): AdminAuthor => ({
   id: data.id,
   full_name: data.full_name,
   avatar_url: data.avatar_url ?? null,
@@ -640,110 +601,23 @@ export async function updateUserAccess(id: string, payload: { is_blocked: boolea
   const { data, error } = await client.rpc("admin_set_user_block", {
     p_user_id: id,
     p_blocked: payload.is_blocked,
-    p_reason: payload.blocked_reason,
+    // Ignored by the database when unblocking.
+    p_reason: payload.blocked_reason ?? "",
   });
   if (error) throw profileChangeError(error);
   return mapAdminProfile(data);
 }
 
-export async function createArticle(
-  input: Partial<{
-    title: string;
-    slug: string;
-    status: ArticleStatus;
-    excerpt: string | null;
-    content: string;
-    cover_image_url: string | null;
-    published_at: string | null;
-    scheduled_at: string | null;
-    is_featured: boolean;
-    is_breaking: boolean;
-    category_id: string | null;
-    author_id: string | null;
-    seo_title: string | null;
-    seo_description: string | null;
-  }>
-): Promise<AdminArticle> {
+export async function createArticle(payload: ArticlePayload): Promise<AdminArticle> {
   const client = requireSupabaseClient();
-
-  const payload = {
-    title: input.title?.trim() ?? "",
-    slug: (input.slug ?? createSlug(input.title ?? "")).trim() || createSlug(input.title ?? "") || `articulo-${Date.now()}`,
-    status: input.status ?? "draft",
-    excerpt: input.excerpt?.trim() || null,
-    content: input.content ?? "",
-    cover_image_url: input.cover_image_url?.trim() || null,
-    published_at: input.status === "published" ? (input.published_at ?? new Date().toISOString()) : null,
-    scheduled_at: input.status === "scheduled" ? (input.scheduled_at ?? new Date().toISOString()) : null,
-    is_featured: Boolean(input.is_featured),
-    is_breaking: Boolean(input.is_breaking),
-    category_id: input.category_id ?? null,
-    author_id: input.author_id ?? null,
-    seo_title: input.seo_title?.trim() || null,
-    seo_description: input.seo_description?.trim() || null,
-  };
-
-  if (!payload.title) throw new Error("El título es obligatorio.");
-
   const { data, error } = await client.from("articles").insert(payload).select(selectArticleQuery).single();
-
   if (error) throw error;
-
   return mapArticleRow(data);
 }
 
-export async function updateArticle(
-  id: string,
-  updates: Partial<{
-    title: string;
-    slug: string;
-    status: ArticleStatus;
-    excerpt: string | null;
-    content: string;
-    cover_image_url: string | null;
-    published_at: string | null;
-    scheduled_at: string | null;
-    is_featured: boolean;
-    is_breaking: boolean;
-    category_id: string | null;
-    author_id: string | null;
-    seo_title: string | null;
-    seo_description: string | null;
-  }>
-): Promise<AdminArticle> {
+export async function updateArticle(id: string, updates: Partial<ArticlePayload>): Promise<AdminArticle> {
   const client = requireSupabaseClient();
-
-  const nextUpdates: Record<string, any> = { ...updates };
-  if (nextUpdates.title) nextUpdates.title = nextUpdates.title.trim();
-  if (nextUpdates.slug) nextUpdates.slug = nextUpdates.slug.trim();
-  if (nextUpdates.excerpt !== undefined) nextUpdates.excerpt = nextUpdates.excerpt?.trim() || null;
-  if (nextUpdates.content !== undefined) nextUpdates.content = nextUpdates.content ?? "";
-  if (nextUpdates.cover_image_url !== undefined) nextUpdates.cover_image_url = nextUpdates.cover_image_url?.trim() || null;
-  if (nextUpdates.seo_title !== undefined) nextUpdates.seo_title = nextUpdates.seo_title?.trim() || null;
-  if (nextUpdates.seo_description !== undefined) nextUpdates.seo_description = nextUpdates.seo_description?.trim() || null;
-
-  if (nextUpdates.slug === "" && nextUpdates.title) {
-    nextUpdates.slug = createSlug(nextUpdates.title);
-  }
-
-  if (nextUpdates.status === "published") {
-    nextUpdates.published_at = nextUpdates.published_at ?? new Date().toISOString();
-    nextUpdates.scheduled_at = null;
-  }
-
-  if (nextUpdates.status === "scheduled") {
-    nextUpdates.scheduled_at = nextUpdates.scheduled_at ?? new Date().toISOString();
-    nextUpdates.published_at = nextUpdates.published_at ?? null;
-  }
-
-  if (nextUpdates.status && nextUpdates.status !== "published" && nextUpdates.status !== "scheduled") {
-    nextUpdates.published_at = nextUpdates.published_at ?? null;
-    nextUpdates.scheduled_at = nextUpdates.scheduled_at ?? null;
-  }
-
-  const { data, error } = await client.from("articles").update(nextUpdates).eq("id", id).select(selectArticleQuery).single();
-
+  const { data, error } = await client.from("articles").update(updates).eq("id", id).select(selectArticleQuery).single();
   if (error) throw error;
-
   return mapArticleRow(data);
 }

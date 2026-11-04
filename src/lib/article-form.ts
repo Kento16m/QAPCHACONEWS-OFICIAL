@@ -96,5 +96,7 @@ export const buildArticlePayload = (form: EditorForm, existing: AdminArticle | n
   };
 };
 
+export type ArticlePayload = ReturnType<typeof buildArticlePayload>;
+
 export const isNewlyPublished = (previous: ArticleStatus | undefined, next: ArticleStatus) =>
   next === "published" && previous !== "published";

@@ -2,7 +2,7 @@ import ReactGA from "react-ga4";
 
 export type AnalyticsEventParams = Record<string, string | number | boolean | undefined | null>;
 
-const safeString = (value: unknown, fallback = "") => {
+const safeString = (value: unknown, fallback = ""): string => {
   if (typeof value === "string") return value;
   if (typeof value === "number" || typeof value === "boolean") return String(value);
   if (value instanceof Date) return value.toISOString();
