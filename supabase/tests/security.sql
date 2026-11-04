@@ -205,7 +205,7 @@ select pg_temp.check('log keeps the real role', pg_temp.val('select role from pu
 select pg_temp.check('log keeps the real IP', pg_temp.val('select ip_address from public.admin_access_logs order by id desc limit 1'), '203.0.113.9');
 select pg_temp.check('log keeps the real session', pg_temp.val('select session_id from public.admin_access_logs order by id desc limit 1'), 'sess-1');
 select pg_temp.check('editor cannot read the access log', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', 'select id from public.admin_access_logs'), 'ok:0');
-select pg_temp.check('admin reads the access log', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', 'select id from public.admin_access_logs'), 'ok:1');
+select pg_temp.check('admin reads the access log', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', $s$select id from public.admin_access_logs where user_id = '00000000-0000-0000-0000-00000000000e'$s$), 'ok:1');
 select pg_temp.check('admin cannot erase the access log', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', 'delete from public.admin_access_logs'), 'err:42501');
 select pg_temp.check('admin cannot edit the access log', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', $s$update public.admin_access_logs set email = 'x'$s$), 'err:42501');
 
