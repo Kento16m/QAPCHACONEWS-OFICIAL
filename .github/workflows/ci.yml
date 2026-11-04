@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Tipos
+        run: npx tsc --noEmit
+      - name: Estilo y errores
+        run: npx eslint src e2e netlify scripts --max-warnings 11
+      - name: Pruebas
+        run: npm test
+      - name: Compilación
+        run: npm run build
+        env:
+          # Public test values: the build only needs them to exist.
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_ANON_KEY: public-anon-key
+      - name: Ninguna dependencia con avisos altos
+        run: npm audit --omit=dev --audit-level=high

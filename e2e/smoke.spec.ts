@@ -175,6 +175,18 @@ test.describe("public site", () => {
     });
   }
 
+  test("the weather page explains itself when the service is down", async ({ page }) => {
+    const pageErrors: string[] = [];
+    page.on("pageerror", (error) => pageErrors.push(error.message));
+    await prepare(page);
+
+    await page.goto("/clima");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.locator("main")).not.toBeEmpty();
+    expect(pageErrors).toEqual([]);
+  });
+
   test("search finds an article by title", async ({ page }) => {
     await prepare(page);
     await page.goto(`/buscar?q=${encodeURIComponent(articleTitle)}`);
