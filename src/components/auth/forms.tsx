@@ -77,7 +77,8 @@ export function RegisterForm() {
     try {
       const u = await signUpWithEmail(d.email, d.password, d.full_name);
       if (!u) {
-        toast.error("No se pudo crear la cuenta. Revisá la configuración de Supabase.");
+        toast.success("Te enviamos un correo para confirmar tu cuenta. Confirmalo para iniciar sesión.");
+        setDialogOpen(false);
         return;
       }
 

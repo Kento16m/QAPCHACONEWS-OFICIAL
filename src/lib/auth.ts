@@ -24,37 +24,11 @@ export function readBlockedAccountMessage() {
   return message;
 }
 
-export function clearAuthStorage() {
-  if (typeof window === "undefined") return;
-
-  try {
-    const keys = [
-      ...Array.from(window.localStorage.keys()),
-      ...Array.from(window.sessionStorage.keys()),
-    ];
-
-    for (const key of new Set(keys)) {
-      if (
-        key.startsWith("sb-") ||
-        key.includes("supabase") ||
-        key.includes("auth") ||
-        key.includes("blocked-account-message")
-      ) {
-        window.localStorage.removeItem(key);
-        window.sessionStorage.removeItem(key);
-      }
-    }
-  } catch (error) {
-    console.warn("No se pudieron limpiar los datos de sesión del usuario bloqueado:", error);
-  }
-}
-
 export async function forceBlockedAccountLogout(reason?: string | null) {
   const client = requireSupabaseClient();
   const message = (reason ?? "Tu cuenta fue suspendida por el administrador.").trim() || "Tu cuenta fue suspendida por el administrador.";
 
   setBlockedAccountMessage(message);
-  clearAuthStorage();
 
   try {
     await client.auth.signOut();
@@ -105,49 +79,10 @@ const mapAuthError = (error: { code?: string; message?: string } | null) => {
   return new Error("No se pudo completar la operación. Intentá nuevamente.");
 };
 
-async function getProfileAccessStatus(client: ReturnType<typeof requireSupabaseClient>, userId: string) {
-  const { data, error } = await client
-    .from("profiles")
-    .select("id, full_name, avatar_url, profile_color, role, is_blocked, blocked_reason")
-    .eq("id", userId)
-    .maybeSingle();
-
-  if (!error) {
-    return {
-      is_blocked: Boolean((data as { is_blocked?: boolean } | null)?.is_blocked),
-      blocked_reason: (data as { blocked_reason?: string | null } | null)?.blocked_reason ?? null,
-    };
-  }
-
-  if (error.code === "42703") {
-    const { data: fallbackData, error: fallbackError } = await client
-      .from("profiles")
-      .select("id, full_name, avatar_url, profile_color, role")
-      .eq("id", userId)
-      .maybeSingle();
-
-    if (fallbackError) throw mapAuthError(fallbackError);
-    return {
-      is_blocked: false,
-      blocked_reason: null,
-      profile: fallbackData,
-    };
-  }
-
-  throw mapAuthError(error);
-}
-
 export async function signInWithPassword(email: string, password: string) {
   const client = requireSupabaseClient();
   const { data, error } = await client.auth.signInWithPassword({ email, password });
   if (error) throw mapAuthError(error);
-
-  const profileStatus = await getProfileAccessStatus(client, data.user.id);
-  if (profileStatus.is_blocked) {
-    const message = profileStatus.blocked_reason?.trim() || "Tu cuenta fue suspendida por el administrador.";
-    await forceBlockedAccountLogout(message);
-    throw new Error(message);
-  }
 
   return data.user as User;
 }
@@ -165,11 +100,7 @@ export async function signUp(email: string, password: string, full_name: string)
   if (error) throw mapAuthError(error);
 
   // No session means email confirmation is pending; the database trigger already created the profile.
-  if (!data.user || !data.session) {
-    throw new Error("Te enviamos un correo para confirmar tu cuenta. Confirmalo antes de iniciar sesión.");
-  }
-
-  return data.user as User;
+  return data.session ? (data.user as User) : null;
 }
 
 export async function signInWithOAuth(provider: "google" | "facebook") {
@@ -261,46 +192,11 @@ export async function signOut() {
   return true;
 }
 
-export async function getSession() {
-  const client = requireSupabaseClient();
-  const { data, error } = await client.auth.getSession();
-  if (error) throw mapAuthError(error);
-
-  const sessionUser = data.session?.user ?? null;
-  if (!sessionUser) return null;
-
-  const profileStatus = await getProfileAccessStatus(client, sessionUser.id);
-  if (profileStatus.is_blocked) {
-    const message = profileStatus.blocked_reason?.trim() || "Tu cuenta fue suspendida por el administrador.";
-    await forceBlockedAccountLogout(message);
-    return null;
-  }
-
-  return sessionUser;
-}
-
 export function onAuthStateChange(callback: (user: User | null) => void) {
   const client = requireSupabaseClient();
-  const { data } = client.auth.onAuthStateChange(async (_event, session) => {
-    const sessionUser = session?.user ?? null;
-    if (!sessionUser) {
-      callback(null);
-      return;
-    }
-
-    try {
-      const profileStatus = await getProfileAccessStatus(client, sessionUser.id);
-      if (profileStatus.is_blocked) {
-        const message = profileStatus.blocked_reason?.trim() || "Tu cuenta fue suspendida por el administrador.";
-        await forceBlockedAccountLogout(message);
-        callback(null);
-        return;
-      }
-      callback(sessionUser);
-    } catch (error) {
-      console.warn("No se pudo validar la sesión del usuario:", error);
-      callback(null);
-    }
+  // Supabase holds its auth lock during this callback, so any query must wait until it returns.
+  const { data } = client.auth.onAuthStateChange((_event, session) => {
+    window.setTimeout(() => callback(session?.user ?? null), 0);
   });
 
   return () => {

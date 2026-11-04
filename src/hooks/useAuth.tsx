@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import * as auth from "@/lib/auth";
 import { getProfileColor } from "@/lib/profile-colors";
 import { supabase } from "@/lib/supabase";
@@ -89,18 +89,32 @@ async function loadProfile(userId: string | null): Promise<ProfileRow | null> {
   }
 }
 
+const profileRequests = new Map<string, Promise<ProfileRow | null>>();
+
+// A sign-in and its auth event ask at the same moment: both share one request.
+const loadProfileOnce = (userId: string) => {
+  const running = profileRequests.get(userId);
+  if (running) return running;
+  const request = loadProfile(userId).finally(() => profileRequests.delete(userId));
+  profileRequests.set(userId, request);
+  return request;
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogView, setDialogView] = useState<AuthView>("login");
+  // Auth events repeat on token refresh and tab focus; the profile only reloads for a different user.
+  const loadedUserId = useRef<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
 
     const syncUser = async (sessionUser: { id: string; email?: string | null; user_metadata?: { full_name?: string; avatar_url?: string | null } } | null) => {
       if (!sessionUser) {
+        loadedUserId.current = null;
         if (mounted) {
           setUser(null);
           setProfile(null);
@@ -109,11 +123,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      let nextProfile = await loadProfile(sessionUser.id);
+      if (sessionUser.id === loadedUserId.current) return;
+
+      let nextProfile = await loadProfileOnce(sessionUser.id);
       if (!nextProfile && mounted) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
-        nextProfile = await loadProfile(sessionUser.id);
+        nextProfile = await loadProfileOnce(sessionUser.id);
       }
+      if (sessionUser.id === loadedUserId.current) return;
 
       if (nextProfile?.is_blocked) {
         const blockedMessage = nextProfile.blocked_reason?.trim() || "Tu cuenta fue suspendida por el administrador.";
@@ -137,20 +154,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!mounted) return;
 
       const nextUser = toAuthUser(sessionUser, nextProfile);
+      loadedUserId.current = sessionUser.id;
       setProfile(nextProfile);
       setUser(nextUser);
       setLoading(false);
     };
 
-    auth.getSession()
-      .then((sessionUser) => syncUser(sessionUser))
-      .catch((error) => {
-        console.error("Error cargando sesión:", error);
-        setUser(null);
-        setProfile(null);
-        setLoading(false);
-      });
-
+    // Fires once on startup with the stored session, or null if there is none.
     const unsubscribe = auth.onAuthStateChange(async (sessionUser) => {
       await syncUser(sessionUser);
     });
@@ -163,7 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithEmail = async (email: string, password: string) => {
     const sessionUser = await auth.signInWithPassword(email, password);
-    const nextProfile = await loadProfile(sessionUser.id);
+    const nextProfile = await loadProfileOnce(sessionUser.id);
     if (nextProfile?.is_blocked) {
       const blockedMessage = nextProfile.blocked_reason?.trim() || "Tu cuenta fue suspendida por el administrador.";
       auth.setBlockedAccountMessage(blockedMessage);
@@ -172,6 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const nextUser = toAuthUser(sessionUser, nextProfile);
     if (!nextUser) throw new Error("No se pudo iniciar sesión.");
+    loadedUserId.current = sessionUser.id;
     setUser(nextUser);
     setProfile(nextProfile);
     setLoading(false);
@@ -180,10 +191,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUpWithEmail = async (email: string, password: string, full_name: string) => {
     const sessionUser = await auth.signUp(email, password, full_name);
-    const nextProfile = await loadProfile(sessionUser.id);
+    if (!sessionUser) return null;
+    const nextProfile = await loadProfileOnce(sessionUser.id);
     const nextUser = toAuthUser(sessionUser, nextProfile);
     if (!nextUser) throw new Error("No se pudo crear la cuenta.");
 
+    loadedUserId.current = sessionUser.id;
     setUser(nextUser);
     setProfile(nextProfile);
     setLoading(false);
@@ -204,6 +217,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     resetPassword: (email: string) => auth.resetPasswordForEmail(email),
     signOut: async () => {
       const ok = await auth.signOut();
+      loadedUserId.current = null;
       setUser(null);
       setProfile(null);
       return ok;
