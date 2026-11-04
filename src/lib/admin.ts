@@ -20,6 +20,7 @@ export interface AdminArticle {
   author_id: string | null;
   seo_title: string | null;
   seo_description: string | null;
+  updated_at: string;
   category: { id: string; name: string; slug: string } | null;
   author: { id: string; full_name: string | null } | null;
 }
@@ -112,6 +113,7 @@ const selectArticleQuery = `
   author_id,
   seo_title,
   seo_description,
+  updated_at,
   category:categories(id,name,slug),
   author:public_profiles(id,full_name,avatar_url)
 `;
@@ -133,6 +135,7 @@ const mapArticleRow = (row: any): AdminArticle => ({
   author_id: row.author_id ?? null,
   seo_title: row.seo_title ?? null,
   seo_description: row.seo_description ?? null,
+  updated_at: row.updated_at ?? "",
   category: row.category ? { id: row.category.id, name: row.category.name, slug: row.category.slug } : null,
   author: row.author ? { id: row.author.id, full_name: row.author.full_name ?? "Redacción" } : null,
 });

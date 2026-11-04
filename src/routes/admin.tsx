@@ -17,7 +17,7 @@ import {
   Tablet,
   Users,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { trackArticlePublished } from "@/lib/analytics";
 import { useArticleForm } from "@/hooks/use-article-form";
 import { buildArticlePayload, isNewlyPublished } from "@/lib/article-form";
@@ -425,6 +425,11 @@ function AdminPage() {
   const [editingTagId, setEditingTagId] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const contentEditorRef = useRef<HTMLDivElement | null>(null);
+  const [editorNode, setEditorNode] = useState<HTMLDivElement | null>(null);
+  const attachEditor = useCallback((node: HTMLDivElement | null) => {
+    contentEditorRef.current = node;
+    setEditorNode(node);
+  }, []);
   const mediaInputRef = useRef<HTMLInputElement | null>(null);
   const contentSelectionRef = useRef<{ start: number; end: number } | null>(null);
 
@@ -449,7 +454,8 @@ function AdminPage() {
     [articles, selectedId],
   );
 
-  const { form, setForm, clearDraft, reset: resetForm, hasRestoredDraft } = useArticleForm(selectedArticle, getArticleTagIds);
+  const { form, setForm, clearDraft, reset: resetForm, recoverDraft, hasRestoredDraft, hasStaleDraft, tagsReady } =
+    useArticleForm(selectedArticle, getArticleTagIds);
 
   const selectedManagementArticle = useMemo(
     () =>
@@ -816,7 +822,7 @@ function AdminPage() {
 
     editor.addEventListener("click", handleEditorClick);
     return () => editor.removeEventListener("click", handleEditorClick);
-  }, [form.content]);
+  }, [form.content, editorNode]);
 
   useEffect(() => {
     if (!selectedId && currentEditorialUser.id && !form.author_id) {
@@ -1147,7 +1153,8 @@ function AdminPage() {
       const saved = selectedArticle
         ? await updateArticle(selectedArticle.id, payload)
         : await createArticle(payload);
-      await syncArticleTags(saved.id, form.tag_ids);
+      // Saving replaces all tags, so a list that never loaded must not be written.
+      if (tagsReady) await syncArticleTags(saved.id, form.tag_ids);
 
       if (isNewlyPublished(selectedArticle?.status, saved.status)) {
         trackArticlePublished(saved.title, saved.category?.name ?? null);
@@ -1155,7 +1162,7 @@ function AdminPage() {
       return saved;
     },
     onSuccess: async (saved) => {
-      clearDraft();
+      clearDraft(saved.updated_at);
       // Wait for the list first: selecting an id it does not have yet would look like a deleted article.
       await queryClient.invalidateQueries({ queryKey: ["admin", "articles"] });
       setSelectedId(saved.id);
@@ -2372,12 +2379,27 @@ function AdminPage() {
                     saveMutation.mutate();
                   }}
                 >
+                  {/* Nothing can change during a save: what was sent is exactly what gets marked as saved. */}
+                  <fieldset disabled={saveMutation.isPending} className="min-w-0 space-y-5 border-0 p-0">
                   {hasRestoredDraft && (
                     <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                       <span>Recuperamos un borrador que no se había guardado.</span>
                       <button type="button" onClick={resetForm} className="font-semibold underline underline-offset-2">
                         Descartar borrador
                       </button>
+                    </div>
+                  )}
+                  {hasStaleDraft && (
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                      <span>Tenés un borrador sin guardar, pero esta nota cambió después. Estás viendo la versión más reciente.</span>
+                      <span className="flex gap-4">
+                        <button type="button" onClick={recoverDraft} className="font-semibold underline underline-offset-2">
+                          Recuperar borrador
+                        </button>
+                        <button type="button" onClick={resetForm} className="font-semibold underline underline-offset-2">
+                          Descartar borrador
+                        </button>
+                      </span>
                     </div>
                   )}
                   <div className="grid gap-5 md:grid-cols-2">
@@ -2732,12 +2754,12 @@ function AdminPage() {
                         onChange={handleInlineMediaUpload}
                       />
                       <div
-                        ref={contentEditorRef}
+                        ref={attachEditor}
                         role="textbox"
                         aria-label="Contenido del artículo"
                         tabIndex={0}
                         suppressContentEditableWarning
-                        contentEditable
+                        contentEditable={!saveMutation.isPending}
                         dir="ltr"
                         style={{ direction: "ltr", textAlign: "left" }}
                         onKeyDown={(event) => {
@@ -2807,6 +2829,7 @@ function AdminPage() {
                       </button>
                     </div>
                   </div>
+                  </fieldset>
                 </form>
               </section>
             )}

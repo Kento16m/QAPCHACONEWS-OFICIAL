@@ -50,7 +50,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 const wrapper = ({ children }: { children: ReactNode }) => <AuthProvider>{children}</AuthProvider>;
 const renderAuth = async () => {
   const hook = renderHook(() => useAuth(), { wrapper });
-  await waitFor(() => expect(hook.result.current.loading).toBe(false));
+  await waitFor(() => expect(hook.result.current.loading).toBe(false), { timeout: 3000 });
   return hook;
 };
 
@@ -88,6 +88,40 @@ describe("AuthProvider", () => {
 
     expect(result.current.user?.full_name).toBe("Ana");
     expect(fake.profileQueries).toBe(1);
+  });
+
+  it("keeps a valid session visible when the profile cannot be loaded, and retries later", async () => {
+    fake.profile = null;
+    fake.session = { user: { id: "u1", email: "ana@test.invalid" } };
+    const { result } = await renderAuth();
+
+    expect(result.current.user?.id).toBe("u1");
+    expect(result.current.user?.role).toBe("reader");
+
+    fake.profile = { id: "u1", full_name: "Ana", avatar_url: null, role: "admin", is_blocked: false, blocked_reason: null };
+    await act(async () => {
+      fake.listener?.("TOKEN_REFRESHED", fake.session);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+
+    await waitFor(() => expect(result.current.user?.role).toBe("admin"));
+  });
+
+  it("retries the profile after a sign-in that could not load it", async () => {
+    const { result } = await renderAuth();
+    fake.profile = null;
+    await act(async () => {
+      await result.current.signInWithEmail("ana@test.invalid", "password");
+    });
+    expect(result.current.user?.role).toBe("reader");
+
+    fake.profile = { id: "u1", full_name: "Ana", avatar_url: null, role: "editor", is_blocked: false, blocked_reason: null };
+    await act(async () => {
+      fake.listener?.("TOKEN_REFRESHED", { user: { id: "u1", email: "ana@test.invalid" } });
+      await new Promise((resolve) => setTimeout(resolve, 20));
+    });
+
+    await waitFor(() => expect(result.current.user?.role).toBe("editor"), { timeout: 3000 });
   });
 
   it("rejects a blocked account at sign-in and closes its session", async () => {

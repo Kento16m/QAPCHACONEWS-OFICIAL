@@ -30,6 +30,7 @@ const article = (overrides: Partial<AdminArticle> = {}): AdminArticle => ({
   author_id: "u1",
   seo_title: null,
   seo_description: null,
+  updated_at: "2026-10-01T12:00:00.000Z",
   category: null,
   author: null,
   ...overrides,

@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useArticleForm } from "@/hooks/use-article-form";
 import type { AdminArticle } from "@/lib/admin";
 
-const article = (id: string, title = `Nota ${id}`, views = 0): AdminArticle => ({
+const article = (id: string, title = `Nota ${id}`, views = 0, updatedAt = "v1"): AdminArticle => ({
   id,
   title,
   slug: id,
@@ -20,14 +20,15 @@ const article = (id: string, title = `Nota ${id}`, views = 0): AdminArticle => (
   author_id: "u1",
   seo_title: null,
   seo_description: null,
+  updated_at: updatedAt,
   category: null,
   author: null,
 });
 
 const loadTags = () => Promise.resolve(["t1"]);
 
-const render = (initial: AdminArticle | null) =>
-  renderHook(({ current }) => useArticleForm(current, loadTags), { initialProps: { current: initial } });
+const render = (initial: AdminArticle | null, load: (id: string) => Promise<string[]> = loadTags) =>
+  renderHook(({ current }) => useArticleForm(current, load), { initialProps: { current: initial } });
 
 const type = (result: { current: ReturnType<typeof useArticleForm> }, title: string) =>
   act(() => result.current.setForm((form) => ({ ...form, title })));
@@ -155,6 +156,107 @@ describe("useArticleForm", () => {
     expect(result.current.form.title).toBe("Nota a");
     expect(result.current.hasRestoredDraft).toBe(false);
     expect(window.localStorage.getItem("qap_article_draft:a")).toBeNull();
+  });
+
+  it("is ready to save tags for a new article", () => {
+    expect(render(null).result.current.tagsReady).toBe(true);
+  });
+
+  it("is not ready to save tags until they arrive", async () => {
+    const { result } = render(article("a"));
+    expect(result.current.tagsReady).toBe(false);
+    await settle();
+    expect(result.current.tagsReady).toBe(true);
+  });
+
+  it("never reports tags as ready when they failed to load", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    const { result } = render(article("a"), () => Promise.reject(new Error("down")));
+    await settle();
+    expect(result.current.tagsReady).toBe(false);
+    consoleError.mockRestore();
+  });
+
+  it("does not store an empty tag list typed before tags arrive", async () => {
+    const first = render(article("a"), () => new Promise(() => {}));
+    type(first.result, "Rápida");
+    flushDraft();
+    first.unmount();
+
+    const { result } = render(article("a"));
+    await settle();
+
+    expect(result.current.form.title).toBe("Rápida");
+    expect(result.current.form.tag_ids).toEqual(["t1"]);
+    expect(result.current.tagsReady).toBe(true);
+  });
+
+  it("does not let an old draft replace a newer version", async () => {
+    const first = render(article("a"));
+    await settle();
+    type(first.result, "Borrador viejo");
+    flushDraft();
+    first.unmount();
+
+    const { result } = render(article("a", "Versión nueva", 0, "v2"));
+    await settle();
+    flushDraft();
+
+    expect(result.current.form.title).toBe("Versión nueva");
+    expect(result.current.hasStaleDraft).toBe(true);
+    expect(result.current.hasRestoredDraft).toBe(false);
+    expect(window.localStorage.getItem("qap_article_draft:a")).not.toBeNull();
+  });
+
+  it("recovers an old draft only when asked", async () => {
+    const first = render(article("a"));
+    await settle();
+    type(first.result, "Borrador viejo");
+    flushDraft();
+    first.unmount();
+
+    const { result } = render(article("a", "Versión nueva", 0, "v2"));
+    await settle();
+    act(() => result.current.recoverDraft());
+
+    expect(result.current.form.title).toBe("Borrador viejo");
+    expect(result.current.hasStaleDraft).toBe(false);
+    expect(result.current.hasRestoredDraft).toBe(true);
+  });
+
+  it("discards an old draft on reset", async () => {
+    const first = render(article("a"));
+    await settle();
+    type(first.result, "Borrador viejo");
+    flushDraft();
+    first.unmount();
+
+    const { result } = render(article("a", "Versión nueva", 0, "v2"));
+    await settle();
+    await act(async () => {
+      result.current.reset();
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    expect(result.current.hasStaleDraft).toBe(false);
+    expect(window.localStorage.getItem("qap_article_draft:a")).toBeNull();
+  });
+
+  it("treats edits after a save as based on the saved version", async () => {
+    const first = render(article("a"));
+    await settle();
+    type(first.result, "Guardado");
+    act(() => first.result.current.clearDraft("v2"));
+    type(first.result, "Después de guardar");
+    flushDraft();
+    first.unmount();
+
+    const { result } = render(article("a", "Guardado", 0, "v2"));
+    await settle();
+
+    expect(result.current.form.title).toBe("Después de guardar");
+    expect(result.current.hasRestoredDraft).toBe(true);
+    expect(result.current.hasStaleDraft).toBe(false);
   });
 
   it("works when localStorage is unavailable", async () => {

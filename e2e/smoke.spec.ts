@@ -304,16 +304,79 @@ test.describe("editorial panel", () => {
     await openNewArticle(page);
 
     await titleInput(page).fill(`Borrador ${STAMP}`);
+    await page.getByLabel("Contenido del artículo").fill("Cuerpo recuperable");
     await page.waitForTimeout(1000);
     await page.reload();
     await page.getByRole("button", { name: "Nuevo artículo" }).click();
 
     await expect(page.getByText("Recuperamos un borrador")).toBeVisible();
     await expect(titleInput(page)).toHaveValue(`Borrador ${STAMP}`);
+    await expect(page.getByLabel("Contenido del artículo")).toHaveText("Cuerpo recuperable");
 
     await page.getByRole("button", { name: "Descartar borrador" }).click();
     await expect(titleInput(page)).toHaveValue("");
+    await expect(page.getByLabel("Contenido del artículo")).toHaveText("");
     await expect(page.getByText("Recuperamos un borrador")).toBeHidden();
+  });
+
+  test("the article body survives switching tabs in the panel", async ({ page }) => {
+    await prepare(page);
+    await page.goto("/");
+    await loginAndWait(page, "editor");
+    await openNewArticle(page);
+
+    await page.getByLabel("Contenido del artículo").fill("Texto que no se pierde");
+    await page.getByRole("button", { name: "Artículos", exact: true }).click();
+    await page.getByRole("button", { name: "Crear artículo", exact: true }).first().click();
+
+    await expect(page.getByLabel("Contenido del artículo")).toHaveText("Texto que no se pierde");
+    await page.evaluate(() => window.localStorage.removeItem("qap_article_draft:new"));
+  });
+
+  test("saving does not remove tags that could not be loaded", async ({ page }) => {
+    await prepare(page);
+    const [tag] = await api("/rest/v1/tags", { method: "POST", headers: { Prefer: "return=representation" }, body: JSON.stringify({ name: `E2E ${STAMP}`, slug: `e2e-${STAMP}` }) });
+    await api("/rest/v1/article_tags", { method: "POST", body: JSON.stringify({ article_id: articleId, tag_id: tag.id }) });
+    await page.route("**/rest/v1/article_tags?select=tag_id*", (route) => route.fulfill({ status: 500, contentType: "application/json", body: "{}" }));
+
+    await page.goto("/");
+    await loginAndWait(page, "editor");
+    await page.goto("/admin");
+    await page.getByRole("button", { name: "Artículos", exact: true }).click();
+    await page.getByRole("button", { name: articleTitle }).first().click();
+    await page.getByRole("button", { name: "Editar", exact: true }).click();
+    await expect(titleInput(page)).toHaveValue(articleTitle);
+    await page.getByRole("button", { name: "Guardar cambios" }).click();
+    await expect(page.getByRole("button", { name: "Guardar cambios" })).toBeEnabled();
+    await page.waitForLoadState("networkidle");
+
+    const rows = await api(`/rest/v1/article_tags?select=tag_id&article_id=eq.${articleId}`);
+    await api(`/rest/v1/tags?id=eq.${tag.id}`, { method: "DELETE" });
+    expect(rows).toHaveLength(1);
+  });
+
+  test("the form cannot be edited while saving", async ({ page }) => {
+    await prepare(page);
+    await page.goto("/");
+    await loginAndWait(page, "editor");
+    await openNewArticle(page);
+    await titleInput(page).fill(`E2E Lenta ${STAMP}`);
+
+    let release = () => {};
+    const held = new Promise<void>((resolve) => { release = resolve; });
+    await page.route("**/rest/v1/articles*", async (route) => {
+      if (route.request().method() === "POST") await held;
+      await route.fallback();
+    });
+    await page.getByRole("button", { name: "Publicar artículo" }).click();
+
+    await expect(titleInput(page)).toBeDisabled();
+    await expect(page.getByLabel("Contenido del artículo")).toHaveAttribute("contenteditable", "false");
+
+    release();
+    await expect(page.getByRole("button", { name: "Guardar cambios" })).toBeVisible();
+    await expect(titleInput(page)).toBeEnabled();
+    await expect(page.getByLabel("Contenido del artículo")).toHaveAttribute("contenteditable", "true");
   });
 
   test("an editor publishes an article that keeps its data through edits", async ({ page, context }) => {

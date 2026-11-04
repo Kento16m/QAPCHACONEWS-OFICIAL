@@ -144,17 +144,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      if (!nextProfile && mounted) {
-        setUser(null);
-        setProfile(null);
-        setLoading(false);
-        return;
-      }
-
       if (!mounted) return;
 
+      // Without a profile the session is still valid: show the person as a reader and retry on the next event.
       const nextUser = toAuthUser(sessionUser, nextProfile);
-      loadedUserId.current = sessionUser.id;
+      loadedUserId.current = nextProfile ? sessionUser.id : null;
       setProfile(nextProfile);
       setUser(nextUser);
       setLoading(false);
@@ -182,7 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const nextUser = toAuthUser(sessionUser, nextProfile);
     if (!nextUser) throw new Error("No se pudo iniciar sesión.");
-    loadedUserId.current = sessionUser.id;
+    loadedUserId.current = nextProfile ? sessionUser.id : null;
     setUser(nextUser);
     setProfile(nextProfile);
     setLoading(false);
@@ -196,7 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const nextUser = toAuthUser(sessionUser, nextProfile);
     if (!nextUser) throw new Error("No se pudo crear la cuenta.");
 
-    loadedUserId.current = sessionUser.id;
+    loadedUserId.current = nextProfile ? sessionUser.id : null;
     setUser(nextUser);
     setProfile(nextProfile);
     setLoading(false);
