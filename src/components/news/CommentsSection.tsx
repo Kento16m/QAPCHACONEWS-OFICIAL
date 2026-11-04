@@ -186,11 +186,11 @@ export function CommentsSection({ articleId }: { articleId: string }) {
   const currentUserId = currentUser?.id ?? null;
   const currentUserMeta = currentUser?.user_metadata ?? {};
   const currentUserDisplayName =
-    currentUserMeta?.full_name ||
-    currentUserMeta?.name ||
+    currentUserMeta["full_name"] ||
+    currentUserMeta["name"] ||
     currentUser?.email?.split("@")[0] ||
     "Usuario";
-  const currentUserAvatar = currentUserMeta?.avatar_url || currentUserMeta?.picture || null;
+  const currentUserAvatar = currentUserMeta["avatar_url"] || currentUserMeta["picture"] || null;
   const isAuthenticated = Boolean(currentUserId && session?.access_token);
 
   useEffect(() => {
@@ -978,13 +978,13 @@ export function CommentsSection({ articleId }: { articleId: string }) {
             <div className="mb-6 flex flex-col gap-3 rounded-[24px] border border-[#eceaf8] bg-[#f7f7fb] p-3 shadow-[inset_0_0_0_1px_rgba(91,77,230,0.03)] sm:flex-row sm:items-center">
               {session?.user?.user_metadata?.["avatar_url"] || session?.user?.user_metadata?.["picture"] ? (
                 <img
-                  src={session.user.user_metadata.avatar_url || session.user.user_metadata.picture}
-                  alt={session.user.user_metadata.full_name || session.user.email || "Usuario"}
+                  src={session.user.user_metadata?.["avatar_url"] || session.user.user_metadata?.["picture"]}
+                  alt={session.user.user_metadata?.["full_name"] || session.user.email || "Usuario"}
                   className="h-10 w-10 rounded-full object-cover ring-2 ring-white sm:h-11 sm:w-11"
                 />
               ) : (
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#5b4de6] text-xs font-bold text-white sm:h-11 sm:w-11 sm:text-sm">
-                  {(session.user.user_metadata.full_name || session.user.email || "U")
+                  {(session.user.user_metadata?.["full_name"] || session.user.email || "U")
                     .split(" ")
                     .filter(Boolean)
                     .slice(0, 2)
@@ -1171,13 +1171,13 @@ function CommentThread({
   const profileFallbackName =
     profile?.full_name?.trim() ||
     (comment.user_id === session?.user?.id
-      ? sessionUserMeta.full_name || sessionUserMeta.name || session?.user?.email?.split("@")[0]
+      ? sessionUserMeta["full_name"] || sessionUserMeta["name"] || session?.user?.email?.split("@")[0]
       : null) ||
     "Usuario";
   const avatarUrl =
     profile?.avatar_url ||
     (comment.user_id === session?.user?.id
-      ? sessionUserMeta.avatar_url || sessionUserMeta.picture || null
+      ? sessionUserMeta["avatar_url"] || sessionUserMeta["picture"] || null
       : null);
   const authorName = profileFallbackName;
   const initials = authorName

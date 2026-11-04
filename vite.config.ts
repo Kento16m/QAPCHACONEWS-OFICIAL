@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig, loadEnv, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
@@ -10,7 +10,7 @@ import { proxyWeather } from "./netlify/shared/openweather.mjs";
 
 const fetchRates = createRatesFetcher();
 
-function maxicambiosProxyPlugin() {
+function maxicambiosProxyPlugin(): Plugin {
   const handle = async (req: any, res: any) => {
     try {
       const { rates, source } = await fetchRates();
@@ -35,7 +35,7 @@ function maxicambiosProxyPlugin() {
 
   // Same behavior as netlify/functions/clima.mjs while developing locally.
   const handleWeather = async (req: any, res: any) => {
-    const apiKey = loadEnv("development", process.cwd(), "").OPENWEATHER_API_KEY?.trim() ?? "";
+    const apiKey = loadEnv("development", process.cwd(), "")["OPENWEATHER_API_KEY"]?.trim() ?? "";
     const response = await proxyWeather(`http://localhost${req.url}`, apiKey);
     res.statusCode = response.status;
     res.setHeader("Content-Type", "application/json; charset=utf-8");
