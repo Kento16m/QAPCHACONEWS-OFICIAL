@@ -74,34 +74,8 @@ async function loadProfile(userId: string | null): Promise<ProfileRow | null> {
       return null;
     }
 
-    if (!data) {
-      const fallbackName = "Usuario";
-      const { data: created, error: upsertError } = await supabase
-        .from("profiles")
-        .upsert({
-          id: userId,
-          full_name: fallbackName,
-          avatar_url: null,
-          profile_color: getProfileColor(fallbackName),
-          role: "reader",
-          is_blocked: false,
-          blocked_reason: null,
-        }, { onConflict: "id" })
-        .select(fallbackSelect)
-        .single();
-
-      if (upsertError) {
-        console.error("No se pudo crear el perfil faltante:", upsertError);
-        return null;
-      }
-
-      return {
-        ...created,
-        role: created.role ?? "reader",
-        is_blocked: Boolean(created.is_blocked),
-        blocked_reason: created.blocked_reason ?? null,
-      } as ProfileRow;
-    }
+    // The signup trigger creates the row; syncUser retries once if it is not visible yet.
+    if (!data) return null;
 
     return {
       ...data,

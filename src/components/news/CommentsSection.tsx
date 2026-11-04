@@ -229,7 +229,7 @@ export function CommentsSection({ articleId }: { articleId: string }) {
     if (uniqueUserIds.length === 0 || !supabase) return;
 
     const { data: profileRows, error: profileError } = await supabase
-      .from("profiles")
+      .from("public_profiles")
       .select("id, full_name, avatar_url, profile_color")
       .in("id", uniqueUserIds);
 
@@ -328,27 +328,8 @@ export function CommentsSection({ articleId }: { articleId: string }) {
       )
       .subscribe();
 
-    const likesChannel = supabase.channel(`comment-likes-${articleId}`);
-    likesChannel
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "comment_likes",
-        },
-        () => {
-          if (pageRef.current > 0) return;
-          setPage(0);
-          setComments([]);
-          void fetchComments(0, false);
-        }
-      )
-      .subscribe();
-
     return () => {
       commentsChannel.unsubscribe();
-      likesChannel.unsubscribe();
     };
   }, [articleId]);
 
@@ -456,7 +437,6 @@ export function CommentsSection({ articleId }: { articleId: string }) {
         body: {
           article_id: articleId,
           parent_id: replyTo,
-          user_id: session.user.id,
           body: cleanBody,
         },
       });

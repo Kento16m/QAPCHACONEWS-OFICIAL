@@ -34,7 +34,6 @@ import {
   createTag,
   deleteArticle,
   deleteCategory,
-  deleteAdminAccessLogs,
   deleteCommentForAdmin,
   deleteTag,
   getAdminArticles,
@@ -422,7 +421,6 @@ function AdminPage() {
   );
   const isAdminUser = Boolean(profile?.role === "admin" || isMasterAdmin);
   const isEditorUser = profile?.role === "editor";
-  const canDeleteAccessLogs = isMasterAdmin;
 
   const {
     data: articles = [],
@@ -514,7 +512,6 @@ function AdminPage() {
   const [accessBanReason, setAccessBanReason] = useState("");
   const [accessBanCloseSessions, setAccessBanCloseSessions] = useState(true);
   const [showAccessBanModal, setShowAccessBanModal] = useState(false);
-  const [showDeleteAccessLogsModal, setShowDeleteAccessLogsModal] = useState(false);
   const [form, setForm] = useState<EditorForm>(emptyForm());
   const [categoryForm, setCategoryForm] = useState({
     name: "",
@@ -1202,57 +1199,6 @@ function AdminPage() {
     }
   };
 
-  const handleDeleteAccessLogs = async (mode: "selected" | "filtered" | "all") => {
-    let ids: number[] = [];
-
-    if (mode === "selected") {
-      if (!selectedAccessLog) {
-        return;
-      }
-      ids = [selectedAccessLog.id];
-    }
-
-    if (mode === "filtered") {
-      ids = filteredAccessLogs.map((log) => log.id);
-    }
-
-    if (mode === "all") {
-      ids = adminAccessLogs.map((log) => log.id);
-    }
-
-    if (ids.length === 0) {
-      window.alert("No hay registros para borrar con este filtro.");
-      return;
-    }
-
-    const targetLabel =
-      mode === "selected"
-        ? "el registro seleccionado"
-        : mode === "filtered"
-          ? `${ids.length} registros filtrados`
-          : `${ids.length} registros en total`;
-    const confirmed = window.confirm(
-      `¿Seguro que querés borrar ${targetLabel}? Esta acción no se puede deshacer.`,
-    );
-    if (!confirmed) {
-      return;
-    }
-
-    try {
-      await deleteAdminAccessLogs({ mode, ids });
-      await queryClient.invalidateQueries({ queryKey: ["admin", "access-logs"] });
-      setShowDeleteAccessLogsModal(false);
-      setSelectedAccessLogId((currentId) =>
-        currentId !== null && ids.includes(currentId) ? null : currentId,
-      );
-      setAccessVisibleCount(10);
-      window.alert("Los registros seleccionados fueron eliminados.");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "No se pudo borrar los registros.";
-      window.alert(message);
-    }
-  };
-
   useEffect(() => {
     setAccessVisibleCount(10);
   }, [accessSearchTerm, accessStatusFilter, accessRoleFilter, accessDateFilter]);
@@ -1751,52 +1697,6 @@ function AdminPage() {
               </div>
             )}
 
-            {showDeleteAccessLogsModal && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
-                <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl">
-                  <div className="mb-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-red-500">
-                      Advertencia
-                    </p>
-                    <h3 className="mt-2 text-2xl font-black text-slate-900">Borrar registros</h3>
-                  </div>
-
-                  <p className="mb-5 text-sm leading-6 text-slate-600">
-                    Esta acción elimina los registros del panel y no se puede deshacer.
-                  </p>
-
-                  <div className="space-y-2">
-                    <button
-                      type="button"
-                      onClick={() => void handleDeleteAccessLogs("filtered")}
-                      disabled={filteredAccessLogs.length === 0}
-                      className="w-full rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-left text-sm font-semibold text-red-700 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-45"
-                    >
-                      Borrar visibles ({filteredAccessLogs.length})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleDeleteAccessLogs("all")}
-                      disabled={adminAccessLogs.length === 0}
-                      className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-45"
-                    >
-                      Borrar todo ({adminAccessLogs.length})
-                    </button>
-                  </div>
-
-                  <div className="mt-5 flex justify-end gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowDeleteAccessLogsModal(false)}
-                      className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {showAccessBanModal && selectedAccessLog?.user_id && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4">
                 <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl">
@@ -2049,15 +1949,6 @@ function AdminPage() {
                     <h2 className="text-2xl font-black text-foreground">Control de Acceso</h2>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    {canDeleteAccessLogs && (
-                      <button
-                        type="button"
-                        onClick={() => setShowDeleteAccessLogsModal(true)}
-                        className="inline-flex items-center gap-2 rounded-full border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100"
-                      >
-                        Borrar
-                      </button>
-                    )}
                     <button
                       type="button"
                       onClick={exportAccessLogsCsv}

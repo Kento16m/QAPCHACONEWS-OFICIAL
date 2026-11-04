@@ -108,25 +108,8 @@ const selectArticleQuery = `
   category_id,
   author_id,
   category:categories(id,name,slug),
-  author:profiles(id,full_name,avatar_url,role)
+  author:public_profiles(id,full_name,avatar_url)
 `;
-
-const profileAccessSelect = "id, full_name, avatar_url, role, profile_color";
-
-async function getProfilesWithOptionalAccess(client: ReturnType<typeof requireSupabaseClient>, userId?: string) {
-  const baseQuery = client.from("profiles").select(profileAccessSelect);
-  const query = userId ? baseQuery.eq("id", userId) : baseQuery;
-  const { data, error } = await query.maybeSingle();
-
-  if (!error) return data;
-  if (error.code === "42703") {
-    const { data: fallbackData, error: fallbackError } = await (userId ? client.from("profiles").select("id, full_name, avatar_url, role").eq("id", userId) : client.from("profiles").select("id, full_name, avatar_url, role")).maybeSingle();
-    if (fallbackError) throw fallbackError;
-    return fallbackData;
-  }
-
-  throw error;
-}
 
 const mapArticleRow = (row: any): AdminArticle => ({
   id: row.id,
@@ -324,34 +307,6 @@ export async function getAdminAccessLogs(): Promise<AdminAccessLog[]> {
   }
 }
 
-export async function deleteAdminAccessLogs(options: { mode: "selected" | "filtered" | "all"; ids?: number[] }): Promise<void> {
-  await ensureAdminAccess();
-  const client = requireSupabaseClient();
-
-  if (options.mode === "selected") {
-    const ids = (options.ids ?? []).filter((value) => Number.isFinite(value));
-    if (ids.length === 0) {
-      return;
-    }
-    const { error } = await client.from("admin_access_logs").delete().in("id", ids);
-    if (error) throw error;
-    return;
-  }
-
-  if (options.mode === "filtered") {
-    const ids = (options.ids ?? []).filter((value) => Number.isFinite(value));
-    if (ids.length === 0) {
-      return;
-    }
-    const { error } = await client.from("admin_access_logs").delete().in("id", ids);
-    if (error) throw error;
-    return;
-  }
-
-  const { error } = await client.from("admin_access_logs").delete().neq("id", 0);
-  if (error) throw error;
-}
-
 export async function recordAdminAccessLog(input: {
   user_id: string | null;
   email?: string | null;
@@ -443,7 +398,7 @@ export async function getArticleCommentsForAdmin(articleId: string): Promise<Adm
 
   if (userIds.length > 0) {
     const { data: profiles, error: profilesError } = await client
-      .from("profiles")
+      .from("public_profiles")
       .select("id, full_name, avatar_url")
       .in("id", userIds);
 
@@ -707,85 +662,38 @@ export async function deleteArticle(id: string): Promise<void> {
   if (error) throw error;
 }
 
+const profileChangeError = (error: { code?: string; message: string }) =>
+  new Error(
+    error.code === "QC403"
+      ? "No podés modificar esta cuenta: las cuentas protegidas y la tuya no se cambian desde el panel."
+      : error.message,
+  );
+
+const mapAdminProfile = (data: any): AdminAuthor => ({
+  id: data.id,
+  full_name: data.full_name,
+  avatar_url: data.avatar_url ?? null,
+  role: data.role ?? "reader",
+  is_blocked: Boolean(data.is_blocked),
+  blocked_reason: data.blocked_reason ?? null,
+});
+
 export async function updateAuthorRole(id: string, role: AdminAuthor["role"]): Promise<AdminAuthor> {
-  await ensureAdminAccess();
   const client = requireSupabaseClient();
-
-  const { data, error } = await client
-    .from("profiles")
-    .update({ role })
-    .eq("id", id)
-    .select("id, full_name, avatar_url, role")
-    .single();
-
-  if (error) throw error;
-  return {
-    id: data.id,
-    full_name: data.full_name,
-    avatar_url: data.avatar_url ?? null,
-    role: data.role ?? "reader",
-    is_blocked: false,
-    blocked_reason: null,
-  };
+  const { data, error } = await client.rpc("admin_set_user_role", { p_user_id: id, p_role: role });
+  if (error) throw profileChangeError(error);
+  return mapAdminProfile(data);
 }
 
-export async function updateUserAccess(id: string, payload: { is_blocked?: boolean; blocked_reason?: string | null }): Promise<AdminAuthor> {
-  await ensureAdminAccess();
+export async function updateUserAccess(id: string, payload: { is_blocked: boolean; blocked_reason: string | null }): Promise<AdminAuthor> {
   const client = requireSupabaseClient();
-
-  const {
-    data: { user },
-    error: currentUserError,
-  } = await client.auth.getUser();
-  if (currentUserError || !user) {
-    throw new Error("Necesitás iniciar sesión para realizar esta acción.");
-  }
-
-  const { data: targetProfile, error: targetProfileError } = await client
-    .from("profiles")
-    .select("id, full_name, avatar_url, role, is_blocked, blocked_reason")
-    .eq("id", id)
-    .maybeSingle();
-
-  if (targetProfileError) throw targetProfileError;
-
-  if (!targetProfile) {
-    throw new Error("No se pudo encontrar el perfil del usuario objetivo.");
-  }
-
-  if (id === user.id) {
-    throw new Error("No podés bloquearte a vos mismo desde el panel de administración.");
-  }
-
-  const nextPayload: Record<string, any> = {};
-  if (Object.prototype.hasOwnProperty.call(payload, "is_blocked")) {
-    nextPayload.is_blocked = payload.is_blocked ?? false;
-  }
-  if (Object.prototype.hasOwnProperty.call(payload, "blocked_reason")) {
-    nextPayload.blocked_reason = payload.blocked_reason ?? null;
-  }
-
-  if (Object.keys(nextPayload).length === 0) {
-    throw new Error("No se especificó ningún cambio de acceso para actualizar.");
-  }
-
-  const { data, error } = await client
-    .from("profiles")
-    .update(nextPayload)
-    .eq("id", id)
-    .select("id, full_name, avatar_url, role, is_blocked, blocked_reason")
-    .single();
-
-  if (error) throw error;
-
-  return {
-    id: data.id,
-    full_name: data.full_name,
-    avatar_url: data.avatar_url ?? null,
-    role: data.role ?? "reader",
-    is_blocked: Boolean(data.is_blocked),
-    blocked_reason: data.blocked_reason ?? null,
-  };
+  const { data, error } = await client.rpc("admin_set_user_block", {
+    p_user_id: id,
+    p_blocked: payload.is_blocked,
+    p_reason: payload.blocked_reason,
+  });
+  if (error) throw profileChangeError(error);
+  return mapAdminProfile(data);
 }
 
 export async function createArticle(

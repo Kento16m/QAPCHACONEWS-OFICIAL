@@ -19,7 +19,7 @@ const makeArticleSelect = (includeContent = true) => {
     "views_count",
     "published_at",
     "category:categories(id,name,slug,color,sort_order)",
-    "author:profiles(full_name,avatar_url)",
+    "author:public_profiles(full_name,avatar_url)",
     "tags:article_tags(tag:tags(id,name,slug))",
   ].filter(Boolean).join(",");
 
@@ -171,7 +171,7 @@ export const getArticlesByCategory = async (slug: string, page = 1, pageSize = 4
 
   const { data, error, count } = await client
     .from("articles")
-    .select("id, title, slug, subtitle, excerpt, cover_image_url, is_featured, is_breaking, reading_time_minutes, seo_title, seo_description, views_count, published_at, category:categories!inner(id,name,slug,color,sort_order), author:profiles(full_name,avatar_url), tags:article_tags(tag:tags(id,name,slug))", { count: "exact" })
+    .select("id, title, slug, subtitle, excerpt, cover_image_url, is_featured, is_breaking, reading_time_minutes, seo_title, seo_description, views_count, published_at, category:categories!inner(id,name,slug,color,sort_order), author:public_profiles(full_name,avatar_url), tags:article_tags(tag:tags(id,name,slug))", { count: "exact" })
     .eq("status", "published")
     .lte("published_at", new Date().toISOString())
     .eq("category.slug", slug)
@@ -195,7 +195,7 @@ export const getArticlesByTag = async (slug: string, page = 1, pageSize = 12): P
 
   const { data, error, count } = await client
     .from("articles")
-    .select("id, title, slug, subtitle, excerpt, cover_image_url, is_featured, is_breaking, reading_time_minutes, seo_title, seo_description, views_count, published_at, category:categories(id,name,slug,color,sort_order), author:profiles(full_name,avatar_url), tags:article_tags!inner(tag:tags!inner(id,name,slug))", { count: "exact" })
+    .select("id, title, slug, subtitle, excerpt, cover_image_url, is_featured, is_breaking, reading_time_minutes, seo_title, seo_description, views_count, published_at, category:categories(id,name,slug,color,sort_order), author:public_profiles(full_name,avatar_url), tags:article_tags!inner(tag:tags!inner(id,name,slug))", { count: "exact" })
     .eq("status", "published")
     .lte("published_at", new Date().toISOString())
     .eq("tags.tag.slug", slug)
@@ -265,7 +265,7 @@ export const searchArticles = async (term: string, page = 1, pageSize = 12): Pro
 
   const baseQuery = client
     .from("articles")
-    .select("id, title, slug, subtitle, excerpt, cover_image_url, is_featured, is_breaking, reading_time_minutes, seo_title, seo_description, views_count, published_at, category:categories(id,name,slug,color,sort_order), author:profiles(full_name,avatar_url), tags:article_tags(tag:tags(id,name,slug))", { count: "exact" })
+    .select("id, title, slug, subtitle, excerpt, cover_image_url, is_featured, is_breaking, reading_time_minutes, seo_title, seo_description, views_count, published_at, category:categories(id,name,slug,color,sort_order), author:public_profiles(full_name,avatar_url), tags:article_tags(tag:tags(id,name,slug))", { count: "exact" })
     .eq("status", "published")
     .lte("published_at", new Date().toISOString());
 

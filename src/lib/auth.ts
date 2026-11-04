@@ -1,6 +1,5 @@
 import type { User } from "@supabase/supabase-js";
 import { requireSupabaseClient } from "@/lib/supabase";
-import { getProfileColor } from "@/lib/profile-colors";
 
 export const BLOCKED_ACCOUNT_MESSAGE_KEY = "blocked-account-message";
 
@@ -165,24 +164,12 @@ export async function signUp(email: string, password: string, full_name: string)
 
   if (error) throw mapAuthError(error);
 
-  const user = data.user as User | null;
-  if (!user) {
-    throw new Error("La cuenta se creó, pero necesitás confirmar tu correo antes de iniciar sesión.");
+  // No session means email confirmation is pending; the database trigger already created the profile.
+  if (!data.user || !data.session) {
+    throw new Error("Te enviamos un correo para confirmar tu cuenta. Confirmalo antes de iniciar sesión.");
   }
 
-  const { error: profileError } = await client.from("profiles").upsert({
-    id: user.id,
-    full_name: full_name.trim() || user.email?.split("@")[0] || "Usuario",
-    avatar_url: user.user_metadata?.avatar_url ?? user.user_metadata?.picture ?? user.user_metadata?.avatar ?? null,
-    profile_color: getProfileColor(full_name),
-    role: "reader",
-  }, { onConflict: "id" });
-
-  if (profileError) {
-    console.warn("No se pudo crear el perfil del usuario al registrarse:", profileError);
-  }
-
-  return user;
+  return data.user as User;
 }
 
 export async function signInWithOAuth(provider: "google" | "facebook") {
