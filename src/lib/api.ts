@@ -99,46 +99,34 @@ const handleSupabaseError = (error: PostgrestError | null) => {
 
 export const getFeaturedArticle = async (): Promise<Article | null> => {
   const client = requireSupabaseClient();
-  const baseQuery = client
-    .from("articles")
-    .select(makeArticleSelect())
-    .eq("status", "published")
-    .lte("published_at", new Date().toISOString());
+  const latestPublished = () =>
+    client
+      .from("articles")
+      .select(makeArticleSelect(false))
+      .eq("status", "published")
+      .lte("published_at", new Date().toISOString())
+      .order("published_at", { ascending: false })
+      .limit(1);
 
-  const { data: featured, error: featuredError } = await baseQuery
-    .eq("is_featured", true)
-    .order("published_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const { data: featured, error: featuredError } = await latestPublished().eq("is_featured", true).maybeSingle();
+  handleSupabaseError(featuredError);
+  if (featured) return mapRow(featured);
 
-  if (featuredError) {
-    if (featuredError.code === "PGRST116") {
-      const { data: fallback, error: fallbackError } = await client
-        .from("articles")
-        .select(makeArticleSelect())
-        .eq("status", "published")
-        .lte("published_at", new Date().toISOString())
-        .order("published_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      handleSupabaseError(fallbackError);
-      return fallback ? mapRow(fallback) : null;
-    }
-    handleSupabaseError(featuredError);
-  }
-
-  return featured ? mapRow(featured) : null;
+  const { data: latest, error: latestError } = await latestPublished().maybeSingle();
+  handleSupabaseError(latestError);
+  return latest ? mapRow(latest) : null;
 };
 
 export const getBreakingArticles = async (): Promise<Article[]> => {
   const client = requireSupabaseClient();
   const { data, error } = await client
     .from("articles")
-    .select(makeArticleSelect())
+    .select(makeArticleSelect(false))
     .eq("status", "published")
     .lte("published_at", new Date().toISOString())
     .eq("is_breaking", true)
-    .order("published_at", { ascending: false });
+    .order("published_at", { ascending: false })
+    .limit(10);
 
   handleSupabaseError(error);
   return (data ?? []).map(mapRow);
@@ -148,7 +136,7 @@ export const getMostReadArticles = async (limit = 5): Promise<Article[]> => {
   const client = requireSupabaseClient();
   const { data, error } = await client
     .from("articles")
-    .select(makeArticleSelect())
+    .select(makeArticleSelect(false))
     .eq("status", "published")
     .lte("published_at", new Date().toISOString())
     .order("views_count", { ascending: false })
@@ -162,7 +150,7 @@ export const getLatestArticles = async (limit = 6): Promise<Article[]> => {
   const client = requireSupabaseClient();
   const { data, error } = await client
     .from("articles")
-    .select(makeArticleSelect())
+    .select(makeArticleSelect(false))
     .eq("status", "published")
     .lte("published_at", new Date().toISOString())
     .order("published_at", { ascending: false })
@@ -242,7 +230,7 @@ export const getRelatedArticles = async (articleId: string, categoryId: string |
   const client = requireSupabaseClient();
   const { data, error } = await client
     .from("articles")
-    .select(makeArticleSelect())
+    .select(makeArticleSelect(false))
     .eq("status", "published")
     .lte("published_at", new Date().toISOString())
     .eq("category_id", categoryId)

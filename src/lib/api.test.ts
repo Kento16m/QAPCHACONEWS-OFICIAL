@@ -34,7 +34,16 @@ vi.mock("@/lib/supabase", () => {
   return { requireSupabaseClient: () => ({ from }), supabase: { from } };
 });
 
-import { buildSearchFilter, searchArticles } from "@/lib/api";
+import {
+  buildSearchFilter,
+  getArticleBySlug,
+  getBreakingArticles,
+  getFeaturedArticle,
+  getLatestArticles,
+  getMostReadArticles,
+  getRelatedArticles,
+  searchArticles,
+} from "@/lib/api";
 
 const calledWith = (method: string) => fake.calls.filter((c) => c.method === method);
 
@@ -63,6 +72,47 @@ describe("buildSearchFilter", () => {
 
   it("escapes backslashes and underscores", () => {
     expect(buildSearchFilter("a\\b_c", []).split('",')[0]).toBe('title.ilike."%a\\\\\\\\b\\\\_c%');
+  });
+});
+
+describe("getFeaturedArticle", () => {
+  it("returns the featured article when there is one", async () => {
+    fake.rows = { articles: [[{ id: "f1", title: "Destacada" }]] };
+    expect((await getFeaturedArticle())?.title).toBe("Destacada");
+  });
+
+  it("falls back to the latest article when none is featured", async () => {
+    fake.rows = { articles: [[], [{ id: "l1", title: "Última" }]] };
+    expect((await getFeaturedArticle())?.title).toBe("Última");
+  });
+
+  it("returns null when nothing is published", async () => {
+    expect(await getFeaturedArticle()).toBeNull();
+  });
+});
+
+describe("list queries", () => {
+  const selectedColumns = () => String(calledWith("select").at(-1)?.args[0]);
+
+  it.each([
+    ["latest", () => getLatestArticles()],
+    ["most read", () => getMostReadArticles()],
+    ["breaking", () => getBreakingArticles()],
+    ["related", () => getRelatedArticles("a1", "c1")],
+    ["featured", () => getFeaturedArticle()],
+  ])("%s does not download the article body", async (_name, query) => {
+    await query();
+    expect(selectedColumns()).not.toMatch(/\bcontent\b/);
+  });
+
+  it("the article page does download the body", async () => {
+    await getArticleBySlug("nota");
+    expect(selectedColumns()).toMatch(/\bcontent\b/);
+  });
+
+  it("limits breaking news to 10", async () => {
+    await getBreakingArticles();
+    expect(calledWith("limit")[0]?.args[0]).toBe(10);
   });
 });
 
