@@ -67,7 +67,7 @@ test.afterAll(async () => {
   for (const id of userIds) await api(`/auth/v1/admin/users/${id}`, { method: "DELETE" });
 });
 
-const EXTERNAL_DATA = ["**/api.openweathermap.org/**", "**/open.er-api.com/**", "**/r.jina.ai/**", "**/api/cotizaciones*", "**/cotizaciones.json"];
+const EXTERNAL_DATA = ["**/api.openweathermap.org/**", "**/api/clima*", "**/api/cotizaciones*", "**/cotizaciones.json"];
 
 // Every test runs with weather and exchange-rate services down: the site must not depend on them.
 const prepare = async (page: Page | BrowserContext, consent: string | null = "false") => {
@@ -157,8 +157,7 @@ test.describe("cookies", () => {
     expect(csp).toContain("googletagmanager");
     const violations: string[] = [];
     page.on("console", (message) => {
-      // shortcut: the browser still falls back to scraping maxicambios directly; Task 3.2 removes that and this filter.
-      if (message.text().includes("Content Security Policy") && !message.text().includes("maxicambios")) violations.push(message.text());
+      if (message.text().includes("Content Security Policy")) violations.push(message.text());
     });
     await prepare(page, null);
     await withProductionCsp(page);

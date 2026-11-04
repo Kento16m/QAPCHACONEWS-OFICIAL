@@ -3,12 +3,15 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
-import { fetchMaxicambiosRates } from "./src/lib/exchange-rate";
+// @ts-expect-error plain JavaScript module shared with the Netlify function
+import { createRatesFetcher } from "./netlify/shared/maxicambios.mjs";
+
+const fetchRates = createRatesFetcher();
 
 function maxicambiosProxyPlugin() {
   const handle = async (req: any, res: any) => {
     try {
-      const rates = await fetchMaxicambiosRates();
+      const { rates, source } = await fetchRates();
       res.statusCode = 200;
       res.setHeader("Content-Type", "application/json; charset=utf-8");
       res.setHeader("Cache-Control", "no-store");
@@ -16,7 +19,7 @@ function maxicambiosProxyPlugin() {
         JSON.stringify({
           rates,
           updatedAt: new Date().toISOString(),
-          source: "maxicambios.com.py",
+          source,
         }),
       );
     } catch (error) {
