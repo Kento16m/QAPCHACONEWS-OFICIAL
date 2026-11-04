@@ -291,7 +291,8 @@ Requiere aprobación explícita del dueño el mismo día.
 - [ ] Corregir los 146 errores de `tsc`, empezando por los que indican bugs reales.
 - [ ] Aplicar Prettier en un único commit sin otros cambios.
 - [ ] Resolver las 71 violaciones de hooks, en su mayoría por retornos anticipados en `admin.tsx`.
-- [ ] CI en cada push: `tsc`, ESLint, `npm test` y compilación. `npm run test:db` usa un secreto de GitHub con un token nuevo.
+- [x] CI en cada push: `tsc`, ESLint, `npm test`, compilación y `npm audit`.
+- [ ] El dueño activa la protección de `main` en GitHub para que un push en rojo no pueda fusionarse ni desplegarse, y agrega un secreto con un token nuevo para correr `npm run test:db` en CI.
 - [ ] Actualizar `zod`, `vite` y `follow-redirects` para dejar `npm audit` sin avisos altos.
 - [ ] Commit y comprobar un push en verde.
 

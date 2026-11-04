@@ -758,16 +758,26 @@ export function WeatherDashboard({
       minute: "2-digit",
       hour12: false,
     });
-    const uvValue = Math.min(15, Math.max(0, Math.round(snapshot?.uvIndex ?? 0)));
-    const airQualityValue = Math.min(300, Math.max(0, Math.round(snapshot?.airQuality ?? 0)));
+    const uvReading = snapshot?.uvIndex ?? null;
+    const airReading = snapshot?.airQuality ?? null;
+    const uvValue = Math.min(15, Math.max(0, Math.round(uvReading ?? 0)));
+    const airQualityValue = Math.min(300, Math.max(0, Math.round(airReading ?? 0)));
 
     return [
       {
         key: "uv",
         label: "Índice UV",
-        value: `${uvValue}`,
+        value: uvReading === null ? "—" : `${uvValue}`,
         description:
-          uvValue < 3 ? "Bajo" : uvValue < 6 ? "Moderado" : uvValue < 8 ? "Alto" : "Muy alto",
+          uvReading === null
+            ? "No disponible"
+            : uvValue < 3
+              ? "Bajo"
+              : uvValue < 6
+                ? "Moderado"
+                : uvValue < 8
+                  ? "Alto"
+                  : "Muy alto",
         icon: "sun",
       },
       {
@@ -815,8 +825,15 @@ export function WeatherDashboard({
       {
         key: "airQuality",
         label: "Calidad del aire",
-        value: `${airQualityValue}`,
-        description: airQualityValue < 50 ? "Buena" : airQualityValue < 100 ? "Moderada" : "Mala",
+        value: airReading === null ? "—" : `${airQualityValue}`,
+        description:
+          airReading === null
+            ? "No disponible"
+            : airQualityValue < 50
+              ? "Buena"
+              : airQualityValue < 100
+                ? "Moderada"
+                : "Mala",
         icon: "sparkles",
       },
       {
@@ -884,8 +901,7 @@ export function WeatherDashboard({
         )}
       >
         <div className="max-w-md rounded-2xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-200">
-          No se pudo cargar el clima en tiempo real. Verificá la API key de OpenWeatherMap y volvé a
-          intentar.
+          No se pudo cargar el clima en tiempo real. Volvé a intentar en unos minutos.
         </div>
       </div>
     );

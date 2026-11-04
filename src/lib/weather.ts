@@ -36,11 +36,12 @@ export type WeatherSnapshot = {
   current: WeatherCurrent;
   forecast: ForecastDay[];
   hourly: HourlyForecastPoint[];
-  uvIndex: number;
+  // Null when that reading is unavailable: the rest of the page still works.
+  uvIndex: number | null;
   visibility: number;
   sunrise: number;
   sunset: number;
-  airQuality: number;
+  airQuality: number | null;
 };
 
 type ForecastEntry = {
@@ -260,12 +261,13 @@ export async function fetchWeatherSnapshotForCity(city: string): Promise<Weather
     fetchHourlyForecastForCity(city),
   ]);
 
-  const uvIndex = current.coordinates
-    ? await fetchUvIndexForCoordinates(current.coordinates.lat, current.coordinates.lon)
-    : 0;
-  const airQuality = current.coordinates
-    ? await fetchAirQualityForCoordinates(current.coordinates.lat, current.coordinates.lon)
-    : 0;
+  const { coordinates } = current;
+  const [uvIndex, airQuality] = coordinates
+    ? await Promise.all([
+        fetchUvIndexForCoordinates(coordinates.lat, coordinates.lon).catch(() => null),
+        fetchAirQualityForCoordinates(coordinates.lat, coordinates.lon).catch(() => null),
+      ])
+    : [null, null];
 
   return {
     current,

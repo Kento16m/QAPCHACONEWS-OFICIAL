@@ -183,7 +183,8 @@ test.describe("public site", () => {
     await page.goto("/clima");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.locator("main")).not.toBeEmpty();
+    await expect(page.getByText("No se pudo cargar el clima")).toBeVisible();
+    await expect(page.getByText("API key")).toHaveCount(0);
     expect(pageErrors).toEqual([]);
   });
 
@@ -229,6 +230,22 @@ test.describe("cookies", () => {
     );
     await banner.getByRole("button", { name: "Aceptar" }).click();
     await gaRequest;
+    await page.waitForLoadState("networkidle");
+
+    // Videos uploaded to Supabase Storage must be allowed to play in articles.
+    const videoSlug = `e2e-video-${STAMP}`;
+    await api("/rest/v1/articles", {
+      method: "POST",
+      body: JSON.stringify({
+        title: `E2E Video ${STAMP}`,
+        slug: videoSlug,
+        status: "published",
+        published_at: new Date(Date.now() - 3_600_000).toISOString(),
+        content: `<video src="${BASE}/storage/v1/object/public/article-media/e2e.mp4" controls></video>`,
+      }),
+    });
+    await page.goto(`/noticia/${videoSlug}`);
+    await expect(page.locator("video")).toBeAttached();
     await page.waitForLoadState("networkidle");
 
     expect(violations).toEqual([]);

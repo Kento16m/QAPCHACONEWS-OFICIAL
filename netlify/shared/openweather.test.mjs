@@ -50,7 +50,7 @@ describe("proxyWeather", () => {
 
   it("passes the service's status and lets browsers reuse good answers", async () => {
     const good = await call("endpoint=/weather&q=x");
-    expect(good.response.headers.get("cache-control")).toContain("max-age=");
+    expect(good.response.headers.get("cache-control")).toBe("private, max-age=600");
 
     const limited = await call(
       "endpoint=/weather&q=x",

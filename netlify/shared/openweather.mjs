@@ -34,7 +34,8 @@ export const proxyWeather = async (requestUrl, apiKey, http = fetch) => {
       status: response.status,
       headers: {
         "content-type": "application/json; charset=utf-8",
-        "cache-control": response.ok ? "public, max-age=600" : "no-store",
+        // Private: each answer depends on the query, so only the visitor's browser reuses it.
+        "cache-control": response.ok ? "private, max-age=600" : "no-store",
       },
     });
   } catch {
