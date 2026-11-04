@@ -33,3 +33,6 @@ dist-ssr
 .env
 .env.*
 !.env.example
+# Estado local que no debe versionarse
+graphify-out/
+supabase/.temp/
