@@ -1,0 +1,46 @@
+/* Flags from flag-icons (MIT License, https://github.com/lipis/flag-icons). Only those the site uses. */
+.fi {
+  background-size: contain;
+  background-position: 50%;
+  background-repeat: no-repeat;
+  position: relative;
+  display: inline-block;
+  width: 1.333333em;
+  line-height: 1em;
+}
+.fi:before {
+  content: "\00a0";
+}
+.fi-ar {
+  background-image: url("./ar.svg");
+}
+.fi-au {
+  background-image: url("./au.svg");
+}
+.fi-br {
+  background-image: url("./br.svg");
+}
+.fi-ca {
+  background-image: url("./ca.svg");
+}
+.fi-ch {
+  background-image: url("./ch.svg");
+}
+.fi-cl {
+  background-image: url("./cl.svg");
+}
+.fi-eu {
+  background-image: url("./eu.svg");
+}
+.fi-gb {
+  background-image: url("./gb.svg");
+}
+.fi-jp {
+  background-image: url("./jp.svg");
+}
+.fi-us {
+  background-image: url("./us.svg");
+}
+.fi-uy {
+  background-image: url("./uy.svg");
+}
