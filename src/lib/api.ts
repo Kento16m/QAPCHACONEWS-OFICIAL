@@ -31,8 +31,17 @@ const normalizePublishedAt = (value: string | null | undefined) => value ?? new 
 const escapeLikeValue = (value: string) =>
   value
     .replace(/\\/g, "\\\\")
-    .replace(/[%_]/g, "\\$&")
-    .replace(/,/g, " ");
+    .replace(/[%_]/g, "\\$&");
+
+// PostgREST treats , . : ( ) as syntax inside or(): double quotes keep them as plain text.
+const quoteFilterValue = (value: string) => `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+
+export const buildSearchFilter = (term: string, categoryIds: string[]) => {
+  const pattern = quoteFilterValue(`%${escapeLikeValue(term)}%`);
+  const clauses = ["title", "subtitle", "excerpt"].map((field) => `${field}.ilike.${pattern}`);
+  if (categoryIds.length > 0) clauses.push(`category_id.in.(${categoryIds.join(",")})`);
+  return clauses.join(",");
+};
 
 const mapRow = (row: any): Article => {
   const tags: Tag[] = Array.isArray(row?.tags)
@@ -293,13 +302,8 @@ export const searchArticles = async (term: string, page = 1, pageSize = 12): Pro
 
   const categoryIds = [...new Set((categoryMatches ?? []).map((row) => row.id).filter(Boolean))];
 
-  let queryBuilder = baseQuery.or(`title.ilike.%${escaped}%,subtitle.ilike.%${escaped}%,excerpt.ilike.%${escaped}%`);
-
-  if (categoryIds.length > 0) {
-    queryBuilder = queryBuilder.in("category_id", categoryIds);
-  }
-
-  const { data, error, count } = await queryBuilder
+  const { data, error, count } = await baseQuery
+    .or(buildSearchFilter(query, categoryIds))
     .order("published_at", { ascending: false })
     .range(from, to);
 
