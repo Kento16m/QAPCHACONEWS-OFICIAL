@@ -40,9 +40,12 @@ export const Route = createFileRoute("/noticia/$slug")({
         article.subtitle ??
         "Leé la nota completa en QAP ChacoNews.")
       : "Leé la nota completa en QAP ChacoNews y seguí la actualidad del Chaco paraguayo.";
-    const image = article?.cover_image_url
-      ? `${siteUrl}${article.cover_image_url.startsWith("/") ? article.cover_image_url : `/${article.cover_image_url}`}`
-      : `${siteUrl}/og-image.svg`;
+    const cover = article?.cover_image_url;
+    const image = /^https?:\/\//i.test(cover ?? "")
+      ? cover
+      : cover?.startsWith("/")
+        ? `${siteUrl}${cover}`
+        : `${siteUrl}/og-image.png`;
 
     return {
       meta: [
@@ -309,7 +312,7 @@ function ArticlePage() {
         .replace(/\s+/g, " ")
         .trim()
         .slice(0, 200);
-      const imageUrl = a.cover_image_url || "/og-image.svg";
+      const imageUrl = a.cover_image_url || `${window.location.origin}/og-image.png`;
       const pageUrl = `${window.location.origin}${window.location.pathname}`;
 
       document.title = title;

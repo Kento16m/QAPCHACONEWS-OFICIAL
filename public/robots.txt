@@ -7,10 +7,8 @@ Disallow: /private/
 Disallow: /_/
 
 # Sitemap principal del sitio
-Sitemap: https://www.qapchaconews.com/sitemap.xml
+Sitemap: https://qapchaconews.com/sitemap.xml
 
-# Host canonical recomendado para indexación
-Host: www.qapchaconews.com
 
 # Bots relevantes
 User-agent: Googlebot
