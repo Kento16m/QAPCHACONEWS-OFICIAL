@@ -1,7 +1,0 @@
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    # Si la solicitud no es para la carpeta dist, redirige internamente a dist
-    RewriteCond %{REQUEST_URI} !^/dist/
-    RewriteRule ^(.*)$ dist/index.html [L]
-</IfModule>
-
