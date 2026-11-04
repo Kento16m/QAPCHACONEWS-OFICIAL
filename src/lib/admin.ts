@@ -1,3 +1,4 @@
+import { createSlug } from "@/lib/slug";
 import { requireSupabaseClient } from "@/lib/supabase";
 
 export type ArticleStatus = "draft" | "scheduled" | "published" | "archived";
@@ -17,6 +18,8 @@ export interface AdminArticle {
   views_count: number;
   category_id: string | null;
   author_id: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
   category: { id: string; name: string; slug: string } | null;
   author: { id: string; full_name: string | null } | null;
 }
@@ -107,6 +110,8 @@ const selectArticleQuery = `
   views_count,
   category_id,
   author_id,
+  seo_title,
+  seo_description,
   category:categories(id,name,slug),
   author:public_profiles(id,full_name,avatar_url)
 `;
@@ -126,19 +131,11 @@ const mapArticleRow = (row: any): AdminArticle => ({
   views_count: Number(row.views_count ?? 0),
   category_id: row.category_id ?? null,
   author_id: row.author_id ?? null,
+  seo_title: row.seo_title ?? null,
+  seo_description: row.seo_description ?? null,
   category: row.category ? { id: row.category.id, name: row.category.name, slug: row.category.slug } : null,
   author: row.author ? { id: row.author.id, full_name: row.author.full_name ?? "Redacción" } : null,
 });
-
-const createSlug = (value: string) =>
-  value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9\s-]/g, "")
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
 
 async function ensureAdminAccess(): Promise<void> {
   const client = requireSupabaseClient();

@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { trackArticlePublished } from "@/lib/analytics";
+import { buildArticlePayload, emptyForm, type EditorForm, formFromArticle, isNewlyPublished } from "@/lib/article-form";
+import { createSlug } from "@/lib/slug";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useCategories } from "@/hooks/use-news";
@@ -100,50 +102,6 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-const createSlug = (value: string) =>
-  value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9\s-]/g, "")
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
-
-type EditorForm = {
-  title: string;
-  slug: string;
-  status: AdminArticle["status"];
-  excerpt: string;
-  content: string;
-  cover_image_url: string;
-  category_id: string | null;
-  author_id: string | null;
-  scheduled_at: string;
-  is_featured: boolean;
-  is_breaking: boolean;
-  seo_title: string;
-  seo_description: string;
-  tag_ids: string[];
-};
-
-const emptyForm = (): EditorForm => ({
-  title: "",
-  slug: "",
-  status: "draft",
-  excerpt: "",
-  content: "",
-  cover_image_url: "",
-  category_id: null,
-  author_id: null,
-  scheduled_at: "",
-  is_featured: false,
-  is_breaking: false,
-  seo_title: "",
-  seo_description: "",
-  tag_ids: [],
-});
-
 const areFormsEqual = (left: EditorForm, right: EditorForm) =>
   left.title === right.title &&
   left.slug === right.slug &&
@@ -159,38 +117,6 @@ const areFormsEqual = (left: EditorForm, right: EditorForm) =>
   left.seo_title === right.seo_title &&
   left.seo_description === right.seo_description &&
   JSON.stringify(left.tag_ids) === JSON.stringify(right.tag_ids);
-
-const buildFormFromArticle = (
-  article: AdminArticle | null,
-  authorList: {
-    id: string;
-    full_name: string | null;
-    avatar_url: string | null;
-    role: string;
-  }[] = [],
-  tagIds: string[] = [],
-): EditorForm => {
-  if (!article) return emptyForm();
-
-  return {
-    title: article.title,
-    slug: article.slug,
-    status: article.status,
-    excerpt: article.excerpt ?? "",
-    content: article.content ?? "",
-    cover_image_url: article.cover_image_url ?? "",
-    category_id: article.category_id ?? null,
-    author_id: article.author_id ?? authorList[0]?.id ?? null,
-    scheduled_at: article.scheduled_at
-      ? new Date(article.scheduled_at).toISOString().slice(0, 16)
-      : "",
-    is_featured: article.is_featured,
-    is_breaking: article.is_breaking,
-    seo_title: "",
-    seo_description: "",
-    tag_ids: tagIds,
-  };
-};
 
 const getInitials = (name: string | null | undefined) =>
   (name ?? "")
@@ -941,12 +867,12 @@ function AdminPage() {
       try {
         const articleTagIds = await getArticleTagIds(article.id);
         if (cancelled) return;
-        const nextForm = buildFormFromArticle(article, authors, articleTagIds);
+        const nextForm = formFromArticle(article, articleTagIds);
         setForm((current) => (areFormsEqual(current, nextForm) ? current : nextForm));
       } catch (error) {
         if (cancelled) return;
         console.error("No se pudieron cargar las etiquetas del artículo.", error);
-        const nextForm = buildFormFromArticle(article, authors, []);
+        const nextForm = formFromArticle(article, []);
         setForm((current) => (areFormsEqual(current, nextForm) ? current : nextForm));
       }
     };
@@ -1282,9 +1208,6 @@ function AdminPage() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      const title = form.title.trim();
-      if (!title) throw new Error("El título es obligatorio.");
-
       const resolvedAuthorId =
         form.author_id ?? currentEditorialUser.id ?? editorialAuthors[0]?.id ?? null;
       if (!resolvedAuthorId) {
@@ -1293,38 +1216,20 @@ function AdminPage() {
 
       setForm((current) => ({ ...current, author_id: resolvedAuthorId }));
 
-      const payload = {
-        title,
-        slug: (form.slug || createSlug(title)).trim() || createSlug(title),
-        status: form.status,
-        excerpt: form.excerpt.trim() || null,
-        content: form.content,
-        cover_image_url: form.cover_image_url.trim() || null,
-        category_id: form.category_id,
-        author_id: resolvedAuthorId,
-        scheduled_at:
-          form.status === "scheduled" && form.scheduled_at
-            ? new Date(form.scheduled_at).toISOString()
-            : null,
-        published_at: form.status === "published" ? new Date().toISOString() : null,
-        is_featured: form.is_featured,
-        is_breaking: form.is_breaking,
-        seo_title: form.seo_title.trim() || null,
-        seo_description: form.seo_description.trim() || null,
-      };
+      const payload = buildArticlePayload({ ...form, author_id: resolvedAuthorId }, selectedArticle, new Date());
 
-      if (!selectedArticle) {
-        const created = await createArticle(payload);
-        await syncArticleTags(created.id, form.tag_ids);
-        setSelectedId(created.id);
-        return created;
+      const saved = selectedArticle
+        ? await updateArticle(selectedArticle.id, payload)
+        : await createArticle(payload);
+      await syncArticleTags(saved.id, form.tag_ids);
+      if (!selectedArticle) setSelectedId(saved.id);
+
+      if (isNewlyPublished(selectedArticle?.status, saved.status)) {
+        trackArticlePublished(saved.title, saved.category?.name ?? null);
       }
-
-      const updated = await updateArticle(selectedArticle.id, payload);
-      await syncArticleTags(updated.id, form.tag_ids);
-      return updated;
+      return saved;
     },
-    onSuccess: async (savedArticle) => {
+    onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["admin", "articles"] });
       await queryClient.invalidateQueries({ queryKey: ["latest"] });
       await queryClient.invalidateQueries({ queryKey: ["featured"] });
@@ -1332,10 +1237,6 @@ function AdminPage() {
       await queryClient.invalidateQueries({ queryKey: ["category"] });
       await queryClient.invalidateQueries({ queryKey: ["article"] });
       await queryClient.invalidateQueries({ queryKey: ["categories"] });
-
-      if (savedArticle.status === "published") {
-        trackArticlePublished(savedArticle.title, savedArticle.category?.name ?? null);
-      }
     },
   });
 
@@ -1519,15 +1420,22 @@ function AdminPage() {
     const article = articles.find((item) => item.id === articleId);
     if (!article) return;
 
+    if (nextStatus === "scheduled" && !article.scheduled_at) {
+      window.alert("Elegí la fecha de publicación en el editor del artículo.");
+      setSelectedId(articleId);
+      setActiveTab("new");
+      return;
+    }
+
     try {
       await updateArticle(articleId, {
         status: nextStatus,
-        published_at: nextStatus === "published" ? new Date().toISOString() : article.published_at,
-        scheduled_at:
-          nextStatus === "scheduled" ? (article.scheduled_at ?? new Date().toISOString()) : null,
+        published_at:
+          article.published_at ?? (nextStatus === "published" ? new Date().toISOString() : null),
+        scheduled_at: nextStatus === "scheduled" ? article.scheduled_at : null,
       });
 
-      if (nextStatus === "published") {
+      if (isNewlyPublished(article.status, nextStatus)) {
         trackArticlePublished(article.title, article.category?.name ?? null);
       }
 
