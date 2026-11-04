@@ -7,11 +7,12 @@ Se aplica **solo en el proyecto actual de producción**, desde el panel de Supab
 En **SQL Editor**, ejecuta esto y guarda el resultado:
 
 ```sql
-select policyname, cmd, qual, with_check from pg_policies where tablename in ('profiles', 'comments');
+select tablename, policyname, cmd, roles, qual, with_check from pg_policies where schemaname = 'public' order by 1, 2;
 select tgname from pg_trigger where tgrelid = 'public.profiles'::regclass and not tgisinternal;
+select column_name from information_schema.columns where table_schema = 'public' and table_name = 'profiles';
 ```
 
-Si `users_update_own_profile` aparece y no hay un trigger que proteja `role`, cualquier usuario puede hacerse administrador.
+Compárteme el resultado **antes de aplicar nada**. Con eso confirmo si cualquier usuario puede hacerse administrador y que el parche encaja con tu base. La tabla `profiles` debe tener las columnas `role`, `is_blocked` y `blocked_reason`.
 
 ## 2. Aplicar el parche de la base
 

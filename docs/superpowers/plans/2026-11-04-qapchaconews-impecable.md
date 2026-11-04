@@ -73,12 +73,7 @@ Casos que ninguna prueba cubría y que más afectarían a una persona real. Cada
 **Interfaces:**
 - Produces: trigger `profiles_guard` en producción. Compatible con el código actual, que hace `upsert` de perfiles.
 
-- [ ] **Paso 1:** el dueño ejecuta en producción esta consulta y comparte el resultado:
-
-```sql
-select policyname, cmd, qual, with_check from pg_policies where tablename in ('profiles', 'comments');
-select tgname from pg_trigger where tgrelid = 'public.profiles'::regclass and not tgisinternal;
-```
+- [ ] **Paso 1:** el dueño ejecuta en producción la consulta de [README.md](../../../supabase/prod-hotfix/README.md) y comparte el resultado antes de aplicar nada. Las políticas de otras tablas leen `profiles.role` como quien consulta, así que el parche no puede quitarles ese permiso a los visitantes.
 
 - [ ] **Paso 2:** si un usuario puede cambiar su propio `role`, escribir un trigger `before insert or update` que rechace cambios de `role` o `is_blocked` si quien llama no es administrador. También debe forzar `role = 'reader'` e `is_blocked = false` en perfiles nuevos, salvo para `service_role`.
 - [ ] **Paso 3:** el dueño lo ejecuta y confirma con una cuenta de lector que `PATCH profiles role=admin` falla y que editar el nombre sigue funcionando.
@@ -232,7 +227,7 @@ El banner ya existía, pero su decisión no afectaba a nada: GA arrancaba aunque
 
 ### Tarea 2.2: cuentas y sesiones
 
-- [ ] Importar `auth.users` y `auth.identities` con los mismos ID y hashes.
+- [ ] Importar `auth.users` y `auth.identities` con los mismos ID y hashes. `verify.mjs` confirma que cada usuario tiene su fila en `profiles`: el trigger no corre al importar, y sin perfil no se puede comentar ni dar like.
 - [ ] Marcar al dueño como administrador protegido (`is_protected = true`).
 - [ ] Prueba (Review Focus 1): con una cuenta real de prueba del dueño, antes y después, entrar con contraseña y con Google. El rol y los comentarios deben conservarse.
 - [ ] Avisar a los usuarios: todas las sesiones se cierran y hay que volver a entrar, porque cambia la clave de firma.

@@ -39,9 +39,8 @@ drop trigger if exists profiles_guard on public.profiles;
 create trigger profiles_guard before insert or update on public.profiles
   for each row execute function public.guard_profile_fields();
 
--- Visitors keep author names and avatars, but no longer see roles or block reasons.
-revoke select on public.profiles from anon;
-grant select (id, full_name, avatar_url, profile_color) on public.profiles to anon;
+-- Roles stay readable by visitors until the new database replaces this one: policies on articles and
+-- other tables read profiles.role as the caller, so revoking it here would break the public site.
 
 -- Comments must go through moderate-comment, which uses the service role and is unaffected.
 drop policy if exists "Authenticated users can insert comments" on public.comments;
@@ -52,7 +51,6 @@ commit;
 -- begin;
 -- drop trigger if exists profiles_guard on public.profiles;
 -- drop function if exists public.guard_profile_fields();
--- grant select on public.profiles to anon;
 -- create policy "Authenticated users can insert comments" on public.comments for insert to authenticated
 --   with check (auth.uid() = user_id and length(trim(body)) between 1 and 2000);
 -- commit;
