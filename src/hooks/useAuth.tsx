@@ -31,7 +31,6 @@ interface AuthContextValue {
   signInWithEmail: (email: string, password: string) => Promise<AuthUser>;
   signUpWithEmail: (email: string, password: string, full_name: string) => Promise<AuthUser | null>;
   signInWithGoogle: () => Promise<unknown>;
-  signInWithFacebook: () => Promise<unknown>;
   sendRecoveryCode: (email: string) => Promise<{ ok: true }>;
   verifyRecoveryCode: (email: string, token: string) => Promise<{ id: string } | null>;
   updatePassword: (password: string) => Promise<unknown>;
@@ -235,8 +234,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       signInWithEmail,
       signUpWithEmail,
-      signInWithGoogle: () => auth.signInWithOAuth("google"),
-      signInWithFacebook: () => auth.signInWithOAuth("facebook"),
+      signInWithGoogle: () => auth.signInWithGoogle(),
       sendRecoveryCode: (email: string) => auth.sendPasswordRecoveryCode(email),
       verifyRecoveryCode: (email: string, token: string) =>
         auth

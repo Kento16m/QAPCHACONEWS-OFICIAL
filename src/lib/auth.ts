@@ -132,7 +132,7 @@ export async function signUp(email: string, password: string, full_name: string)
   return data.session ? (data.user as User) : null;
 }
 
-export async function signInWithOAuth(provider: "google" | "facebook") {
+export async function signInWithGoogle() {
   const client = requireSupabaseClient();
 
   if (typeof window === "undefined") {
@@ -140,7 +140,7 @@ export async function signInWithOAuth(provider: "google" | "facebook") {
   }
 
   const { data, error } = await client.auth.signInWithOAuth({
-    provider,
+    provider: "google",
     options: {
       redirectTo: window.location.origin,
     },

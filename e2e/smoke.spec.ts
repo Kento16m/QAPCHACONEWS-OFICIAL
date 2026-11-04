@@ -313,6 +313,28 @@ test.describe("accounts", () => {
     ).toBeVisible();
   });
 
+  test("Google sign-in goes to Supabase and returns to this site", async ({ page }) => {
+    await prepare(page);
+    await page.route("**/auth/v1/authorize*", (route) =>
+      route.fulfill({ status: 200, contentType: "text/html", body: "ok" }),
+    );
+    await page.goto("/");
+    await page.locator("button:visible", { hasText: "Iniciar sesión" }).first().click();
+    await expect(page.getByRole("dialog").getByRole("button", { name: /Facebook/ })).toHaveCount(0);
+
+    const authorize = page.waitForRequest((request) =>
+      request.url().includes("/auth/v1/authorize"),
+    );
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: /Google/ })
+      .click();
+
+    const url = new URL((await authorize).url());
+    expect(url.searchParams.get("provider")).toBe("google");
+    expect(url.searchParams.get("redirect_to")).toBe("http://127.0.0.1:4179");
+  });
+
   test("a blocked person sees the reason and stays out", async ({ page }) => {
     await prepare(page);
     await page.goto("/");

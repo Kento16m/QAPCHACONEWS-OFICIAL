@@ -241,7 +241,7 @@ El banner ya existía, pero su decisión no afectaba a nada: GA arrancaba aunque
 ### Tarea 2.4: configurar servicios
 
 - [ ] Correo propio (SMTP), porque el límite por defecto de 2 correos por hora rompe el registro y la recuperación.
-- [ ] Credenciales de Google y Facebook, o quitar esos botones si no se usarán.
+- [x] Google activo en el proyecto nuevo y Facebook retirado del sitio. Al migrar: probar un inicio real con Google en el dominio final.
 - [ ] Variables de entorno en Netlify, según `.env.example`.
 - [ ] Sitio de pruebas de Netlify desde `oficial`, con la base nueva. `npm run test:e2e` pasa allí.
 
@@ -269,7 +269,7 @@ Requiere aprobación explícita del dueño el mismo día.
 - [ ] Borrar `src/data/mock.ts`, `src/server.ts`, `src/start.ts`, `src/lib/error-capture.ts`, `src/lib/error-page.ts`, `src/pages/admin/.gitkeep`, la carpeta vacía `QAPCHACONEWS`, y las capturas y logos sin referencias en `public/`.
 - [ ] Quitar `@tanstack/react-start`, `nitro` y la config de Lovable si se decide desconectarlo.
 - [ ] Dejar un solo gestor de paquetes, npm: borrar `bun.lock` y `bunfig.toml`.
-- [ ] Borrar `.htaccess` si se descarta Hostinger, y `public/_redirects`, que duplica `netlify.toml`.
+- [x] Borrar el `.htaccess` de la raíz, pensado para servir el sitio público desde Hostinger, y `public/_redirects`, que duplica `netlify.toml`.
 - [ ] Copiar solo el CSS y las fuentes de `weather-icons-master` y borrar el resto.
 - [ ] Antes de cada borrado, buscar en todo el repo. Tras cada grupo, `npm test` y compilación. Commit por grupo.
 
@@ -304,7 +304,8 @@ Requiere aprobación explícita del dueño el mismo día.
 
 Esta fase necesita su propia especificación y su propio plan: empieza con las skills de brainstorming e impeccable, porque el diseño visual y la experiencia de los editores merecen decidirse contigo. Estas son las decisiones de partida que propongo.
 
-- **Estructura:** mismo repositorio, entrada `admin.html`, código en `src/admin/`, `vite.admin.config.ts` y salida `dist-admin`. Es un segundo sitio de Netlify en el subdominio, con CSP propia y `noindex`. Reutiliza `article-form.ts` y `use-article-form.ts`.
+- **Estructura:** mismo repositorio, entrada `admin.html`, código en `src/admin/`, `vite.admin.config.ts` y salida `dist-admin`. Reutiliza `article-form.ts` y `use-article-form.ts`.
+- **Alojamiento (decidido):** `admin.qapchaconews.com` va en **Hostinger**; el sitio público sigue en Netlify. Hostinger sirve archivos estáticos, así que el panel habla solo con Supabase y no tiene funciones propias: sin `/api/clima` ni `/api/cotizaciones` en su dominio. Un `.htaccess` propio aporta la ruta única de la SPA, CSP, `noindex` y HTTPS obligatorio, porque el dominio principal ya exige HTTPS en sus subdominios. Falta definir cómo se publica: GitHub Actions por FTP o Git de Hostinger.
 - **Acceso:** pantalla de inicio de sesión propia. Se elimina `admin-access.ts`, porque el permiso real ya lo aplica la base. Administradores con doble factor (TOTP) obligatorio y comprobado en RLS.
 - **Secciones:** Resumen, Artículos, Editor, Comentarios, Categorías, Etiquetas, Usuarios, Newsletter y Control de Acceso.
 - **Editor:** sustituir `contenteditable` y `execCommand` (obsoleto) por TipTap, con borrador automático, vista previa y subida de imágenes.
@@ -396,8 +397,8 @@ Migraciones previstas, cada una con su prueba:
 |---|---|---|
 | ¿Damos acceso a producción (token) o lo haces guiado? | Guiado, para no compartir otro token | 0.2 |
 | ¿Sigues usando Lovable? | Desconectarlo: el proyecto ya se gestiona por Git | 2.5 y 3.1 |
-| ¿Sigues usando Hostinger? | Descartarlo: el sitio ya vive en Netlify | 3.1 |
+| ~~¿Sigues usando Hostinger?~~ | **Decidido:** solo para `admin.qapchaconews.com`; el sitio público sigue en Netlify | – |
 | ¿Acceso a la cuenta de Netlify? | Sí, o lo configuras guiado | 2.4 |
-| ¿Mantienes el inicio con Google y Facebook? | Google sí; Facebook solo si tus usuarios lo usan | 2.4 |
+| ~~¿Mantienes el inicio con Google y Facebook?~~ | **Decidido:** solo Google, ya activo en el proyecto nuevo. Facebook se quitó del sitio | – |
 | ¿Qué correo envía los mensajes del sitio? | Un servicio SMTP con el dominio propio | 2.4 |
 | ¿Plan de Supabase? | Pro al entrar en producción, por copias diarias y porque el gratuito puede pausarse; confirma el precio vigente | 2.5 y Fase 6 |
