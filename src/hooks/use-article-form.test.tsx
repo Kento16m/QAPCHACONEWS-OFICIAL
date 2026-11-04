@@ -1,0 +1,172 @@
+import { act, renderHook } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { useArticleForm } from "@/hooks/use-article-form";
+import type { AdminArticle } from "@/lib/admin";
+
+const article = (id: string, title = `Nota ${id}`, views = 0): AdminArticle => ({
+  id,
+  title,
+  slug: id,
+  status: "draft",
+  excerpt: null,
+  content: "<p>x</p>",
+  cover_image_url: null,
+  published_at: null,
+  scheduled_at: null,
+  is_featured: false,
+  is_breaking: false,
+  views_count: views,
+  category_id: null,
+  author_id: "u1",
+  seo_title: null,
+  seo_description: null,
+  category: null,
+  author: null,
+});
+
+const loadTags = () => Promise.resolve(["t1"]);
+
+const render = (initial: AdminArticle | null) =>
+  renderHook(({ current }) => useArticleForm(current, loadTags), { initialProps: { current: initial } });
+
+const type = (result: { current: ReturnType<typeof useArticleForm> }, title: string) =>
+  act(() => result.current.setForm((form) => ({ ...form, title })));
+
+const flushDraft = () => act(() => vi.advanceTimersByTime(1000));
+const settle = () => act(async () => { await vi.advanceTimersByTimeAsync(0); });
+
+beforeEach(() => {
+  vi.useFakeTimers();
+  window.localStorage.clear();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+describe("useArticleForm", () => {
+  it("loads the article and its tags", async () => {
+    const { result } = render(article("a"));
+    await settle();
+
+    expect(result.current.form.title).toBe("Nota a");
+    expect(result.current.form.tag_ids).toEqual(["t1"]);
+    expect(result.current.hasRestoredDraft).toBe(false);
+  });
+
+  it("keeps edits when the list reloads the same article", async () => {
+    const { result, rerender } = render(article("a"));
+    await settle();
+    type(result, "Título editado");
+
+    rerender({ current: article("a", "Nota a", 99) });
+    await settle();
+
+    expect(result.current.form.title).toBe("Título editado");
+  });
+
+  it("keeps a new article when the list reloads", async () => {
+    const { result, rerender } = render(null);
+    type(result, "Nota nueva");
+
+    rerender({ current: null });
+    await settle();
+
+    expect(result.current.form.title).toBe("Nota nueva");
+  });
+
+  it("loads another article when the id changes", async () => {
+    const { result, rerender } = render(article("a"));
+    await settle();
+
+    rerender({ current: article("b") });
+    await settle();
+
+    expect(result.current.form.title).toBe("Nota b");
+  });
+
+  it("restores an unsaved new article after a reload", async () => {
+    const first = render(null);
+    type(first.result, "Texto sin guardar");
+    flushDraft();
+    first.unmount();
+
+    const { result } = render(null);
+    await settle();
+
+    expect(result.current.form.title).toBe("Texto sin guardar");
+    expect(result.current.hasRestoredDraft).toBe(true);
+  });
+
+  it("restores unsaved edits and keeps drafted tags", async () => {
+    const first = render(article("a"));
+    await settle();
+    act(() => first.result.current.setForm((form) => ({ ...form, title: "Edición", tag_ids: ["t9"] })));
+    flushDraft();
+    first.unmount();
+
+    const { result } = render(article("a"));
+    await settle();
+
+    expect(result.current.form.title).toBe("Edición");
+    expect(result.current.form.tag_ids).toEqual(["t9"]);
+  });
+
+  it("forgets the draft after a successful save", async () => {
+    const first = render(article("a"));
+    await settle();
+    type(first.result, "Guardado");
+    flushDraft();
+    act(() => first.result.current.clearDraft());
+    flushDraft();
+    first.unmount();
+
+    const { result } = render(article("a"));
+    await settle();
+
+    expect(result.current.form.title).toBe("Nota a");
+    expect(result.current.hasRestoredDraft).toBe(false);
+  });
+
+  it("does not store a draft when nothing changed", async () => {
+    const { result, unmount } = render(article("a"));
+    await settle();
+    expect(result.current.form.title).toBe("Nota a");
+    flushDraft();
+    unmount();
+
+    expect(window.localStorage.getItem("qap_article_draft:a")).toBeNull();
+  });
+
+  it("discards a restored draft on reset", async () => {
+    const first = render(article("a"));
+    await settle();
+    type(first.result, "Descartable");
+    flushDraft();
+    first.unmount();
+
+    const { result } = render(article("a"));
+    await settle();
+    await act(async () => {
+      result.current.reset();
+      await vi.advanceTimersByTimeAsync(0);
+    });
+
+    expect(result.current.form.title).toBe("Nota a");
+    expect(result.current.hasRestoredDraft).toBe(false);
+    expect(window.localStorage.getItem("qap_article_draft:a")).toBeNull();
+  });
+
+  it("works when localStorage is unavailable", async () => {
+    const spy = vi.spyOn(window.localStorage, "setItem").mockImplementation(() => {
+      throw new Error("quota");
+    });
+    const { result } = render(null);
+    type(result, "Sin almacenamiento");
+    flushDraft();
+
+    expect(spy).toHaveBeenCalled();
+    expect(result.current.form.title).toBe("Sin almacenamiento");
+    spy.mockRestore();
+  });
+});

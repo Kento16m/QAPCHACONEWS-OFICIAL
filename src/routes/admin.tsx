@@ -19,7 +19,8 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { trackArticlePublished } from "@/lib/analytics";
-import { buildArticlePayload, emptyForm, type EditorForm, formFromArticle, isNewlyPublished } from "@/lib/article-form";
+import { useArticleForm } from "@/hooks/use-article-form";
+import { buildArticlePayload, isNewlyPublished } from "@/lib/article-form";
 import { createSlug } from "@/lib/slug";
 
 import { useAuth } from "@/hooks/useAuth";
@@ -101,22 +102,6 @@ export const Route = createFileRoute("/admin")({
   },
   component: AdminPage,
 });
-
-const areFormsEqual = (left: EditorForm, right: EditorForm) =>
-  left.title === right.title &&
-  left.slug === right.slug &&
-  left.status === right.status &&
-  left.excerpt === right.excerpt &&
-  left.content === right.content &&
-  left.cover_image_url === right.cover_image_url &&
-  left.category_id === right.category_id &&
-  left.author_id === right.author_id &&
-  left.scheduled_at === right.scheduled_at &&
-  left.is_featured === right.is_featured &&
-  left.is_breaking === right.is_breaking &&
-  left.seo_title === right.seo_title &&
-  left.seo_description === right.seo_description &&
-  JSON.stringify(left.tag_ids) === JSON.stringify(right.tag_ids);
 
 const getInitials = (name: string | null | undefined) =>
   (name ?? "")
@@ -438,7 +423,6 @@ function AdminPage() {
   const [accessBanReason, setAccessBanReason] = useState("");
   const [accessBanCloseSessions, setAccessBanCloseSessions] = useState(true);
   const [showAccessBanModal, setShowAccessBanModal] = useState(false);
-  const [form, setForm] = useState<EditorForm>(emptyForm());
   const [categoryForm, setCategoryForm] = useState({
     name: "",
     slug: "",
@@ -476,6 +460,8 @@ function AdminPage() {
     () => (selectedId ? (articles.find((article) => article.id === selectedId) ?? null) : null),
     [articles, selectedId],
   );
+
+  const { form, setForm, clearDraft, reset: resetForm, hasRestoredDraft } = useArticleForm(selectedArticle, getArticleTagIds);
 
   const selectedManagementArticle = useMemo(
     () =>
@@ -845,45 +831,6 @@ function AdminPage() {
   }, [form.content]);
 
   useEffect(() => {
-    if (!selectedId) {
-      setForm((current) => {
-        const next = emptyForm();
-        if (currentEditorialUser.id && !current.author_id) {
-          return { ...next, author_id: currentEditorialUser.id };
-        }
-        return areFormsEqual(current, next) ? current : next;
-      });
-      return;
-    }
-
-    const article = articles.find((item) => item.id === selectedId);
-    if (!article) {
-      setSelectedId(null);
-      return;
-    }
-
-    let cancelled = false;
-    const loadSelectedTags = async () => {
-      try {
-        const articleTagIds = await getArticleTagIds(article.id);
-        if (cancelled) return;
-        const nextForm = formFromArticle(article, articleTagIds);
-        setForm((current) => (areFormsEqual(current, nextForm) ? current : nextForm));
-      } catch (error) {
-        if (cancelled) return;
-        console.error("No se pudieron cargar las etiquetas del artículo.", error);
-        const nextForm = formFromArticle(article, []);
-        setForm((current) => (areFormsEqual(current, nextForm) ? current : nextForm));
-      }
-    };
-
-    void loadSelectedTags();
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedId, articles, authors]);
-
-  useEffect(() => {
     if (!selectedId && currentEditorialUser.id && !form.author_id) {
       setForm((current) => ({ ...current, author_id: currentEditorialUser.id }));
     }
@@ -1222,15 +1169,17 @@ function AdminPage() {
         ? await updateArticle(selectedArticle.id, payload)
         : await createArticle(payload);
       await syncArticleTags(saved.id, form.tag_ids);
-      if (!selectedArticle) setSelectedId(saved.id);
 
       if (isNewlyPublished(selectedArticle?.status, saved.status)) {
         trackArticlePublished(saved.title, saved.category?.name ?? null);
       }
       return saved;
     },
-    onSuccess: async () => {
+    onSuccess: async (saved) => {
+      clearDraft();
+      // Wait for the list first: selecting an id it does not have yet would look like a deleted article.
       await queryClient.invalidateQueries({ queryKey: ["admin", "articles"] });
+      setSelectedId(saved.id);
       await queryClient.invalidateQueries({ queryKey: ["latest"] });
       await queryClient.invalidateQueries({ queryKey: ["featured"] });
       await queryClient.invalidateQueries({ queryKey: ["breaking"] });
@@ -1391,8 +1340,8 @@ function AdminPage() {
     if (!confirmed) return;
 
     await deleteArticle(articleId);
+    resetForm();
     setSelectedId(null);
-    setForm(emptyForm());
     setActiveTab("articles");
     await queryClient.invalidateQueries({ queryKey: ["admin", "articles"] });
     await queryClient.invalidateQueries({ queryKey: ["latest"] });
@@ -1453,7 +1402,6 @@ function AdminPage() {
 
   const handleCreateNew = () => {
     setSelectedId(null);
-    setForm(emptyForm());
     setActiveTab("new");
   };
 
@@ -2442,6 +2390,14 @@ function AdminPage() {
                     saveMutation.mutate();
                   }}
                 >
+                  {hasRestoredDraft && (
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                      <span>Recuperamos un borrador que no se había guardado.</span>
+                      <button type="button" onClick={resetForm} className="font-semibold underline underline-offset-2">
+                        Descartar borrador
+                      </button>
+                    </div>
+                  )}
                   <div className="grid gap-5 md:grid-cols-2">
                     <label className="space-y-2 md:col-span-2">
                       <span className="text-sm font-medium text-foreground">Título</span>
