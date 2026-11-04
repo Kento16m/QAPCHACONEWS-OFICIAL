@@ -9,12 +9,13 @@ import {
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { trackPageView } from "@/lib/analytics";
 import { SiteHeader } from "@/components/news/SiteHeader";
+import { CookieBanner } from "@/components/news/CookieBanner";
 import { SiteFooter } from "@/components/news/SiteFooter";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/hooks/useAuth";
@@ -130,64 +131,6 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-function CookieConsentBanner() {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem("legal_consent_accepted");
-    setVisible(stored === null);
-  }, []);
-
-  const saveConsent = (accepted: boolean) => {
-    window.localStorage.setItem("legal_consent_accepted", String(accepted));
-    setVisible(false);
-  };
-
-  if (!visible) return null;
-
-  return (
-    <div className="fixed bottom-4 inset-x-4 z-50 md:inset-x-auto md:left-1/2 md:w-[min(680px,calc(100%-2rem))] md:-translate-x-1/2">
-      <div className="flex flex-col gap-3 rounded-[22px] border border-border bg-card/95 p-4 shadow-[0_18px_50px_rgba(15,23,42,0.18)] backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0 flex-1 text-sm leading-5 text-foreground">
-          <span className="font-medium">Usamos cookies para mejorar tu experiencia.</span>{" "}
-          <span className="text-muted-foreground">
-            Consulta nuestra
-            <Link to="/cookies" className="ml-1 underline underline-offset-2 hover:text-primary">
-              Política de Cookies
-            </Link>
-            ,
-            <Link to="/politica-de-privacidad" className="mx-1 underline underline-offset-2 hover:text-primary">
-              Política de Privacidad
-            </Link>
-            y
-            <Link to="/terminos-y-condiciones" className="ml-1 underline underline-offset-2 hover:text-primary">
-              Términos y Condiciones
-            </Link>
-            .
-          </span>
-        </div>
-
-        <div className="flex shrink-0 items-center gap-2">
-          <button
-            type="button"
-            onClick={() => saveConsent(false)}
-            className="inline-flex items-center justify-center rounded-full border border-border bg-secondary px-3 py-2 text-sm font-medium text-foreground transition hover:bg-accent"
-          >
-            Rechazar
-          </button>
-          <button
-            type="button"
-            onClick={() => saveConsent(true)}
-            className="inline-flex items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:opacity-95"
-          >
-            Aceptar
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const location = useLocation();
@@ -206,7 +149,7 @@ function RootComponent() {
           <Outlet />
         </main>
         {!isAdminRoute && <SiteFooter />}
-        {!isAdminRoute && <CookieConsentBanner />}
+        {!isAdminRoute && <CookieBanner />}
         <AuthDialog />
       </AuthProvider>
       <Toaster position="top-center" />

@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { reopenCookieConsent } from "@/lib/analytics";
 import { useCategories } from "@/hooks/use-news";
 import { Logo } from "./primitives";
 import { socials } from "./SiteHeader";
@@ -103,6 +104,9 @@ export function SiteFooter() {
       <div className="border-t border-navy-border">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-5 text-xs text-navy-muted sm:px-6 lg:flex-row lg:items-center lg:justify-between">
           <span>© 2026 QAP ChacoNews. Todos los derechos reservados.</span>
+          <button type="button" onClick={reopenCookieConsent} className="text-left transition hover:text-primary">
+            Preferencias de cookies
+          </button>
           <span>Desarrollado por Kento Terakawa</span>
         </div>
       </div>

@@ -174,13 +174,13 @@ Si el dueño prefiere no dar acceso a producción, estos pasos se ejecutan guiad
 
 **Files:**
 - Modify: `netlify.toml`, `src/main.tsx:10-12`, `src/lib/analytics.ts`
-- Create: `src/components/news/CookieBanner.tsx`
-- Test: `src/lib/analytics.test.ts`
+- Create: `src/components/news/CookieBanner.tsx` (el banner existente, movido desde `__root.tsx`)
+- Test: `src/lib/analytics.test.ts`, `src/components/news/CookieBanner.test.tsx`
 
-La Política de Cookies menciona consentimiento y analítica, pero el código no pide consentimiento y GA arranca siempre.
+El banner ya existía, pero su decisión no afectaba a nada: GA arrancaba aunque la persona rechazara. Se conserva la clave `legal_consent_accepted` para respetar las decisiones ya tomadas.
 
 - [ ] Test: sin consentimiento guardado, `analytics.initialize` no carga GA. Con aceptación sí, y el rechazo queda recordado.
-- [ ] Verlo fallar, implementar y añadir un banner mínimo: Aceptar, Rechazar y enlace a la política.
+- [ ] Verlo fallar, conectar el banner con la analítica y añadir un enlace en el pie para cambiar la decisión.
 - [ ] Añadir a la CSP `https://www.googletagmanager.com` en `script-src` y `https://*.google-analytics.com https://*.analytics.google.com` en `connect-src`.
 - [ ] Comprobar en el navegador que no hay errores de CSP y que tras aceptar llega la visita a GA. Commit.
 
@@ -392,7 +392,7 @@ Migraciones previstas, cada una con su prueba:
 | 18 | Sesión que se cuelga | 1.4 |
 | 19 | Sin red de seguridad | Listo en parte; 1.8 y 3.3 |
 | 20 | Código sin uso | 3.1 y 3.2 |
-| Nuevo | Sin consentimiento de cookies | 1.6 |
+| Nuevo | El rechazo de cookies no detenía GA | 1.6 |
 
 ## Decisiones pendientes del dueño
 

@@ -50,23 +50,79 @@ const sanitizeAnalyticsParams = (params: Record<string, unknown> = {}) => {
   return sanitized;
 };
 
-export const analytics = {
-  initialize: (trackingId: string) => {
-    if (!trackingId || typeof window === "undefined") return;
+export type CookieConsent = "accepted" | "rejected";
 
-    try {
-      ReactGA.initialize(trackingId, {
-        gaOptions: {
-          send_page_view: false,
-        },
-      });
-    } catch (error) {
-      console.warn("GA init failed:", error);
-    }
+const CONSENT_KEY = "legal_consent_accepted";
+const CONSENT_OPEN_EVENT = "qap:open-cookie-preferences";
+
+let trackingId = "";
+let gaStarted = false;
+
+export const getCookieConsent = (): CookieConsent | null => {
+  try {
+    const stored = window.localStorage.getItem(CONSENT_KEY);
+    if (stored === null) return null;
+    return stored === "true" ? "accepted" : "rejected";
+  } catch {
+    return null;
+  }
+};
+
+const setGaDisabled = (disabled: boolean) => {
+  if (trackingId) (window as unknown as Record<string, unknown>)[`ga-disable-${trackingId}`] = disabled;
+};
+
+const isMeasuring = () => gaStarted && getCookieConsent() === "accepted";
+
+const startIfAllowed = () => {
+  if (!trackingId || getCookieConsent() !== "accepted") return;
+  setGaDisabled(false);
+  if (gaStarted) return;
+
+  try {
+    ReactGA.initialize(trackingId, {
+      gaOptions: {
+        send_page_view: false,
+      },
+    });
+    gaStarted = true;
+  } catch (error) {
+    console.warn("GA init failed:", error);
+  }
+};
+
+export const setCookieConsent = (consent: CookieConsent) => {
+  const wasMeasuring = isMeasuring();
+  try {
+    window.localStorage.setItem(CONSENT_KEY, String(consent === "accepted"));
+  } catch {
+    // Without storage the choice is not remembered, and measurement stays off.
+  }
+
+  if (consent === "rejected") {
+    setGaDisabled(true);
+    return;
+  }
+
+  startIfAllowed();
+  if (!wasMeasuring) analytics.pageView(window.location.pathname, window.location.search);
+};
+
+export const reopenCookieConsent = () => window.dispatchEvent(new Event(CONSENT_OPEN_EVENT));
+export const onCookieConsentReopen = (listener: () => void) => {
+  window.addEventListener(CONSENT_OPEN_EVENT, listener);
+  return () => window.removeEventListener(CONSENT_OPEN_EVENT, listener);
+};
+
+export const analytics = {
+  initialize: (id: string) => {
+    if (!id || typeof window === "undefined") return;
+    trackingId = id;
+    startIfAllowed();
   },
 
   pageView: (pathname: string | unknown, search: string | unknown = "", title?: string | unknown) => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !isMeasuring()) return;
 
     const safePathname = safeString(pathname, window.location.pathname || "/");
     const safeSearch = safeString(search, window.location.search || "");
@@ -85,6 +141,8 @@ export const analytics = {
   },
 
   event: (name: string, params: Record<string, unknown> = {}) => {
+    if (!isMeasuring()) return;
+
     try {
       const safeParams = sanitizeAnalyticsParams(params);
       ReactGA.event(name, safeParams);
