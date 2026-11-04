@@ -41,11 +41,12 @@ export const Route = createFileRoute("/noticia/$slug")({
         "Leé la nota completa en QAP ChacoNews.")
       : "Leé la nota completa en QAP ChacoNews y seguí la actualidad del Chaco paraguayo.";
     const cover = article?.cover_image_url;
-    const image = /^https?:\/\//i.test(cover ?? "")
-      ? cover
-      : cover?.startsWith("/")
-        ? `${siteUrl}${cover}`
-        : `${siteUrl}/og-image.png`;
+    const image =
+      cover && /^https?:\/\//i.test(cover)
+        ? cover
+        : cover?.startsWith("/")
+          ? `${siteUrl}${cover}`
+          : `${siteUrl}/og-image.png`;
 
     return {
       meta: [
