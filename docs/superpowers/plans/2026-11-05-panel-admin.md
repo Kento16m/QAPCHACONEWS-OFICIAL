@@ -232,7 +232,7 @@ panelAccess(input: {
 **Produce:** `compressImage(file: File): Promise<File>`, a 1600 px y WebP; `validateImageUrl(url: string): boolean`, solo `https`; `imageUsage(url: string): Promise<{ id: string; title: string }[]>`; `<ImagePicker onPick />` con pestañas Biblioteca, Subir y URL.
 
 - [ ] Pruebas: rechaza `http:`, `javascript:` y `data:`; un video o GIF no se convierte y sí se sube; una imagen más chica no se agranda.
-- [ ] `security.sql`: staff lee y escribe; anon no; editor no borra lo de otro si la política lo limita.
+- [ ] `security.sql`: administradores y editores leen, cargan y borran cualquier imagen, igual que hoy en Storage; anon y lector no pueden.
 - [ ] El selector se usa en portada de la nota y en el texto, con arrastrar y pegar. Antes de borrar, se muestra `imageUsage`.
 - [ ] Commit.
 
