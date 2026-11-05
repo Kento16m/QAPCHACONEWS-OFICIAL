@@ -94,7 +94,10 @@ function ActivityList() {
             className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b p-4 last:border-b-0"
           >
             <p className="min-w-0 flex-1">
-              <span className="font-medium">{row.actor?.full_name ?? "Sistema"}</span>{" "}
+              <span className="font-medium">{row.actor_name ?? row.actor_email ?? "Sistema"}</span>{" "}
+              {row.actor_name && row.actor_email && (
+                <span className="text-[0.8125rem] text-muted-foreground">({row.actor_email}) </span>
+              )}
               {sentence(row)}
             </p>
             <span className="text-[0.8125rem] text-muted-foreground">

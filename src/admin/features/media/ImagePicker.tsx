@@ -14,11 +14,13 @@ import { cn } from "@/lib/utils";
 import {
   IMAGE_TYPES,
   listMedia,
+  PAGE_SIZE,
   registerImageUrl,
   uploadMedia,
   type MediaAsset,
 } from "../../lib/media";
 import { Skeleton } from "../../ui/Field";
+import { Pager } from "../../ui/Pager";
 
 type Tab = "library" | "upload" | "url";
 
@@ -43,15 +45,18 @@ export function ImagePicker({
 }) {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<Tab>("library");
+  const [page, setPage] = useState(1);
   const [term, setTerm] = useState("");
   const debounced = useDebouncedValue(term, 300);
   const [address, setAddress] = useState("");
   const [alt, setAlt] = useState("");
   const [dragging, setDragging] = useState(false);
 
+  // A cover or an inline photo cannot be a video.
+  const imagesOnly = !accept.includes("video/");
   const library = useQuery({
-    queryKey: ["admin", "media", 1, debounced],
-    queryFn: () => listMedia(1, debounced),
+    queryKey: ["admin", "media", page, debounced, imagesOnly],
+    queryFn: () => listMedia(page, debounced, { imagesOnly }),
     enabled: open && tab === "library",
   });
 
@@ -131,7 +136,10 @@ export function ImagePicker({
               type="search"
               aria-label="Buscar en la biblioteca"
               value={term}
-              onChange={(event) => setTerm(event.target.value)}
+              onChange={(event) => {
+                setTerm(event.target.value);
+                setPage(1);
+              }}
               placeholder="Buscar por descripción"
             />
             <div className="mt-3 grid max-h-[50svh] grid-cols-3 gap-2 overflow-y-auto sm:grid-cols-4">
@@ -156,6 +164,12 @@ export function ImagePicker({
                 </button>
               ))}
             </div>
+            <Pager
+              page={page}
+              total={library.data?.total ?? 0}
+              size={PAGE_SIZE}
+              onChange={setPage}
+            />
             {library.data?.rows.length === 0 && (
               <p className="mt-3 text-muted-foreground">
                 {term

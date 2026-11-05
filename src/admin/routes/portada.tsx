@@ -133,6 +133,38 @@ function Slot({
   );
 }
 
+function UntilField({
+  until,
+  expired,
+  onSave,
+}: {
+  until: string | null;
+  expired: boolean;
+  onSave: (until: string | null) => void;
+}) {
+  const saved = toLocalInput(until);
+  const [draft, setDraft] = useState(saved);
+  useEffect(() => setDraft(saved), [saved]);
+
+  return (
+    <label className="text-[0.8125rem] text-muted-foreground">
+      {expired ? "Venció" : "Hasta"}
+      <Input
+        type="datetime-local"
+        value={draft}
+        onChange={(event) => setDraft(event.target.value)}
+        onKeyDown={(event) => event.key === "Enter" && event.currentTarget.blur()}
+        onBlur={() => {
+          // Typing a date passes through empty and half-written values. Only "Quitar" removes.
+          if (!draft) setDraft(saved);
+          else if (draft !== saved) onSave(fromLocalInput(draft));
+        }}
+        className="mt-1 h-9 rounded-lg text-sm text-foreground md:text-sm"
+      />
+    </label>
+  );
+}
+
 function Breaking() {
   const queryClient = useQueryClient();
   const [adding, setAdding] = useState(false);
@@ -179,17 +211,11 @@ function Breaking() {
             <li key={note.id} className="border-t py-3 first:border-t-0">
               <p className="font-medium">{note.title}</p>
               <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                <label className="text-[0.8125rem] text-muted-foreground">
-                  {expired ? "Venció" : "Hasta"}
-                  <Input
-                    type="datetime-local"
-                    value={toLocalInput(note.breaking_until)}
-                    onChange={(event) =>
-                      change.mutate({ id: note.id, until: fromLocalInput(event.target.value) })
-                    }
-                    className="mt-1 h-9 rounded-lg text-sm text-foreground md:text-sm"
-                  />
-                </label>
+                <UntilField
+                  until={note.breaking_until}
+                  expired={expired}
+                  onSave={(until) => change.mutate({ id: note.id, until })}
+                />
                 <Button
                   variant="ghost"
                   size="sm"

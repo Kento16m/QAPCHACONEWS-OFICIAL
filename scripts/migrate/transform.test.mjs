@@ -1,6 +1,8 @@
 // @vitest-environment node
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
+  LIVE_ONLY_TRIGGERS,
   assertNotCutOver,
   assertTargets,
   dollarQuote,
@@ -215,5 +217,24 @@ describe("assertNotCutOver", () => {
     expect(() => assertNotCutOver([{ done_at: "2026-11-10T00:00:00Z" }])).toThrow(
       /ya se hizo el cambio/,
     );
+  });
+});
+
+describe("LIVE_ONLY_TRIGGERS", () => {
+  const migrations = readdirSync("supabase/migrations")
+    .map((file) => readFileSync(`supabase/migrations/${file}`, "utf8"))
+    .join("\n");
+
+  it("includes every trigger that writes the activity log", () => {
+    const logging = [
+      ...migrations.matchAll(/create trigger (\w+_log_activity)\s[^;]*?on public\.(\w+)/g),
+    ];
+    expect(logging.length).toBeGreaterThan(4);
+    for (const [, trigger, table] of logging)
+      expect(LIVE_ONLY_TRIGGERS).toContainEqual([table, trigger]);
+  });
+
+  it("includes the one that would start old breaking news again", () => {
+    expect(LIVE_ONLY_TRIGGERS).toContainEqual(["articles", "articles_start_breaking"]);
   });
 });

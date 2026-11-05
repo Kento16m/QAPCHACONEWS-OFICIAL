@@ -37,7 +37,11 @@ export const composeHomepage = (
   }
 
   return {
-    hero: chosen.get(1) ?? featuredFallback ?? latest[0] ?? null,
+    hero:
+      chosen.get(1) ??
+      (featuredFallback && !chosenIds.has(featuredFallback.id) ? featuredFallback : null) ??
+      byDate[0] ??
+      null,
     featured,
     strip: byDate.slice(0, STRIP_SIZE),
     latest: byDate.slice(0, LATEST_SIZE),

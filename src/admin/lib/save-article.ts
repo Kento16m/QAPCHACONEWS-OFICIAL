@@ -53,16 +53,11 @@ export const saveArticle = async (
   return toArticle(data);
 };
 
-/** Breaking news ends by itself: a note gets 24 hours when it starts, and keeps its date after. */
+/** The database starts the 24 hours when readers can see the note. After that, its date stays. */
 export const breakingUntilFor = (
   isBreaking: boolean,
   current: Pick<AdminArticle, "is_breaking" | "breaking_until"> | null,
-  now: Date,
-) => {
-  if (!isBreaking) return null;
-  if (current?.is_breaking) return current.breaking_until;
-  return new Date(now.getTime() + 24 * 3_600_000).toISOString();
-};
+) => (isBreaking && current?.is_breaking ? current.breaking_until : null);
 
 /** A save that matched no row: the note changed, disappeared, or this person may not write it. */
 export const explainFailedSave = (

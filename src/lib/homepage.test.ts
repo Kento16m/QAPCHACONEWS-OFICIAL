@@ -60,6 +60,18 @@ describe("composeHomepage", () => {
     expect(ids(home.featured)).toEqual(["n6", "n7", "n8", "n9", "n10"]);
   });
 
+  it("does not show a chosen note again as the main note", () => {
+    const newest = composeHomepage([{ position: 2, article: note("n1") }], null, latest);
+    expect(newest.hero?.id).toBe("n2");
+    const marked = composeHomepage(
+      [{ position: 2, article: note("destacada") }],
+      note("destacada"),
+      latest,
+    );
+    expect(marked.hero?.id).toBe("n1");
+    expect(ids(marked.featured)[0]).toBe("destacada");
+  });
+
   it("falls back to the newest note when nothing is marked as featured", () => {
     expect(composeHomepage([], null, latest).hero?.id).toBe("n1");
   });

@@ -17,6 +17,19 @@ const archived = (source_table, source_id, reason, row) => ({
   row,
 });
 
+// History keeps its original dates, values and identities: these are for live use.
+export const LIVE_ONLY_TRIGGERS = [
+  ["profiles", "profiles_set_updated_at"],
+  ["admin_access_logs", "admin_access_logs_fill"],
+  ["articles", "articles_start_breaking"],
+  ["articles", "articles_log_activity"],
+  ["comments", "comments_log_activity"],
+  ["profiles", "profiles_log_activity"],
+  ["categories", "categories_log_activity"],
+  ["tags", "tags_log_activity"],
+  ["homepage_slots", "homepage_slots_log_activity"],
+];
+
 export const planMigration = (source) => {
   const articleIds = new Set(source.articles.map((article) => article.id));
   const archive = [];

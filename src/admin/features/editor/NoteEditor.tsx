@@ -91,7 +91,7 @@ export function NoteEditor({ article }: { article: AdminArticle | null }) {
         const now = new Date();
         payload = {
           ...buildArticlePayload(next, article, now),
-          breaking_until: breakingUntilFor(next.is_breaking, article, now),
+          breaking_until: breakingUntilFor(next.is_breaking, article),
         };
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Revisá los datos de la nota.");

@@ -111,18 +111,16 @@ export type ActivityRow = {
   entity_id: string | null;
   summary: string;
   created_at: string;
-  actor: { full_name: string | null } | null;
+  actor_name: string | null;
+  actor_email: string | null;
 };
 
 export const listActivity = async (page: number) => {
   const { data, error, count } = await requireSupabaseClient()
     .from("activity_log")
-    .select(
-      "id, action, entity, entity_id, summary, created_at, actor:public_profiles(full_name)",
-      {
-        count: "exact",
-      },
-    )
+    .select("id, action, entity, entity_id, summary, created_at, actor_name, actor_email", {
+      count: "exact",
+    })
     .order("id", { ascending: false })
     .range(...range(page));
   if (error) throw error;
@@ -145,7 +143,13 @@ export const restoreDeletedNote = async (articleId: string) => {
   const { error: restoreError } = await client.rpc("admin_restore_article", {
     p_revision_id: revision.id,
   });
-  if (restoreError) throw new Error("No pudimos restaurar la nota.");
+  if (restoreError) {
+    throw new Error(
+      restoreError.code === "QC409"
+        ? "Esa nota ya existe. Para volver a una versión anterior, abrila y usá su historial."
+        : "No pudimos restaurar la nota.",
+    );
+  }
 };
 
 export type AccessFilters = {

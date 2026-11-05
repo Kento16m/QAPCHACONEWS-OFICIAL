@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { deltaPercent, fillMissingDays, groupByMonth, hasEnoughHistory, rangeFor } from "./series";
+import {
+  comparedToPrevious,
+  deltaPercent,
+  fillMissingDays,
+  groupByMonth,
+  hasEnoughHistory,
+  rangeFor,
+} from "./series";
 
 describe("fillMissingDays", () => {
   it("shows days without reads as zero", () => {
@@ -51,6 +58,23 @@ describe("deltaPercent", () => {
 
   it("gives nothing when there is no period to compare with", () => {
     expect(deltaPercent(50, 0)).toBeNull();
+  });
+});
+
+describe("comparedToPrevious", () => {
+  const days = (reads: number[]) =>
+    reads.map((value, index) => ({ day: String(index), reads: value }));
+
+  it("compares two whole periods", () => {
+    expect(comparedToPrevious(days([60, 60]), days([50, 50]))).toBe(20);
+  });
+
+  it("does not compare with a period that started before counting did", () => {
+    expect(comparedToPrevious(days([60, 60]), days([0, 0, 0, 0, 5]))).toBeNull();
+  });
+
+  it("allows a quiet first day", () => {
+    expect(comparedToPrevious(days([20]), days([0, 5, 5]))).toBe(100);
   });
 });
 

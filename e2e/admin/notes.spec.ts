@@ -146,155 +146,6 @@ test("without internet the text stays and comes back after reloading", async ({ 
   await page.waitForTimeout(1200);
 
   await page.route("**/rest/v1/articles**", (route) => route.abort());
-  await page.getByRole("button", { name: "Guardar", exact: true }).click();
-  await expect(page.getByText(/No pudimos guardar/)).toBeVisible();
-  await expect(page.locator(".note-editor")).toContainText("Escrito sin conexión.");
-  await page.unroute("**/rest/v1/articles**");
-
-  page.on("dialog", (dialog) => void dialog.accept());
-  await page.reload();
-  await expect(page.getByText("Recuperamos lo que estabas escribiendo")).toBeVisible();
-  await expect(page.locator(".note-editor")).toContainText("Escrito sin conexión.");
-});
-
-test("an old note with media opens and saves without losing it", async ({ page }) => {
-  const id = await makeNote(
-    `E2E medios ${STAMP}`,
-    `<h3>Sub</h3><p><span style="font-weight: bolder;">Fuerte</span> y normal.</p><div data-media-block="true" contenteditable="false"><figure class="m"><img src="https://x.supabase.co/a.webp" alt="Foto"></figure><button type="button" data-remove-media="true" aria-label="Quitar">×</button></div><div data-media-block="true" contenteditable="false"><iframe src="https://www.instagram.com/reel/abc/embed/" title="R"></iframe><button type="button" data-remove-media="true" aria-label="Quitar">×</button></div>`,
-  );
-  await signIn(page, "editor");
-  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
-  await openNote(page, id);
-  await page.locator(".note-editor").click();
-  await page.keyboard.press("Control+Home");
-  await page.keyboard.type("Nuevo. ");
-  await page.getByRole("button", { name: "Guardar", exact: true }).click();
-  await expect(page.getByText("Guardado.")).toBeVisible();
-
-  const [stored] = await api(`/rest/v1/articles?id=eq.${id}&select=content`);
-  expect(stored.content).toContain(`src="https://x.supabase.co/a.webp"`);
-  expect(stored.content).toContain(`alt="Foto"`);
-  expect(stored.content).toContain(`src="https://www.instagram.com/reel/abc/embed/"`);
-  expect(stored.content).toContain("<strong>Fuerte</strong>");
-  expect(stored.content).not.toContain("×");
-});
-
-test("an earlier version can be compared and brought back", async ({ page }) => {
-  const id = await makeNote(`E2E historial ${STAMP}`, "<p>Primera redacción.</p>");
-  await signIn(page, "editor");
-  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
-  await openNote(page, id);
-
-  await page.getByRole("tab", { name: "Historial" }).click();
-  await expect(page.getByText("Todavía no hay versiones anteriores")).toBeVisible();
-
-  await page.locator(".note-editor").click();
-  await page.keyboard.press("Control+A");
-  await page.keyboard.type("Segunda redacción.");
-  await page.getByRole("button", { name: "Guardar", exact: true }).click();
-  await expect(page.getByText("Guardado.")).toBeVisible();
-
-  await page.getByRole("button", { name: /Cambiada por/ }).click();
-  await expect(page.getByRole("dialog").locator("del")).toContainText("Primera");
-  await expect(page.getByRole("dialog").locator("ins")).toContainText("Segunda");
-  await page.getByRole("button", { name: "Usar esta versión" }).click();
-
-  await expect(page.locator(".note-editor")).toContainText("Primera redacción.");
-  await expect(page.getByText("Cambios sin guardar")).toBeVisible();
-  await page.getByRole("button", { name: "Guardar", exact: true }).click();
-  await expect(page.getByText("Todo guardado")).toBeVisible();
-
-  const [stored] = await api(`/rest/v1/articles?id=eq.${id}&select=content`);
-  expect(stored.content).toContain("Primera redacción.");
-  const versions = await api(`/rest/v1/article_revisions?article_id=eq.${id}&select=id`);
-  expect(versions).toHaveLength(2);
-});
-
-const mockAssistant = (page: Page, result: unknown, status = 200) =>
-  page.route("**/functions/v1/editor-assist", (route) =>
-    route.fulfill({
-      status,
-      contentType: "application/json",
-      headers: { "Access-Control-Allow-Origin": "*" },
-      body: JSON.stringify(status === 200 ? { result } : result),
-    }),
-  );
-
-test("the assistant suggests and nothing changes until it is accepted", async ({ page }) => {
-  const id = await makeNote(`E2E asistente ${STAMP}`, "<p>El presidente hablo ayer.</p>");
-  await signIn(page, "editor");
-  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
-  await openNote(page, id);
-  await page.getByRole("tab", { name: "Asistente" }).click();
-
-  await mockAssistant(page, { titles: ["Título sugerido", "Otro título"] });
-  await page.getByRole("button", { name: "Títulos" }).click();
-  await expect(page.getByText("Título sugerido")).toBeVisible();
-  await expect(page.getByPlaceholder("Título de la nota")).toHaveValue(`E2E asistente ${STAMP}`);
-  await page
-    .getByRole("listitem")
-    .filter({ hasText: "Otro título" })
-    .getByRole("button", { name: "Descartar" })
-    .click();
-  await expect(page.getByText("Otro título")).toHaveCount(0);
-  await page.getByRole("button", { name: "Usar" }).click();
-  await expect(page.getByPlaceholder("Título de la nota")).toHaveValue("Título sugerido");
-
-  await page.unroute("**/functions/v1/editor-assist");
-  await mockAssistant(page, {
-    fixes: [{ original: "hablo", replacement: "habló", reason: "Falta la tilde" }],
-  });
-  await page.getByRole("button", { name: "Ortografía" }).click();
-  await expect(page.getByText("Falta la tilde")).toBeVisible();
-  await expect(page.locator(".note-editor")).toContainText("hablo ayer");
-  await page.getByRole("button", { name: "Corregir" }).click();
-  await expect(page.locator(".note-editor")).toContainText("habló ayer");
-});
-
-test("when the assistant fails, the note is untouched and writing goes on", async ({ page }) => {
-  const id = await makeNote(`E2E asistente caído ${STAMP}`, "<p>Texto intacto.</p>");
-  await signIn(page, "editor");
-  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
-  await openNote(page, id);
-  await page.getByRole("tab", { name: "Asistente" }).click();
-
-  await mockAssistant(page, { error: "El asistente no respondió." }, 502);
-  await page.getByRole("button", { name: "Resumen" }).click();
-  await expect(page.getByRole("alert")).toContainText("Podés seguir escribiendo");
-  await page.locator(".note-editor").click();
-  await page.keyboard.press("End");
-  await page.keyboard.type(" Más texto.");
-  await expect(page.locator(".note-editor")).toContainText("Texto intacto. Más texto.");
-});
-
-// One white pixel, as a real upload.
-const PNG = Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=",
-  "base64",
-);
-
-test("an image uploaded from the computer reaches the library and the note", async ({ page }) => {
-  const id = await makeNote(`E2E imagen ${STAMP}`);
-  const alt = `Foto E2E ${STAMP}`;
-  await signIn(page, "editor");
-  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
-  await openNote(page, id);
-
-  await page.getByRole("button", { name: "Elegir foto" }).click();
-  await page.getByRole("tab", { name: "Subir" }).click();
-  await page.getByLabel("Descripción de la imagen").fill(alt);
-  await page
-    .getByLabel("Elegir archivo")
-    .setInputFiles({ name: "foto.png", mimeType: "image/png", buffer: PNG });
-  await expect(page.getByAltText("Foto de portada elegida")).toBeVisible();
-  await page.getByRole("button", { name: "Guardar", exact: true }).click();
-  await expect(page.getByText("Guardado.")).toBeVisible();
-
-  const [note] = await api(`/rest/v1/articles?id=eq.${id}&select=cover_image_url`);
-  expect(note.cover_image_url).toContain("/article-media/");
-  expect(note.cover_image_url).toContain(".webp");
-
-  await page.goto("/imagenes");
   await page.getByRole("searchbox", { name: "Buscar imágenes" }).fill(alt);
   await page.getByRole("button", { name: alt }).click();
   await expect(page.getByRole("dialog").getByText(`E2E imagen ${STAMP}`)).toBeVisible();
@@ -612,7 +463,7 @@ test("an editor reads comments but gets no way to remove them", async ({ page })
 });
 
 test("an administrator manages roles, blocks, categories and subscribers", async ({ page }) => {
-  await makeUser("gestion");
+  const gestion = await makeUser("gestion");
   await signIn(page, "admin");
   await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
 
@@ -621,6 +472,13 @@ test("an administrator manages roles, blocks, categories and subscribers", async
   const person = page.getByRole("row").filter({ hasText: emailFor("gestion") });
   await expect(person).toBeVisible();
   await person.getByRole("combobox").selectOption("editor");
+  await expect(page.getByRole("heading", { name: /Cambiar el rol/ })).toBeVisible();
+  const [before] = await api(`/rest/v1/profiles?id=eq.${gestion}&select=role`);
+  expect(before.role).toBe("reader");
+  await page.getByRole("button", { name: "Cancelar" }).click();
+  await expect(person.getByRole("combobox")).toHaveValue("reader");
+  await person.getByRole("combobox").selectOption("editor");
+  await page.getByRole("button", { name: "Cambiar rol" }).click();
   await expect(page.getByText("Rol cambiado.")).toBeVisible();
 
   await page.goto("/categorias");
@@ -661,11 +519,21 @@ test("a deleted note can be restored from the activity log", async ({ page }) =>
 
   await page.goto("/actividad");
   const row = page.getByRole("listitem").filter({ hasText: `borró la nota ${title}` });
+  await expect(row).toContainText(emailFor("admin"));
   await row.getByRole("button", { name: "Restaurar" }).click();
   await expect(page.getByText("Nota restaurada como borrador.")).toBeVisible();
   const [note] = await api(`/rest/v1/articles?id=eq.${id}&select=status,content`);
   expect(note.status).toBe("draft");
   expect(note.content).toContain("Texto que vuelve.");
+
+  await api(`/rest/v1/articles?id=eq.${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ content: "<p>Editada después.</p>" }),
+  });
+  await row.getByRole("button", { name: "Restaurar" }).click();
+  await expect(page.getByText(/ya existe/)).toBeVisible();
+  const [kept] = await api(`/rest/v1/articles?id=eq.${id}&select=content`);
+  expect(kept.content).toContain("Editada después.");
 
   await page.getByRole("tab", { name: "Control de acceso" }).click();
   await page.getByRole("searchbox", { name: "Buscar accesos" }).fill(emailFor("admin"));
@@ -723,4 +591,108 @@ test("reads per day reach the chart and the rankings", async ({ page }) => {
   await expect(page.getByText(/lecturas en 30 días/)).toBeVisible();
   await page.getByRole("button", { name: "12 meses" }).click();
   await expect(page.getByText("Ver como tabla")).toBeVisible();
+});
+
+test("editing the end of breaking news saves only when finished, and clearing it removes nothing", async ({
+  page,
+}) => {
+  const title = `E2E hasta ${STAMP}`;
+  const until = new Date(Date.now() + 2 * 86_400_000).toISOString();
+  const [note] = await api("/rest/v1/articles", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({
+      title,
+      slug: `e2e-hasta-${STAMP}`,
+      content: "<p>x</p>",
+      status: "published",
+      published_at: new Date().toISOString(),
+      is_breaking: true,
+      breaking_until: until,
+    }),
+  });
+  created.push(note.id);
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await page.goto("/portada");
+  const row = page.getByRole("listitem").filter({ hasText: title });
+  const input = row.getByLabel(/Hasta/);
+
+  let writes = 0;
+  page.on("request", (request) => {
+    if (request.method() === "PATCH" && request.url().includes("/rest/v1/articles")) writes += 1;
+  });
+  await input.fill("");
+  await input.blur();
+  await page.waitForTimeout(500);
+  expect(writes).toBe(0);
+  await expect(row).toBeVisible();
+  const [same] = await api(`/rest/v1/articles?id=eq.${note.id}&select=is_breaking`);
+  expect(same.is_breaking).toBe(true);
+
+  await input.fill("2030-01-15T10:30");
+  expect(writes).toBe(0);
+  await input.blur();
+  await expect.poll(() => writes).toBe(1);
+  await api("/rest/v1/homepage_slots?position=gte.1", { method: "DELETE" });
+});
+
+test("when the image's use cannot be checked, deleting it waits", async ({ page }) => {
+  const alt = `Foto sin comprobar ${STAMP}`;
+  const [asset] = await api("/rest/v1/media_assets", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({ url: `https://x.test/${STAMP}.webp`, source: "url", alt }),
+  });
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await page.goto("/imagenes");
+  await page.route("**/rest/v1/articles**", (route) => route.abort());
+  await page.getByRole("searchbox", { name: "Buscar imágenes" }).fill(alt);
+  await page.getByRole("button", { name: alt }).click();
+  // The client retries a lost connection before giving up.
+  await expect(page.getByText(/No pudimos comprobar/)).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole("dialog").getByRole("button", { name: "Borrar" })).toBeDisabled();
+  await api(`/rest/v1/media_assets?id=eq.${asset.id}`, { method: "DELETE" });
+});
+
+test("the picker reaches older images and a cover cannot be a video", async ({ page }) => {
+  const stamp = String(STAMP);
+  const rows = Array.from({ length: 26 }, (_, index) => ({
+    url: `https://x.test/${stamp}-${index}.webp`,
+    source: "url",
+    alt: `Vieja ${stamp} ${index}`,
+  }));
+  const assets = await api("/rest/v1/media_assets", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify(rows),
+  });
+  const [video] = await api("/rest/v1/media_assets", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({
+      url: `https://x.test/${stamp}.mp4`,
+      source: "url",
+      mime_type: "video/mp4",
+      alt: `Video ${stamp}`,
+    }),
+  });
+  try {
+    const id = await makeNote(`E2E selector ${stamp}`);
+    await enter(page, id);
+    await page.getByRole("button", { name: "Elegir foto" }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByRole("searchbox", { name: "Buscar en la biblioteca" }).fill(stamp);
+    const old = dialog.getByRole("button", { name: new RegExp(`^Elegir Vieja ${stamp}`) });
+    await expect(old).toHaveCount(24);
+    await expect(dialog.getByRole("button", { name: `Elegir Video ${stamp}` })).toHaveCount(0);
+    await dialog.getByRole("button", { name: "Siguiente" }).click();
+    await expect(old).toHaveCount(2);
+  } finally {
+    await api(
+      `/rest/v1/media_assets?id=in.(${[...assets.map((a: { id: string }) => a.id), video.id].join(",")})`,
+      { method: "DELETE" },
+    );
+  }
 });

@@ -114,7 +114,10 @@ export function AreaChart({
           )}
         </div>
       </div>
-      <div aria-hidden className="ml-11 mt-1.5 flex justify-between whitespace-nowrap text-xs text-muted-foreground max-sm:[&>*:nth-child(even)]:hidden">
+      <div
+        aria-hidden
+        className="ml-11 mt-1.5 flex justify-between whitespace-nowrap text-xs text-muted-foreground max-sm:[&>*:nth-child(even)]:hidden"
+      >
         {rows
           .filter((_, index) => index % labelEvery === 0)
           .map((row) => (

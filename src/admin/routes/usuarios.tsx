@@ -44,6 +44,7 @@ function UsersPage() {
   const debounced = useDebouncedValue(term, 300);
   const [blocking, setBlocking] = useState<UserRow | null>(null);
   const [reason, setReason] = useState("");
+  const [changing, setChanging] = useState<{ user: UserRow; role: UserRow["role"] } | null>(null);
 
   const { data, isPending, isError, refetch } = useQuery({
     queryKey: ["admin", "users", page, debounced],
@@ -153,7 +154,7 @@ function UsersPage() {
                           value={user.role}
                           disabled={locked || setRole.isPending}
                           onChange={(event) =>
-                            setRole.mutate({ user, role: event.target.value as UserRow["role"] })
+                            setChanging({ user, role: event.target.value as UserRow["role"] })
                           }
                         >
                           {ROLES.map((role) => (
@@ -201,6 +202,30 @@ function UsersPage() {
         )}
         <Pager page={page} total={data?.total ?? 0} size={PAGE_SIZE} onChange={setPage} />
       </section>
+
+      <AlertDialog open={changing !== null} onOpenChange={(open) => !open && setChanging(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              ¿Cambiar el rol de {changing?.user.full_name ?? changing?.user.email} a{" "}
+              {ROLES.find((role) => role.value === changing?.role)?.label}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {changing?.role === "admin"
+                ? "Un administrador puede ver y cambiar todo, incluidos los roles de los demás."
+                : changing?.role === "editor"
+                  ? "Un editor puede escribir y publicar notas, y moderar comentarios."
+                  : "Un lector no puede entrar al panel."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => changing && setRole.mutate(changing)}>
+              Cambiar rol
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={blocking !== null} onOpenChange={(open) => !open && setBlocking(null)}>
         <AlertDialogContent>

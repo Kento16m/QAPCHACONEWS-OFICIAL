@@ -4,6 +4,7 @@
 // Usage: SOURCE_TOKEN=... TARGET_TOKEN=... node scripts/migrate/import-prod.mjs [--dry-run]
 // After the switch, once: TARGET_TOKEN=... node scripts/migrate/import-prod.mjs --lock
 import {
+  LIVE_ONLY_TRIGGERS,
   assertNotCutOver,
   assertTargets,
   dollarQuote,
@@ -201,11 +202,11 @@ if (process.argv.includes("--dry-run")) {
 
 const statements = [
   "begin;",
-  "truncate public.article_tags, public.comment_likes, public.comments, public.articles, public.categories, public.tags, public.newsletter_subscribers, public.admin_access_logs, public.profiles, private.legacy_data restart identity cascade;",
+  "truncate public.article_tags, public.comment_likes, public.comments, public.articles, public.categories, public.tags, public.newsletter_subscribers, public.admin_access_logs, public.profiles, public.activity_log, public.article_revisions, private.legacy_data restart identity cascade;",
   "delete from auth.users;",
-  // History keeps its original dates and identities: these triggers are for live use.
-  "alter table public.profiles disable trigger profiles_set_updated_at;",
-  "alter table public.admin_access_logs disable trigger admin_access_logs_fill;",
+  ...LIVE_ONLY_TRIGGERS.map(
+    ([table, trigger]) => `alter table public.${table} disable trigger ${trigger};`,
+  ),
   insertRows("auth.users", userColumns, users),
   insertRows("auth.identities", identityColumns, identities),
   // The signup trigger gave every user a profile, including any production lacked. Real data replaces it.
@@ -230,8 +231,9 @@ const statements = [
   insertRows("public.admin_access_logs", COLUMNS.admin_access_logs, source.admin_access_logs),
   insertRows("private.legacy_data", ["source_table", "source_id", "reason", "row"], plan.archive),
   "insert into public.media_assets (url, source, uploaded_by) select distinct cover_image_url, 'url', null::uuid from public.articles where cover_image_url like 'https://%' on conflict (url) do nothing;",
-  "alter table public.profiles enable trigger profiles_set_updated_at;",
-  "alter table public.admin_access_logs enable trigger admin_access_logs_fill;",
+  ...LIVE_ONLY_TRIGGERS.map(
+    ([table, trigger]) => `alter table public.${table} enable trigger ${trigger};`,
+  ),
   // New rows must continue after the imported ids.
   "select setval(pg_get_serial_sequence('public.comments', 'id'), greatest((select max(id) from public.comments), 1));",
   "select setval(pg_get_serial_sequence('public.admin_access_logs', 'id'), greatest((select max(id) from public.admin_access_logs), 1));",

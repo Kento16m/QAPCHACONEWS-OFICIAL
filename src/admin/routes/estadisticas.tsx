@@ -2,7 +2,13 @@ import { useMemo } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ReadsCard } from "../features/today/ReadsCard";
-import { deltaPercent, fetchRanking, fetchSeries, previousRange, rangeFor } from "../lib/series";
+import {
+  comparedToPrevious,
+  fetchRanking,
+  fetchSeries,
+  previousRange,
+  rangeFor,
+} from "../lib/series";
 import { Skeleton } from "../ui/Field";
 import { LoadError } from "../ui/Pager";
 
@@ -78,11 +84,9 @@ function StatsPage() {
     queryFn: () => fetchSeries(before.from, before.to),
   });
 
-  const sum = (rows: { reads: number }[] | undefined) =>
-    rows?.reduce((total, row) => total + row.reads, 0);
-  const now = sum(current.data);
-  const then = sum(previous.data);
-  const delta = now !== undefined && then !== undefined ? deltaPercent(now, then) : null;
+  const now = current.data?.reduce((total, row) => total + row.reads, 0);
+  const delta =
+    current.data && previous.data ? comparedToPrevious(current.data, previous.data) : null;
 
   return (
     <>

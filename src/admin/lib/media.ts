@@ -143,12 +143,14 @@ export const registerImageUrl = async (url: string, alt = ""): Promise<MediaAsse
   return data as MediaAsset;
 };
 
-export const listMedia = async (page: number, q: string) => {
+export const listMedia = async (page: number, q: string, options?: { imagesOnly: boolean }) => {
   let query = requireSupabaseClient()
     .from("media_assets")
     .select("*", { count: "exact" })
     .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
+  if (options?.imagesOnly) query = query.or("mime_type.is.null,mime_type.not.like.video/*");
   const term = q.trim().replace(/[%_\\]/g, "\\$&");
   if (term) query = query.ilike("alt", `%${term}%`);
   const { data, error, count } = await query;
@@ -161,14 +163,15 @@ export const updateAlt = async (id: string, alt: string) => {
   if (error) throw error;
 };
 
+const quoted = (value: string) => `"${value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+
 /** Which notes show this image, to warn before removing it. */
 export const imageUsage = async (url: string) => {
   const pattern = `%${url.replace(/[%_\\]/g, "\\$&")}%`;
-  const value = `"${pattern.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
   const { data, error } = await requireSupabaseClient()
     .from("articles")
     .select("id, title")
-    .or(`cover_image_url.eq."${url}",content.ilike.${value}`)
+    .or(`cover_image_url.eq.${quoted(url)},content.ilike.${quoted(pattern)}`)
     .limit(20);
   if (error) throw error;
   return data ?? [];

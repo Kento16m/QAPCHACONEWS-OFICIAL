@@ -94,6 +94,16 @@ function AssetDialog({ asset, onClose }: { asset: MediaAsset; onClose: () => voi
           <p className="font-medium">Dónde se usa</p>
           {usage.isPending ? (
             <Skeleton className="mt-1 h-5 w-48" />
+          ) : usage.isError ? (
+            <div role="alert" className="mt-1 flex flex-wrap items-center gap-3">
+              <p className="text-destructive-text">
+                No pudimos comprobar dónde se usa. Para no romper una nota, no se puede borrar hasta
+                saberlo.
+              </p>
+              <Button variant="outline" size="sm" onClick={() => void usage.refetch()}>
+                Reintentar
+              </Button>
+            </div>
           ) : notes.length === 0 ? (
             <p className="text-muted-foreground">En ninguna nota.</p>
           ) : (
@@ -130,7 +140,7 @@ function AssetDialog({ asset, onClose }: { asset: MediaAsset; onClose: () => voi
               <Button
                 variant="outline"
                 className="sm:mr-auto"
-                disabled={usage.isPending}
+                disabled={usage.isPending || usage.isError}
                 onClick={() => setConfirming(true)}
               >
                 Borrar

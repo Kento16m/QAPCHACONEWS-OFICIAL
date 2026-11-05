@@ -41,6 +41,14 @@ export const groupByMonth = (rows: DayReads[]): DayReads[] => {
 export const deltaPercent = (current: number, previous: number) =>
   previous === 0 ? null : Math.round(((current - previous) / previous) * 100);
 
+/** Counting started at some point: a period that began before that cannot be compared. */
+export const comparedToPrevious = (current: DayReads[], previous: DayReads[]) => {
+  const sum = (rows: DayReads[]) => rows.reduce((total, row) => total + row.reads, 0);
+  return previous.slice(0, MIN_DAYS_WITH_READS).some((row) => row.reads > 0)
+    ? deltaPercent(sum(current), sum(previous))
+    : null;
+};
+
 export const hasEnoughHistory = (rows: DayReads[]) =>
   rows.filter((row) => row.reads > 0).length >= MIN_DAYS_WITH_READS;
 

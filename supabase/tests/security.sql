@@ -327,7 +327,8 @@ select pg_temp.setup($s$insert into public.categories (id, name, slug) values ('
 select pg_temp.setup($s$insert into public.articles (id, title, slug, content, status, category_id) values ('a0000000-0000-0000-0000-00000000ccc2', 'Con sección', 'con-seccion-test', 'x', 'draft', 'c0000000-0000-0000-0000-00000000ccc1')$s$);
 select pg_temp.check('admin deletes a category that a note uses', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', $s$delete from public.categories where id = 'c0000000-0000-0000-0000-00000000ccc1'$s$), 'ok:1');
 select pg_temp.check('the note stays, without section', pg_temp.val($s$select category_id is null from public.articles where id = 'a0000000-0000-0000-0000-00000000ccc2'$s$), 'true');
-select pg_temp.check('restoring a version with a deleted category works', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', $s$select public.admin_restore_article((select id from public.article_revisions where article_id = 'a0000000-0000-0000-0000-00000000ccc2' order by id desc limit 1))$s$), 'ok:1');
+select pg_temp.setup($s$delete from public.articles where id = 'a0000000-0000-0000-0000-00000000ccc2'$s$);
+select pg_temp.check('restoring a version with a deleted category works', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', $s$select public.admin_restore_article((select id from public.article_revisions where article_id = 'a0000000-0000-0000-0000-00000000ccc2' and is_deletion))$s$), 'ok:1');
 
 -- Panel: the team's authors
 select pg_temp.check('anon cannot list authors', pg_temp.exec('anon', null, 'select * from public.list_team_authors()'), 'err:42501');
@@ -398,6 +399,35 @@ select pg_temp.check('editor reads the ranking by author', pg_temp.exec('authent
 select pg_temp.check('an unknown grouping is refused', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$select * from public.admin_reads_by('x', current_date, current_date)$s$), 'err:22023');
 select pg_temp.setup($s$delete from public.articles where id = 'a0000000-0000-0000-0000-00000000eee1'$s$);
 select pg_temp.check('deleting a note removes its daily reads', pg_temp.val($s$select count(*) from public.article_views_daily where article_id = 'a0000000-0000-0000-0000-00000000eee1'$s$), '0');
+
+-- Panel: restoring never overwrites a note that exists
+select pg_temp.setup($s$insert into public.articles (id, title, slug, content, status, published_at) values ('a0000000-0000-0000-0000-00000000fff2', 'Viva', 'viva-test', 'antes', 'published', now() - interval '1 hour')$s$);
+select pg_temp.setup($s$update public.articles set content = 'ahora' where id = 'a0000000-0000-0000-0000-00000000fff2'$s$);
+select pg_temp.check('restoring over a live note is refused', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', $s$select public.admin_restore_article((select id from public.article_revisions where article_id = 'a0000000-0000-0000-0000-00000000fff2' limit 1))$s$), 'err:QC409');
+select pg_temp.check('the live note keeps its text', pg_temp.val($s$select content from public.articles where id = 'a0000000-0000-0000-0000-00000000fff2'$s$), 'ahora');
+
+-- Panel: breaking news counts from when readers can see it
+select pg_temp.setup($s$insert into public.articles (id, title, slug, content, status, is_breaking) values ('a0000000-0000-0000-0000-00000000fff1', 'Urgente', 'urgente-test', 'x', 'draft', true)$s$);
+select pg_temp.check('a draft marked breaking has no end yet', pg_temp.val($s$select breaking_until is null from public.articles where id = 'a0000000-0000-0000-0000-00000000fff1'$s$), 'true');
+select pg_temp.setup($s$update public.articles set status = 'published', published_at = now() where id = 'a0000000-0000-0000-0000-00000000fff1'$s$);
+select pg_temp.check('publishing starts the 24 hours', pg_temp.val($s$select round(extract(epoch from breaking_until - now()) / 3600) from public.articles where id = 'a0000000-0000-0000-0000-00000000fff1'$s$), '24');
+select pg_temp.setup($s$update public.articles set is_breaking = false, breaking_until = now() - interval '2 days' where id = 'a0000000-0000-0000-0000-00000000fff1'$s$);
+select pg_temp.setup($s$update public.articles set is_breaking = true where id = 'a0000000-0000-0000-0000-00000000fff1'$s$);
+select pg_temp.check('marking again after it expired starts over', pg_temp.val($s$select round(extract(epoch from breaking_until - now()) / 3600) from public.articles where id = 'a0000000-0000-0000-0000-00000000fff1'$s$), '24');
+select pg_temp.setup($s$update public.articles set breaking_until = now() + interval '3 days' where id = 'a0000000-0000-0000-0000-00000000fff1'$s$);
+select pg_temp.setup($s$update public.articles set title = 'Urgente 2' where id = 'a0000000-0000-0000-0000-00000000fff1'$s$);
+select pg_temp.check('a chosen end date stays', pg_temp.val($s$select round(extract(epoch from breaking_until - now()) / 3600) from public.articles where id = 'a0000000-0000-0000-0000-00000000fff1'$s$), '72');
+select pg_temp.setup($s$insert into public.articles (id, title, slug, content, status, published_at, is_breaking) values ('a0000000-0000-0000-0000-00000000fff3', 'Vencida', 'vencida-test', 'x', 'published', now() - interval '3 days', true)$s$);
+select pg_temp.setup($s$update public.articles set breaking_until = now() - interval '1 day' where id = 'a0000000-0000-0000-0000-00000000fff3'$s$);
+select pg_temp.setup($s$update public.articles set is_breaking = true where id = 'a0000000-0000-0000-0000-00000000fff3'$s$);
+select pg_temp.check('expired breaking news does not come back by saving', pg_temp.val($s$select breaking_until < now() from public.articles where id = 'a0000000-0000-0000-0000-00000000fff3'$s$), 'true');
+
+-- Panel: the log keeps who it was
+select pg_temp.setup($s$delete from public.activity_log where entity = 'tag'$s$);
+select pg_temp.check('admin creates a tag', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', $s$insert into public.tags (id, name, slug) values ('b0000000-0000-0000-0000-00000000fff4', 'Quién', 'quien-test')$s$), 'ok:1');
+select pg_temp.setup($s$update public.profiles set full_name = 'Otro Nombre' where id = '00000000-0000-0000-0000-00000000000a'$s$);
+select pg_temp.check('renaming later does not rewrite the log', pg_temp.val($s$select actor_name <> 'Otro Nombre' from public.activity_log where entity = 'tag' and entity_id = 'b0000000-0000-0000-0000-00000000fff4'$s$), 'true');
+select pg_temp.check('the log keeps the email, which nobody can fake', pg_temp.val($s$select actor_email from public.activity_log where entity = 'tag' and entity_id = 'b0000000-0000-0000-0000-00000000fff4'$s$), 'admin@test.invalid');
 
 -- Structure
 select pg_temp.check('every public table has RLS', pg_temp.val($s$select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity$s$), '0');
