@@ -228,8 +228,10 @@ function CalendarPage() {
             )}
             {agenda.map(([day, notes]) => (
               <div key={day} className="rounded-2xl border bg-card p-3">
-                <h2 className="mb-2 flex items-center gap-2 font-medium first-letter:uppercase">
-                  {dayName.format(new Date(`${day}T00:00:00Z`))}
+                <h2 className="mb-2 flex items-center gap-2 font-medium">
+                  <span className="inline-block first-letter:uppercase">
+                    {dayName.format(new Date(`${day}T00:00:00Z`))}
+                  </span>
                   {day === today && (
                     <span className="rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
                       Hoy
