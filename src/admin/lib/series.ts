@@ -92,6 +92,8 @@ export const axisTicks = (count: number, labels = 7) => {
   return [...ticks, last];
 };
 
+export const totalReads = (rows: DayReads[]) => rows.reduce((sum, row) => sum + row.reads, 0);
+
 export const hasEnoughHistory = (rows: DayReads[]) =>
   rows.filter((row) => row.reads > 0).length >= MIN_DAYS_WITH_READS;
 

@@ -300,7 +300,7 @@ export function NoteEditor({ article }: { article: AdminArticle | null }) {
           extraTabs={[
             {
               id: "asistente",
-              label: "Asistente",
+              label: "IA",
               content: <AiPanel form={form} editor={editor} onChange={change} />,
             },
             {

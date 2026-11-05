@@ -296,7 +296,7 @@ function ActivityPage() {
 
   return (
     <>
-      <h1 className="mb-3 text-2xl font-semibold">Actividad</h1>
+      <h1 className="mb-3 flex min-h-10 items-center text-2xl font-semibold">Actividad</h1>
       <AiUsage />
       <section className="rounded-2xl border bg-card">
         <div role="tablist" aria-label="Registros" className="flex gap-1 border-b p-2">

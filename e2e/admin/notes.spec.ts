@@ -225,7 +225,7 @@ test("the assistant suggests and nothing changes until it is accepted", async ({
   await signIn(page, "editor");
   await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
   await openNote(page, id);
-  await page.getByRole("tab", { name: "Asistente" }).click();
+  await page.getByRole("tab", { name: "IA", exact: true }).click();
 
   await mockAssistant(page, { titles: ["Título sugerido", "Otro título"] });
   await page.getByRole("button", { name: "Títulos" }).click();
@@ -256,7 +256,7 @@ test("when the assistant fails, the note is untouched and writing goes on", asyn
   await signIn(page, "editor");
   await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
   await openNote(page, id);
-  await page.getByRole("tab", { name: "Asistente" }).click();
+  await page.getByRole("tab", { name: "IA", exact: true }).click();
 
   await mockAssistant(page, { error: "El asistente no respondió." }, 502);
   await page.getByRole("button", { name: "Resumen" }).click();
@@ -573,8 +573,8 @@ test("a new comment appears by itself; an administrator removes it and blocks th
   await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
   await page.goto("/comentarios");
   await expect(page.getByRole("heading", { name: "Comentarios" })).toBeVisible();
-  await page.waitForTimeout(1500);
 
+  // Right away on purpose: it can arrive before the live connection is ready.
   const body = `Comentario E2E ${STAMP}`;
   await api("/rest/v1/comments", {
     method: "POST",
@@ -893,9 +893,9 @@ test("finish: Hoy shows the rise in reads and says which period its lists cover"
   });
   await signIn(page, "editor");
   await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
-  const reads = page.locator("section").filter({ hasText: "Lecturas totales" });
+  const reads = page.locator("section").filter({ hasText: "Lecturas, 7 días" });
   await expect(reads).toContainText(/\+\d+%/);
-  await expect(reads).toContainText("Últimos 7 días frente a los 7 anteriores");
+  await expect(reads).toContainText("desde el inicio");
   await expect(page.locator("section").filter({ hasText: "Comentarios, 24 h" })).toContainText(
     "24 h anteriores",
   );
@@ -1003,7 +1003,7 @@ test("finish: on a phone the calendar is a list, filters fold away and names sta
   await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
 
   const urgent = await page.getByRole("heading", { name: "Requiere atención" }).boundingBox();
-  const figures = await page.getByText("Lecturas totales").boundingBox();
+  const figures = await page.getByText("Lecturas, 7 días").boundingBox();
   expect(urgent?.y ?? Infinity).toBeLessThan(figures?.y ?? 0);
 
   await page.goto("/calendario");
@@ -1027,5 +1027,76 @@ test("finish: on a phone the calendar is a list, filters fold away and names sta
     .locator("span")
     .first()
     .evaluate((node) => node.scrollWidth - node.clientWidth);
+  expect(cut).toBeLessThanOrEqual(0);
+});
+
+test("finish: a busy day stays short, and the rest is one click away", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const titles = Array.from({ length: 5 }, (_, index) => `E2E dia lleno ${index} ${STAMP}`);
+  const notes = await api("/rest/v1/articles", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify(
+      titles.map((title, index) => ({
+        title,
+        slug: `e2e-dia-${index}-${STAMP}`,
+        content: "<p>x</p>",
+        status: "published",
+        published_at: new Date().toISOString(),
+      })),
+    ),
+  });
+  created.push(...notes.map((note: { id: string }) => note.id));
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await page.goto("/calendario");
+  await page
+    .getByRole("button", { name: /^\+\d+ más/ })
+    .first()
+    .waitFor();
+  const today = new Date(Date.now() - 3 * 3_600_000).toISOString().slice(0, 10);
+  const cell = page.locator(`td[data-day='${today}']`);
+  await expect(cell.getByRole("link")).toHaveCount(4);
+  await cell.getByRole("button", { name: /^\+\d+ más/ }).click();
+  for (const title of titles) {
+    await expect(page.getByRole("dialog").getByRole("link", { name: title })).toBeVisible();
+  }
+});
+
+test("finish: Revisar lands on breaking news, even on a phone", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const [note] = await api("/rest/v1/articles", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({
+      title: `E2E sin fin ${STAMP}`,
+      slug: `e2e-sin-fin-${STAMP}`,
+      content: "<p>x</p>",
+      status: "published",
+      published_at: new Date(Date.now() - 3 * 86_400_000).toISOString(),
+      is_breaking: true,
+      breaking_until: null,
+    }),
+  });
+  created.push(note.id);
+  await api(`/rest/v1/articles?id=eq.${note.id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ breaking_until: null }),
+  });
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await page.getByRole("link", { name: "Revisar" }).click();
+  await expect(page).toHaveURL(/\/portada#ultima-hora$/);
+  await expect(page.getByRole("heading", { name: "Última hora" })).toBeInViewport();
+});
+
+test("finish: on an office laptop every tab of the editor can be seen", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await page.goto("/articulos/nueva");
+  const strip = page.getByRole("tablist", { name: "Datos de la nota" });
+  await expect(strip.getByRole("tab", { name: /Revisión \(\d+\)/ })).toBeVisible();
+  const cut = await strip.evaluate((node) => node.scrollWidth - node.clientWidth);
   expect(cut).toBeLessThanOrEqual(0);
 });

@@ -40,15 +40,11 @@ type Change = { value?: string; caption: string; rise?: boolean };
 
 const signed = (value: number, unit = "") => `${value > 0 ? "+" : "−"}${Math.abs(value)}${unit}`;
 
-const readsChange = (percent: number | null | undefined): Change | undefined => {
-  if (percent === undefined) return undefined;
-  if (percent === null) return { caption: "Sin datos previos" };
-  if (percent === 0) return { caption: "Igual que los 7 días anteriores" };
-  return {
-    value: signed(percent, "%"),
-    caption: "Últimos 7 días frente a los 7 anteriores",
-    rise: percent > 0,
-  };
+const readsChange = (percent: number | null | undefined, lifetime: number | undefined) => {
+  if (percent === undefined || lifetime === undefined) return undefined;
+  const caption = `${number.format(lifetime)} desde el inicio`;
+  if (!percent) return { caption };
+  return { value: signed(percent, "%"), caption, rise: percent > 0 };
 };
 
 const commentsChange = (
@@ -114,7 +110,11 @@ function AttentionRow({ item }: { item: AttentionItem }) {
         <p className="text-[0.8125rem] text-muted-foreground">{item.detail}</p>
       </div>
       {isReady(item.to) && (
-        <Link to={item.to as "/"} className="ml-auto font-semibold text-link hover:underline">
+        <Link
+          to={item.to as "/"}
+          {...(item.hash ? { hash: item.hash } : {})}
+          className="ml-auto font-semibold text-link hover:underline"
+        >
           {item.action}
         </Link>
       )}
@@ -231,7 +231,7 @@ function BySection({ stats }: { stats: DashboardStats | undefined }) {
 
 function Today() {
   const { data: stats, isError, refetch } = useDashboard();
-  const readsPercent = useReadsChange();
+  const week = useReadsChange();
   const commentsBefore = useCommentsBefore();
 
   return (
@@ -255,9 +255,9 @@ function Today() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         <div className="grid grid-cols-2 gap-4 lg:col-span-12 lg:grid-cols-4">
           <Figure
-            label="Lecturas totales"
-            value={stats?.total_reads}
-            change={readsChange(readsPercent)}
+            label="Lecturas, 7 días"
+            value={week.reads}
+            change={readsChange(week.percent, stats?.total_reads)}
           />
           <Figure
             label="Notas publicadas"

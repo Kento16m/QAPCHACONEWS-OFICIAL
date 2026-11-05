@@ -46,7 +46,7 @@ function Security() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-2xl font-semibold">Seguridad</h1>
+      <h1 className="flex min-h-10 items-center text-2xl font-semibold">Seguridad</h1>
       <p className="mt-1 text-muted-foreground">
         La doble verificación pide un código de tu teléfono además de la contraseña. Registrá dos
         dispositivos: si perdés uno, seguís pudiendo entrar.

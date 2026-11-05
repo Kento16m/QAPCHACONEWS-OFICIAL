@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import {
   agendaDays,
   canMove,
+  cellNotes,
   dayKey,
   listCalendar,
   monthGrid,
@@ -97,6 +98,7 @@ function CalendarPage() {
   const [over, setOver] = useState<string | null>(null);
   const [moving, setMoving] = useState<CalendarNote | null>(null);
   const [newDay, setNewDay] = useState("");
+  const [openDay, setOpenDay] = useState<string | null>(null);
 
   const weeks = useMemo(() => monthGrid(year, month), [year, month]);
   const range = useMemo(() => monthRange(year, month), [year, month]);
@@ -288,10 +290,19 @@ function CalendarPage() {
                           {Number(day.slice(8))}
                         </span>
                         <ul className="space-y-1">
-                          {byDay.get(day)?.map((note) => (
+                          {cellNotes(byDay.get(day) ?? []).shown.map((note) => (
                             <NoteChip key={note.id} note={note} onAskMove={askMove} />
                           ))}
                         </ul>
+                        {cellNotes(byDay.get(day) ?? []).hidden > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setOpenDay(day)}
+                            className="mt-1 rounded-md px-1.5 py-0.5 text-xs font-medium text-link hover:bg-muted"
+                          >
+                            +{cellNotes(byDay.get(day) ?? []).hidden} más
+                          </button>
+                        )}
                       </td>
                     ))}
                   </tr>
@@ -301,6 +312,30 @@ function CalendarPage() {
           </section>
         </>
       )}
+
+      <Dialog open={openDay !== null} onOpenChange={(open) => !open && setOpenDay(null)}>
+        <DialogContent className="p-5">
+          <DialogHeader>
+            <DialogTitle className="first-letter:uppercase">
+              {openDay && dayName.format(new Date(`${openDay}T00:00:00Z`))}
+            </DialogTitle>
+            <DialogDescription>Todas las notas de este día.</DialogDescription>
+          </DialogHeader>
+          <ul className="space-y-1.5">
+            {openDay &&
+              byDay.get(openDay)?.map((note) => (
+                <NoteChip
+                  key={note.id}
+                  note={note}
+                  onAskMove={(chosen) => {
+                    setOpenDay(null);
+                    askMove(chosen);
+                  }}
+                />
+              ))}
+          </ul>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={moving !== null} onOpenChange={(open) => !open && setMoving(null)}>
         <DialogContent>

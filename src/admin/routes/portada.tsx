@@ -186,7 +186,7 @@ function Breaking() {
   const now = Date.now();
 
   return (
-    <section className="rounded-2xl border bg-card p-5 lg:col-span-4">
+    <section id="ultima-hora" className="scroll-mt-20 rounded-2xl border bg-card p-5 lg:col-span-4">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg font-semibold">Última hora</h2>
         <Button variant="outline" size="sm" onClick={() => setAdding(true)}>
@@ -262,6 +262,13 @@ function HomepagePage() {
     // Only fresh data replaces the screen, and never over changes not yet saved.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
+
+  // The chosen notes above it take their height only once loaded.
+  useEffect(() => {
+    if (!isPending && window.location.hash === "#ultima-hora") {
+      document.getElementById("ultima-hora")?.scrollIntoView();
+    }
+  }, [isPending]);
 
   const edit = (next: (SlotNote | null)[]) => {
     setSlots(next);

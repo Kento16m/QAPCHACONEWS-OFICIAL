@@ -133,7 +133,9 @@ function TaxonomyPage() {
 
   return (
     <>
-      <h1 className="mb-5 text-2xl font-semibold">Categorías y etiquetas</h1>
+      <h1 className="mb-5 flex min-h-10 items-center text-2xl font-semibold">
+        Categorías y etiquetas
+      </h1>
       <div className="grid items-start gap-4 lg:grid-cols-2">
         <section className="rounded-2xl border bg-card p-5">
           <div className="mb-2 flex items-center justify-between gap-3">

@@ -13,6 +13,7 @@ export type AttentionItem = {
   detail: string;
   action: string;
   to: string;
+  hash?: string;
   tone: "warning" | "info";
 };
 
@@ -44,6 +45,7 @@ export const attentionItems = (stats: AttentionInput): AttentionItem[] => {
       detail: "Publicadas hace más de 24 horas",
       action: "Revisar",
       to: "/portada",
+      hash: "ultima-hora",
       tone: "warning",
     },
     {

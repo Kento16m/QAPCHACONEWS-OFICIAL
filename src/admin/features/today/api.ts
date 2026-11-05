@@ -2,7 +2,13 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { requireSupabaseClient } from "@/lib/supabase";
 import type { AttentionInput } from "../../lib/attention";
-import { comparedToPrevious, fetchSeries, previousRange, rangeFor } from "../../lib/series";
+import {
+  comparedToPrevious,
+  fetchSeries,
+  previousRange,
+  rangeFor,
+  totalReads,
+} from "../../lib/series";
 
 export type DashboardStats = AttentionInput & {
   published: number;
@@ -30,7 +36,7 @@ const fetchDashboard = async () => {
 export const useDashboard = () =>
   useQuery({ queryKey: ["admin", "dashboard"], queryFn: fetchDashboard, refetchInterval: 60_000 });
 
-/** Reads of the last 7 days against the 7 before: a percentage, null if it cannot be compared. */
+/** Reads of the last 7 days, and against the 7 before: a percentage, null if it cannot be compared. */
 export const useReadsChange = () => {
   const range = useMemo(() => rangeFor(7), []);
   const before = useMemo(() => previousRange(range), [range]);
@@ -42,9 +48,11 @@ export const useReadsChange = () => {
     queryKey: ["admin", "series", before.from, before.to],
     queryFn: () => fetchSeries(before.from, before.to),
   });
-  return current.data && previous.data
-    ? comparedToPrevious(current.data, previous.data)
-    : undefined;
+  return {
+    reads: current.data && totalReads(current.data),
+    percent:
+      current.data && previous.data ? comparedToPrevious(current.data, previous.data) : undefined,
+  };
 };
 
 const hoursAgo = (hours: number) => new Date(Date.now() - hours * 3_600_000).toISOString();

@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { agendaDays, canMove, dayKey, monthGrid, moveToDay, monthRange } from "./calendar";
+import {
+  agendaDays,
+  canMove,
+  cellNotes,
+  dayKey,
+  monthGrid,
+  moveToDay,
+  monthRange,
+} from "./calendar";
 
 describe("dayKey", () => {
   it("uses the day in Paraguay, not in UTC", () => {
@@ -92,5 +100,23 @@ describe("agendaDays", () => {
   it("does not bring today into another month", () => {
     expect(agendaDays(["2026-12-01"], "2026-12", "2026-11-05")).toEqual(["2026-12-01"]);
     expect(agendaDays([], "2026-12", "2026-11-05")).toEqual([]);
+  });
+});
+
+describe("cellNotes", () => {
+  const note = (id: string, status: "scheduled" | "published") =>
+    ({ id, status }) as Parameters<typeof cellNotes>[0][number];
+
+  it("shows everything when it fits", () => {
+    const notes = [note("a", "published"), note("b", "published")];
+    expect(cellNotes(notes)).toEqual({ shown: notes, hidden: 0 });
+  });
+
+  it("keeps a day from growing, and what is still to come stays in sight", () => {
+    const notes = ["a", "b", "c", "d", "e"].map((id) => note(id, "published"));
+    notes.push(note("z", "scheduled"));
+    const { shown, hidden } = cellNotes(notes);
+    expect(shown.map((item) => item.id)).toEqual(["z", "a", "b", "c"]);
+    expect(hidden).toBe(2);
   });
 });

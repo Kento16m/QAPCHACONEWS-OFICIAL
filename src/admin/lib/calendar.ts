@@ -28,6 +28,21 @@ export type CalendarNote = {
   scheduled_at: string | null;
 };
 
+const NOTES_IN_A_CELL = 4;
+
+/** What fits in a day of the month: what is still to come goes first. */
+export const cellNotes = (notes: CalendarNote[]) => {
+  const ordered = [
+    ...notes.filter((note) => note.status === "scheduled"),
+    ...notes.filter((note) => note.status !== "scheduled"),
+  ];
+  if (ordered.length <= NOTES_IN_A_CELL) return { shown: notes, hidden: 0 };
+  return {
+    shown: ordered.slice(0, NOTES_IN_A_CELL),
+    hidden: ordered.length - NOTES_IN_A_CELL,
+  };
+};
+
 /** For a list: today and what is coming, then what already went out. Today is always there. */
 export const agendaDays = (days: string[], month: string, today: string) => {
   const shown = new Set(days.filter((day) => day.startsWith(month)));

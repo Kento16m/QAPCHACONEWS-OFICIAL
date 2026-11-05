@@ -310,7 +310,7 @@ export function SidePanel({
       <div
         role="tablist"
         aria-label="Datos de la nota"
-        className="flex gap-0.5 overflow-x-auto border-b p-2 [scrollbar-width:none]"
+        className="flex flex-wrap gap-0.5 border-b p-2 xl:flex-nowrap"
       >
         {[...TABS, ...extraTabs].map((item) => (
           <button
@@ -320,7 +320,7 @@ export function SidePanel({
             aria-selected={tab === item.id}
             onClick={() => setTab(item.id)}
             className={cn(
-              "shrink-0 whitespace-nowrap rounded-lg px-2 py-1.5 text-[0.8125rem] font-medium transition-colors duration-150",
+              "shrink-0 whitespace-nowrap rounded-lg px-1.5 py-1.5 text-[0.8125rem] font-medium transition-colors duration-150",
               tab === item.id ? "bg-accent text-accent-foreground" : "hover:bg-muted",
             )}
           >

@@ -61,13 +61,17 @@ function CommentsPage() {
   // A new comment appears on its own.
   useEffect(() => {
     const client = requireSupabaseClient();
+    const refresh = () => {
+      void queryClient.invalidateQueries({ queryKey: ["admin", "comments"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
+    };
     const channel = client
       .channel("admin-comments")
-      .on("postgres_changes", { event: "*", schema: "public", table: "comments" }, () => {
-        void queryClient.invalidateQueries({ queryKey: ["admin", "comments"] });
-        void queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
-      })
-      .subscribe();
+      .on("postgres_changes", { event: "*", schema: "public", table: "comments" }, refresh)
+      // What arrived between loading the list and connecting would otherwise stay hidden.
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") refresh();
+      });
     return () => {
       void client.removeChannel(channel);
     };
