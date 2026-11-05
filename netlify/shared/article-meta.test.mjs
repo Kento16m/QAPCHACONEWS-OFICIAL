@@ -155,6 +155,7 @@ describe("handleArticleRequest", () => {
       headers: {
         "content-type": "text/html; charset=utf-8",
         "content-length": "10",
+        etag: '"abc"',
         "x-kept": "yes",
       },
     });
@@ -174,6 +175,33 @@ describe("handleArticleRequest", () => {
     expect(response.headers.get("x-kept")).toBe("yes");
     // The body changed size; a stale length would cut the page off.
     expect(response.headers.get("content-length")).toBeNull();
+  });
+
+  it("lets the CDN reuse the page briefly, so most visitors skip the database query", async () => {
+    const response = await handleArticleRequest(
+      request("/noticia/lluvias"),
+      async () => page(),
+      config,
+      found(),
+    );
+
+    expect(response.headers.get("netlify-cdn-cache-control")).toBe(
+      "public, durable, s-maxage=60, stale-while-revalidate=600",
+    );
+    expect(response.headers.get("cache-control")).toBe("public, max-age=0, must-revalidate");
+    // The body changed, so the original validator no longer describes it.
+    expect(response.headers.get("etag")).toBeNull();
+  });
+
+  it("never caches a page without its tags", async () => {
+    const http = vi.fn().mockRejectedValue(new Error("down"));
+    const response = await handleArticleRequest(
+      request("/noticia/x"),
+      async () => page(),
+      config,
+      http,
+    );
+    expect(response.headers.get("netlify-cdn-cache-control")).toBeNull();
   });
 
   it("returns the normal page when the article is unknown or Supabase fails", async () => {

@@ -1,4 +1,5 @@
 ﻿import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { hasBlockedWord } from "./blocked-words.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,9 +23,6 @@ const POST_ERRORS: Record<string, { status: number; message: string }> = {
   QC404: { status: 404, message: "La noticia no está disponible para comentar." },
   QC429: { status: 429, message: RATE_LIMIT_MESSAGE },
 };
-
-const BLOCKED_WORDS =
-  /(\b(?:puta|puto|culo|gil|gila|idiota|imbecil|nazi|matar|asesinar|mierda|mierd[ae]|cabr[oó]|hijo de puta|bastardo|pendejo|pendeja|retrasado|retrasada|mongol|mamon|perra|perro|maldito|maldita|pesado|desgraciado|cagada)\b)/i;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -59,7 +57,7 @@ Deno.serve(async (req) => {
       return json({ error: "Tu comentario parece spam o incluye enlaces no permitidos." }, 400);
     }
 
-    if (BLOCKED_WORDS.test(normalized)) {
+    if (hasBlockedWord(normalized)) {
       return json(
         {
           error:
@@ -77,6 +75,7 @@ Deno.serve(async (req) => {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${openAiKey}` },
       body: JSON.stringify({ input: normalized, model: "omni-moderation-latest" }),
+      signal: AbortSignal.timeout(10_000),
     });
     const moderationData = await moderationResponse.json().catch(() => null);
 

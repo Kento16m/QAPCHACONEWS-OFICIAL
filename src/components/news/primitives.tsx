@@ -100,11 +100,14 @@ export function CoverImage({
   alt,
   className,
   fit = "cover",
+  priority = false,
 }: {
   src: string | null;
   alt: string;
   className?: string;
   fit?: "cover" | "contain";
+  // The main image of the page: downloading it first makes the page feel ready sooner.
+  priority?: boolean;
 }) {
   const [failed, setFailed] = useState(false);
   if (!src || failed) {
@@ -125,7 +128,8 @@ export function CoverImage({
     <img
       src={src}
       alt={alt}
-      loading="lazy"
+      loading={priority ? "eager" : "lazy"}
+      fetchPriority={priority ? "high" : "auto"}
       onError={() => setFailed(true)}
       style={{ objectPosition: "center center" }}
       className={cn(

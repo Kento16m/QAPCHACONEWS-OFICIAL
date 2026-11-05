@@ -1,5 +1,5 @@
-import { lazy, Suspense } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, lazyRouteComponent, useNavigate } from "@tanstack/react-router";
+import { Deferred } from "@/components/Deferred";
 import { useQuery } from "@tanstack/react-query";
 import { User, Menu, Moon, Search, Sun, CloudSun, MapPin, LoaderCircle, X } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
@@ -36,15 +36,12 @@ import {
 import { CURRENCY_MODAL_LIST, CURRENCY_PREVIEW, fetchExchangeRates } from "@/lib/exchange-rate";
 
 // Only signed-in people see this menu, and its libraries are heavy.
-const UserMenu = lazy(() =>
-  import("@/components/auth/UserMenu").then((module) => ({ default: module.UserMenu })),
-);
+const UserMenu = lazyRouteComponent(() => import("@/components/auth/UserMenu"), "UserMenu");
 
 // The full forecast is only downloaded when someone opens it.
-const WeatherDashboard = lazy(() =>
-  import("@/components/weather/WeatherDashboard").then((module) => ({
-    default: module.WeatherDashboard,
-  })),
+const WeatherDashboard = lazyRouteComponent(
+  () => import("@/components/weather/WeatherDashboard"),
+  "WeatherDashboard",
 );
 
 function AuthControl() {
@@ -53,11 +50,11 @@ function AuthControl() {
     return <span className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-secondary" />;
   if (user)
     return (
-      <Suspense
+      <Deferred
         fallback={<span className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-secondary" />}
       >
         <UserMenu />
-      </Suspense>
+      </Deferred>
     );
   return (
     <>
@@ -684,11 +681,11 @@ function WeatherForecastModal() {
                     isDarkMode ? "bg-slate-950" : "bg-slate-50",
                   )}
                 >
-                  <Suspense
+                  <Deferred
                     fallback={<LoaderCircle className="mx-auto mt-10 h-6 w-6 animate-spin" />}
                   >
                     <WeatherDashboard theme={isDarkMode ? "dark" : "light"} variant="modal" />
-                  </Suspense>
+                  </Deferred>
                 </div>
               )}
             </div>

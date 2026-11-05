@@ -244,6 +244,13 @@ El banner ya existía, pero su decisión no afectaba a nada: GA arrancaba aunque
 - [x] Google activo en el proyecto nuevo y Facebook retirado del sitio. Al migrar: probar un inicio real con Google en el dominio final.
 - [ ] Variables de entorno en Netlify, según `.env.example`.
 - [ ] Sitio de pruebas de Netlify desde `oficial`, con la base nueva. `npm run test:e2e` pasa allí.
+- [ ] En ese sitio, comprobar lo que solo se puede ver desplegado:
+  - Las variables `VITE_SUPABASE_*` y `OPENWEATHER_API_KEY` están disponibles para funciones y funciones de borde.
+  - Depurador de Facebook y `curl` de `/noticia/<slug>` con `Accept-Encoding: br`, `If-None-Match` y `HEAD`: las etiquetas llegan y nada se rompe.
+  - Tiempo de respuesta con y sin caché de la función de borde.
+  - Todas las URL de `/sitemap.xml` responden 200, y `/rss.xml` es válido.
+  - `/api/clima` con dos ciudades distintas y `/api/cotizaciones`.
+  - Lighthouse real en portada y en una nota, para decidir si hace falta prerenderizar.
 
 ### Tarea 2.5: el cambio
 

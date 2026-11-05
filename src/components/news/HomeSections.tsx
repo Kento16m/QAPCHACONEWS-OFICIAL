@@ -42,7 +42,7 @@ export function HeroArticle() {
   if (isError || !a) return <StateMessage error={isError}>No hay una nota destacada.</StateMessage>;
   return (
     <article className="img-zoom relative h-[460px] overflow-hidden rounded-3xl bg-navy lg:h-[520px]">
-      <CoverImage src={a.cover_image_url} alt={a.title} className="absolute inset-0" />
+      <CoverImage src={a.cover_image_url} alt={a.title} className="absolute inset-0" priority />
       <div className="bg-scrim-strong absolute inset-0" />
       <div className="absolute left-6 top-6 z-10">
         <CategoryBadge category={a.category} className="shadow-soft" />

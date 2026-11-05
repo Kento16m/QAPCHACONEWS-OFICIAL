@@ -7,9 +7,11 @@ import {
   useRouter,
   HeadContent,
   Scripts,
+  lazyRouteComponent,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
+import { Deferred } from "@/components/Deferred";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -20,9 +22,8 @@ import { SiteFooter } from "@/components/news/SiteFooter";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 
-const AuthDialog = lazy(() =>
-  import("@/components/auth/AuthDialog").then((module) => ({ default: module.AuthDialog })),
-);
+// Reloads once if a new deploy removed the file this page expects.
+const AuthDialog = lazyRouteComponent(() => import("@/components/auth/AuthDialog"), "AuthDialog");
 
 // Sign-in forms are only downloaded the first time someone opens them.
 function AuthDialogWhenOpened() {
@@ -31,9 +32,9 @@ function AuthDialogWhenOpened() {
   if (dialogOpen) opened.current = true;
   if (!opened.current) return null;
   return (
-    <Suspense fallback={null}>
+    <Deferred>
       <AuthDialog />
-    </Suspense>
+    </Deferred>
   );
 }
 

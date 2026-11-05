@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "plus jakarta sans",
+        "files": [
+          "src/test/page-shell.test.ts"
+        ],
+        "createdAt": "2026-11-05T00:39:20.878Z",
+        "reason": "Claude: this test only asserts the site's existing typography, in use before this work, is kept when self-hosted; not a new design choice"
+      }
+    ]
+  }
+}

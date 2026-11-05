@@ -439,6 +439,7 @@ function ArticlePage() {
         <figure className="reveal mx-auto mt-10 w-full max-w-4xl">
           <div className="w-full overflow-hidden rounded-[28px] bg-transparent shadow-soft">
             <CoverImage
+              priority
               src={a.cover_image_url}
               alt={a.title}
               fit="contain"

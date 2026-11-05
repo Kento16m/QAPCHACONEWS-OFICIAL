@@ -45,3 +45,15 @@ describe("fonts", () => {
     for (const file of files) expect(existsSync(join(fontsDir, file))).toBe(true);
   });
 });
+
+describe("article tags at the edge", () => {
+  const edge = readFileSync("netlify/edge-functions/article-meta.js", "utf8");
+
+  it("falls back to the normal page if the function itself fails", () => {
+    expect(edge).toContain('onError: "bypass"');
+  });
+
+  it("allows the CDN to cache its result", () => {
+    expect(edge).toContain('cache: "manual"');
+  });
+});

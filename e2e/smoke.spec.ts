@@ -278,6 +278,48 @@ test.describe("cookies", () => {
   });
 });
 
+test.describe("deferred downloads", () => {
+  test("a sign-in download that keeps failing leaves the page usable and says so", async ({
+    page,
+  }) => {
+    await prepare(page);
+    await page.route("**/assets/AuthDialog-*.js", (route) => route.abort());
+    await page.goto(`/noticia/${articleSlug}`);
+    await expect(page.getByText("Cuerpo de la nota.")).toBeVisible();
+
+    await page.locator("button:visible", { hasText: "Iniciar sesión" }).first().click();
+    // One automatic reload is expected, so the page gets time to come back.
+    await page.waitForTimeout(1500);
+    if (await page.getByRole("dialog").isHidden()) {
+      await page.locator("button:visible", { hasText: "Iniciar sesión" }).first().click();
+    }
+
+    await expect(page.getByText("No se pudo cargar. Recargá la página.")).toBeVisible();
+    await expect(page.getByText("Cuerpo de la nota.")).toBeVisible();
+    await expect(page.getByText("Esta página no pudo cargarse")).toHaveCount(0);
+  });
+
+  test("a sign-in download that fails once recovers by itself", async ({ page }) => {
+    await prepare(page);
+    let failures = 0;
+    await page.route("**/assets/AuthDialog-*.js", (route) => {
+      if (failures++ === 0) return route.abort();
+      return route.fallback();
+    });
+    await page.goto(`/noticia/${articleSlug}`);
+    await expect(page.getByText("Cuerpo de la nota.")).toBeVisible();
+
+    await page.locator("button:visible", { hasText: "Iniciar sesión" }).first().click();
+    await page.waitForTimeout(1500);
+    if (await page.getByRole("dialog").isHidden()) {
+      await page.locator("button:visible", { hasText: "Iniciar sesión" }).first().click();
+    }
+
+    await expect(page.getByRole("dialog").getByLabel("Correo electrónico")).toBeVisible();
+    await expect(page.getByText("Cuerpo de la nota.")).toBeVisible();
+  });
+});
+
 test.describe("accounts", () => {
   test("registering with confirmation pending shows a notice and stays signed out", async ({
     page,

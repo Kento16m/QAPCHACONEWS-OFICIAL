@@ -2,7 +2,8 @@
 const SITE_NAME = "QAP ChacoNews";
 const DEFAULT_DESCRIPTION = "Leé la nota completa en QAP ChacoNews.";
 const MAX_DESCRIPTION = 200;
-const TIMEOUT_MS = 1500;
+// Every uncached visitor waits for this query: better to skip the tags than to feel slow.
+const TIMEOUT_MS = 800;
 
 const escapeHtml = (value) =>
   String(value)
@@ -140,6 +141,13 @@ export const handleArticleRequest = async (request, next, config, http = fetch) 
 
   const headers = new Headers(response.headers);
   headers.delete("content-length");
+  headers.delete("etag");
+  // The CDN keeps the page briefly, so most visitors never wait for the database.
+  headers.set("cache-control", "public, max-age=0, must-revalidate");
+  headers.set(
+    "netlify-cdn-cache-control",
+    "public, durable, s-maxage=60, stale-while-revalidate=600",
+  );
   return new Response(injectArticleMeta(await response.text(), article, config.site), {
     status: response.status,
     headers,

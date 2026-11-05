@@ -7,4 +7,4 @@ export default (request, context) =>
     anonKey: Netlify.env.get("VITE_SUPABASE_ANON_KEY"),
   });
 
-export const config = { path: "/noticia/*" };
+export const config = { path: "/noticia/*", onError: "bypass", cache: "manual" };
