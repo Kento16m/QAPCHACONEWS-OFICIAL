@@ -1,24 +1,34 @@
-# Pixel Perfect Preview
+# QAP ChacoNews
 
-Implement exactly the screenshot and nothing else
+Portal de noticias del Chaco Paraguayo. React, TanStack Router y Vite en Netlify, con Supabase como base de datos, sesiones y almacenamiento.
 
-This project was built with [Lovable](https://lovable.dev).
+## Desarrollo
 
-## Build with Lovable
+Necesitás Node.js 22 y un archivo `.env` local (no se sube a Git) con estas variables:
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/d2b2543f-3d8b-483e-b64d-74fbb7bf18d8).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+| Variable | Para qué |
+| --- | --- |
+| `VITE_SUPABASE_URL` | URL del proyecto de Supabase |
+| `VITE_SUPABASE_ANON_KEY` | Clave pública de Supabase |
+| `OPENWEATHER_API_KEY` | Clima (solo en el servidor) |
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+npm install
 npm run dev
 ```
+
+## Pruebas
+
+| Comando | Qué revisa | Necesita |
+| --- | --- | --- |
+| `npm test` | Lógica de la app y funciones | Nada |
+| `npm run test:db` | Permisos y reglas de la base | `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF` |
+| `npm run test:e2e` | La app completa en un navegador | `SUPABASE_ACCESS_TOKEN` |
+
+`test:db` y `test:e2e` se niegan a correr contra el proyecto de producción.
+
+## Base de datos
+
+Las tablas salen de [supabase/migrations](supabase/migrations). La función [moderate-comment](supabase/functions/moderate-comment) revisa cada comentario con Gemini y necesita el secreto `GEMINI_API_KEY` en Supabase. Si Gemini no responde, el comentario no se publica.
+
+[scripts/migrate](scripts/migrate) copia los datos del proyecto anterior: ese proyecto solo se lee y nunca puede ser el destino.

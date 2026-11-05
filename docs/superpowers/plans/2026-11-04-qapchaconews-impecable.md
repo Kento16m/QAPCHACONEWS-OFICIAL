@@ -35,7 +35,7 @@ Producción sigue expuesta mientras la base nueva no entre en servicio, así que
 
 - **Producción:** no se toca sin aprobación del dueño para ese paso concreto.
 - **Secretos:** ningún token, clave de servicio o contraseña en archivos, commits o logs. Nunca se usa el enlace de GitHub para permitir un secreto.
-- **Git:** se trabaja y se sube desde `oficial` al remoto `oficial`. `main` y `origin` (conectados a Lovable) no se usan, y no se reescribe historial ya publicado.
+- **Git:** se trabaja y se sube desde `oficial` al remoto `oficial`. `main` y `origin` (el repositorio anterior) no se usan, y no se reescribe historial ya publicado.
 - **Base de datos:** todo cambio entra como archivo nuevo en `supabase/migrations/`, con su prueba en `supabase/tests/security.sql`. No se edita a mano en producción.
 - **Permisos:** se comprueban en la base. El navegador solo decide qué mostrar.
 - **Pruebas:** el test se escribe primero y se ve fallar. Cada fase cierra con `npm test`, `npm run test:db` y la compilación en verde.
@@ -261,7 +261,7 @@ Requiere aprobación explícita del dueño el mismo día.
 - [ ] Apuntar el sitio de Netlify de producción a `oficial`.
 - [ ] Comprobar en vivo: portada, una nota, entrar, comentar y publicar.
 - [ ] **Vuelta atrás:** restaurar el despliegue anterior en Netlify. La base vieja se conserva 30 días. Lo publicado después del cambio habría que copiarlo a mano.
-- [ ] Desconectar Lovable si esa es la decisión tomada.
+- [x] Quitar Lovable del proyecto (decisión del dueño).
 
 ---
 
@@ -274,7 +274,7 @@ Requiere aprobación explícita del dueño el mismo día.
 - [ ] Borrar 36 componentes sin uso de `src/components/ui` y `src/hooks/use-mobile.tsx`.
 - [ ] Quitar las 29 dependencias que solo ellos usaban.
 - [ ] Borrar `src/data/mock.ts`, `src/server.ts`, `src/start.ts`, `src/lib/error-capture.ts`, `src/lib/error-page.ts`, `src/pages/admin/.gitkeep`, la carpeta vacía `QAPCHACONEWS`, y las capturas y logos sin referencias en `public/`.
-- [ ] Quitar `@tanstack/react-start`, `nitro` y la config de Lovable si se decide desconectarlo.
+- [x] Quitar `@tanstack/react-start`, `nitro` y la config de Lovable.
 - [ ] Dejar un solo gestor de paquetes, npm: borrar `bun.lock` y `bunfig.toml`.
 - [x] Borrar el `.htaccess` de la raíz, pensado para servir el sitio público desde Hostinger, y `public/_redirects`, que duplica `netlify.toml`.
 - [ ] Copiar solo el CSS y las fuentes de `weather-icons-master` y borrar el resto.
@@ -364,7 +364,7 @@ Migraciones previstas, cada una con su prueba:
 
 - [ ] **Copias:** decidir el plan de Supabase. Ensayar una restauración completa en un proyecto aparte.
 - [ ] **Pruebas:** proyecto de pruebas separado de producción, para `npm run test:e2e` tras la migración.
-- [ ] **Monitoreo:** avisos de caída y captura de errores del navegador. Revisar `lovable-error-reporting.ts`.
+- [ ] **Monitoreo:** avisos de caída y captura de errores del navegador.
 - [ ] **Registros:** definir cuánto tiempo se guardan los accesos del panel y borrarlos con `pg_cron`.
 - [ ] **Legal:** alinear Política de Privacidad, Cookies y Términos con lo que hace el sistema, y pedir revisión a un profesional.
 - [ ] **Documentación:** README real con instalación, variables, migraciones, pruebas y despliegue, más una guía breve para editores. Eliminar `informe_qap_chaconews.txt` y `ADMIN-ANALISIS-Y-ROADMAP.md`, ya absorbidos aquí.
@@ -403,7 +403,7 @@ Migraciones previstas, cada una con su prueba:
 | Decisión | Recomendación | Bloquea |
 |---|---|---|
 | ¿Damos acceso a producción (token) o lo haces guiado? | Guiado, para no compartir otro token | 0.2 |
-| ¿Sigues usando Lovable? | Desconectarlo: el proyecto ya se gestiona por Git | 2.5 y 3.1 |
+| ¿Sigues usando Lovable? | No: el dueño pidió quitarlo. El proyecto se gestiona por Git | 2.5 y 3.1 |
 | ~~¿Sigues usando Hostinger?~~ | **Decidido:** solo para `admin.qapchaconews.com`; el sitio público sigue en Netlify | – |
 | ¿Acceso a la cuenta de Netlify? | Sí, o lo configuras guiado | 2.4 |
 | ~~¿Mantienes el inicio con Google y Facebook?~~ | **Decidido:** solo Google, ya activo en el proyecto nuevo. Facebook se quitó del sitio | – |
