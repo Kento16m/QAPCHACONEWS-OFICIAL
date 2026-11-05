@@ -1,23 +1,26 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export function Pager({
   page,
   total,
   size,
   onChange,
+  className,
 }: {
   page: number;
   total: number;
   size: number;
   onChange: (page: number) => void;
+  className?: string;
 }) {
   const pages = Math.max(1, Math.ceil(total / size));
   if (pages <= 1) return null;
   return (
     <nav
       aria-label="Páginas"
-      className="flex items-center justify-between gap-3 border-t px-4 py-3"
+      className={cn("flex items-center justify-between gap-3 border-t px-4 py-3", className)}
     >
       <p className="text-muted-foreground">
         Página {page} de {pages}

@@ -611,6 +611,33 @@ test("an editor reads comments but gets no way to remove them", async ({ page })
   await expect(page.getByRole("button", { name: "Borrar" })).toHaveCount(0);
 });
 
+test("windows keep their content away from the edges", async ({ page }) => {
+  const expectInset = async (name: string, last: string) => {
+    const dialog = page.getByRole("dialog");
+    await expect(async () => {
+      const box = (await dialog.boundingBox())!;
+      const title = (await dialog.getByRole("heading", { name }).boundingBox())!;
+      const end = (await dialog.getByRole("button", { name: last }).boundingBox())!;
+      expect(title.x - box.x).toBeGreaterThanOrEqual(16);
+      expect(title.y - box.y).toBeGreaterThanOrEqual(16);
+      expect(box.x + box.width - (end.x + end.width)).toBeGreaterThanOrEqual(16);
+      expect(box.y + box.height - (end.y + end.height)).toBeGreaterThanOrEqual(16);
+    }).toPass();
+  };
+
+  await signIn(page, "admin");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await page.goto("/categorias");
+  await page.getByRole("button", { name: "Nueva categoría" }).click();
+  await expectInset("Nueva categoría", "Guardar");
+
+  const id = await makeNote(`E2E ventana ${STAMP}`);
+  await openNote(page, id);
+  await page.getByRole("button", { name: "Elegir foto" }).click();
+  await page.getByRole("dialog").getByRole("tab", { name: "Dirección web" }).click();
+  await expectInset("Foto de portada", "Usar esta imagen");
+});
+
 test("an administrator manages roles, blocks, categories and subscribers", async ({ page }) => {
   const gestion = await makeUser("gestion");
   await signIn(page, "admin");

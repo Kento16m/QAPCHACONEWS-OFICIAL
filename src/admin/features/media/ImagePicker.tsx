@@ -164,6 +164,7 @@ export function ImagePicker({
               total={library.data?.total ?? 0}
               size={PAGE_SIZE}
               onChange={setPage}
+              className="px-0"
             />
             {library.data?.rows.length === 0 && (
               <p className="mt-3 text-muted-foreground">
