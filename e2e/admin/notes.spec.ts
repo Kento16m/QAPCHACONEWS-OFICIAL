@@ -263,3 +263,52 @@ test("when the assistant fails, the note is untouched and writing goes on", asyn
   await page.keyboard.type(" Más texto.");
   await expect(page.locator(".note-editor")).toContainText("Texto intacto. Más texto.");
 });
+
+// One white pixel, as a real upload.
+const PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=",
+  "base64",
+);
+
+test("an image uploaded from the computer reaches the library and the note", async ({ page }) => {
+  const id = await makeNote(`E2E imagen ${STAMP}`);
+  const alt = `Foto E2E ${STAMP}`;
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await openNote(page, id);
+
+  await page.getByRole("button", { name: "Elegir foto" }).click();
+  await page.getByRole("tab", { name: "Subir" }).click();
+  await page.getByLabel("Descripción de la imagen").fill(alt);
+  await page
+    .getByLabel("Elegir archivo")
+    .setInputFiles({ name: "foto.png", mimeType: "image/png", buffer: PNG });
+  await expect(page.getByAltText("Foto de portada elegida")).toBeVisible();
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  await expect(page.getByText("Guardado.")).toBeVisible();
+
+  const [note] = await api(`/rest/v1/articles?id=eq.${id}&select=cover_image_url`);
+  expect(note.cover_image_url).toContain("/article-media/");
+  expect(note.cover_image_url).toContain(".webp");
+
+  await page.goto("/imagenes");
+  await page.getByRole("searchbox", { name: "Buscar imágenes" }).fill(alt);
+  await page.getByRole("button", { name: alt }).click();
+  await expect(page.getByRole("dialog").getByText(`E2E imagen ${STAMP}`)).toBeVisible();
+  await page.getByRole("button", { name: "Borrar" }).click();
+  await expect(page.getByText("Se dejará de ver en 1 nota")).toBeVisible();
+  await page.getByRole("dialog").getByRole("button", { name: "Borrar" }).click();
+  await expect(page.getByText("Imagen borrada.")).toBeVisible();
+});
+
+test("an address that is not an image is refused", async ({ page }) => {
+  const id = await makeNote(`E2E imagen rota ${STAMP}`);
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await openNote(page, id);
+  await page.getByRole("button", { name: "Elegir foto" }).click();
+  await page.getByRole("tab", { name: "Dirección web" }).click();
+  await page.getByLabel("Dirección de la imagen").fill("http://inseguro.test/a.png");
+  await page.getByRole("button", { name: "Usar esta imagen" }).click();
+  await expect(page.getByRole("alert")).toContainText("https://");
+});

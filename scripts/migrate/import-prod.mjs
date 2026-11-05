@@ -229,6 +229,7 @@ const statements = [
   ),
   insertRows("public.admin_access_logs", COLUMNS.admin_access_logs, source.admin_access_logs),
   insertRows("private.legacy_data", ["source_table", "source_id", "reason", "row"], plan.archive),
+  "insert into public.media_assets (url, source, uploaded_by) select distinct cover_image_url, 'url', null::uuid from public.articles where cover_image_url like 'https://%' on conflict (url) do nothing;",
   "alter table public.profiles enable trigger profiles_set_updated_at;",
   "alter table public.admin_access_logs enable trigger admin_access_logs_fill;",
   // New rows must continue after the imported ids.

@@ -411,6 +411,60 @@ export type Database = {
           },
         ]
       }
+      media_assets: {
+        Row: {
+          alt: string
+          created_at: string
+          height: number | null
+          id: string
+          mime_type: string | null
+          source: string
+          storage_path: string | null
+          uploaded_by: string | null
+          url: string
+          width: number | null
+        }
+        Insert: {
+          alt?: string
+          created_at?: string
+          height?: number | null
+          id?: string
+          mime_type?: string | null
+          source: string
+          storage_path?: string | null
+          uploaded_by?: string | null
+          url: string
+          width?: number | null
+        }
+        Update: {
+          alt?: string
+          created_at?: string
+          height?: number | null
+          id?: string
+          mime_type?: string | null
+          source?: string
+          storage_path?: string | null
+          uploaded_by?: string | null
+          url?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "media_assets_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_assets_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       newsletter_subscribers: {
         Row: {
           confirmed: boolean

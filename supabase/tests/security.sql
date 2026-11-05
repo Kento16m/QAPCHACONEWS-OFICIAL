@@ -293,6 +293,17 @@ select pg_temp.setup($s$update public.ai_usage set uses = 400 where user_id = '0
 select pg_temp.check('the team cap stops everyone', pg_temp.exec('service_role', null, $s$select public.service_reserve_ai_use('00000000-0000-0000-0000-000000000001')$s$), 'err:QC429');
 select pg_temp.setup($s$delete from public.ai_usage$s$);
 
+-- Panel: image library
+select pg_temp.check('anon cannot read the library', pg_temp.exec('anon', null, 'select 1 from public.media_assets'), 'err:42501');
+select pg_temp.check('reader sees nothing in the library', pg_temp.exec('authenticated', '00000000-0000-0000-0000-000000000001', $s$select 1 from public.media_assets where url = 'https://x.test/a.webp'$s$), 'ok:0');
+select pg_temp.check('reader cannot add to the library', pg_temp.exec('authenticated', '00000000-0000-0000-0000-000000000001', $s$insert into public.media_assets (url, source) values ('https://x.test/r.webp', 'url')$s$), 'err:42501');
+select pg_temp.check('editor adds an image by address', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$insert into public.media_assets (url, source) values ('https://x.test/a.webp', 'url')$s$), 'ok:1');
+select pg_temp.check('the library records who added it', pg_temp.val($s$select uploaded_by from public.media_assets where url = 'https://x.test/a.webp'$s$), '00000000-0000-0000-0000-00000000000e');
+select pg_temp.check('an insecure address is refused', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$insert into public.media_assets (url, source) values ('http://x.test/b.webp', 'url')$s$), 'err:23514');
+select pg_temp.check('editor describes an image', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$update public.media_assets set alt = 'Foto' where url = 'https://x.test/a.webp'$s$), 'ok:1');
+select pg_temp.check('editor cannot change an image address', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$update public.media_assets set url = 'https://evil.test/x' where url = 'https://x.test/a.webp'$s$), 'err:42501');
+select pg_temp.check('editor removes an image', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$delete from public.media_assets where url = 'https://x.test/a.webp'$s$), 'ok:1');
+
 -- Structure
 select pg_temp.check('every public table has RLS', pg_temp.val($s$select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity$s$), '0');
 select pg_temp.check('anon has no whole-table write access', pg_temp.val($s$select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and has_table_privilege('anon', c.oid, 'INSERT, UPDATE, DELETE')$s$), '0');

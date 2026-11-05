@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ImagenesRouteImport } from './routes/imagenes'
 import { Route as SeguridadRouteImport } from './routes/seguridad'
 import { Route as ArticulosIndexRouteImport } from './routes/articulos.index'
 import { Route as ArticulosIdRouteImport } from './routes/articulos.$id'
@@ -17,6 +18,11 @@ import { Route as ArticulosIdRouteImport } from './routes/articulos.$id'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImagenesRoute = ImagenesRouteImport.update({
+  id: '/imagenes',
+  path: '/imagenes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SeguridadRoute = SeguridadRouteImport.update({
@@ -37,12 +43,14 @@ const ArticulosIdRoute = ArticulosIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/imagenes': typeof ImagenesRoute
   '/seguridad': typeof SeguridadRoute
   '/articulos/$id': typeof ArticulosIdRoute
   '/articulos/': typeof ArticulosIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/imagenes': typeof ImagenesRoute
   '/seguridad': typeof SeguridadRoute
   '/articulos/$id': typeof ArticulosIdRoute
   '/articulos': typeof ArticulosIndexRoute
@@ -50,20 +58,28 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/imagenes': typeof ImagenesRoute
   '/seguridad': typeof SeguridadRoute
   '/articulos/$id': typeof ArticulosIdRoute
   '/articulos/': typeof ArticulosIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/seguridad' | '/articulos/$id' | '/articulos/'
+  fullPaths: '/' | '/imagenes' | '/seguridad' | '/articulos/$id' | '/articulos/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/seguridad' | '/articulos/$id' | '/articulos'
-  id: '__root__' | '/' | '/seguridad' | '/articulos/$id' | '/articulos/'
+  to: '/' | '/imagenes' | '/seguridad' | '/articulos/$id' | '/articulos'
+  id:
+    | '__root__'
+    | '/'
+    | '/imagenes'
+    | '/seguridad'
+    | '/articulos/$id'
+    | '/articulos/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ImagenesRoute: typeof ImagenesRoute
   SeguridadRoute: typeof SeguridadRoute
   ArticulosIdRoute: typeof ArticulosIdRoute
   ArticulosIndexRoute: typeof ArticulosIndexRoute
@@ -76,6 +92,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/imagenes': {
+      id: '/imagenes'
+      path: '/imagenes'
+      fullPath: '/imagenes'
+      preLoaderRoute: typeof ImagenesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/seguridad': {
@@ -104,6 +127,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ImagenesRoute: ImagenesRoute,
   SeguridadRoute: SeguridadRoute,
   ArticulosIdRoute: ArticulosIdRoute,
   ArticulosIndexRoute: ArticulosIndexRoute,

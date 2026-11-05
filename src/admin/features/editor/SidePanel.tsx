@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CircleAlert, CircleCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { getAdminTags, type ArticleStatus } from "@/lib/admin";
@@ -9,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useAuthors, useCategories } from "../../lib/articles";
 import { shareCard, type Issue } from "../../lib/save-article";
 import { Select, STATUS_OPTIONS } from "../../ui/Field";
+import { ImagePicker } from "../media/ImagePicker";
 
 const SITE = import.meta.env.VITE_APP_URL || "https://qapchaconews.com";
 const SEO_TITLE_MAX = 60;
@@ -53,6 +55,7 @@ function PublishingFields({
   onChange: (changes: Partial<EditorForm>) => void;
   tagsReady: boolean;
 }) {
+  const [picking, setPicking] = useState(false);
   const { data: categories } = useCategories();
   const { data: authors } = useAuthors();
   const { data: tags } = useQuery({ queryKey: ["admin", "tags"], queryFn: getAdminTags });
@@ -91,21 +94,34 @@ function PublishingFields({
         </Field>
       )}
 
-      <Field label="Foto de portada">
-        <Input
-          value={form.cover_image_url}
-          onChange={(event) => onChange({ cover_image_url: event.target.value })}
-          placeholder="https://"
-          className="h-10 rounded-lg"
+      <div>
+        <p className="font-medium">Foto de portada</p>
+        {form.cover_image_url ? (
+          <img
+            src={form.cover_image_url}
+            alt="Foto de portada elegida"
+            className="mt-1.5 aspect-video w-full rounded-xl bg-muted object-cover"
+          />
+        ) : (
+          <p className="mt-1 text-muted-foreground">Todavía no elegiste una.</p>
+        )}
+        <div className="mt-2 flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setPicking(true)}>
+            {form.cover_image_url ? "Cambiar" : "Elegir foto"}
+          </Button>
+          {form.cover_image_url && (
+            <Button variant="ghost" size="sm" onClick={() => onChange({ cover_image_url: "" })}>
+              Quitar
+            </Button>
+          )}
+        </div>
+        <ImagePicker
+          open={picking}
+          onOpenChange={setPicking}
+          title="Foto de portada"
+          onPick={(asset) => onChange({ cover_image_url: asset.url })}
         />
-      </Field>
-      {form.cover_image_url && (
-        <img
-          src={form.cover_image_url}
-          alt="Foto de portada elegida"
-          className="aspect-video w-full rounded-xl bg-muted object-cover"
-        />
-      )}
+      </div>
 
       <Field label="Sección">
         <Select

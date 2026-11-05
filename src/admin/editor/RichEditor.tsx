@@ -15,6 +15,7 @@ import {
   Undo2,
   Video as VideoIcon,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,6 +26,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { ImagePicker } from "../features/media/ImagePicker";
+import { MEDIA_TYPES, uploadMedia, type MediaAsset } from "../lib/media";
 import { embedUrlFor, extensions, removeOldControls } from "./extensions";
 import { cleanPastedHtml } from "./paste";
 
@@ -33,11 +36,10 @@ const allExtensions = [
   Placeholder.configure({ placeholder: "Escribí o pegá el texto de la nota…" }),
 ];
 
-type Pending = "link" | "image" | "embed" | null;
+type Pending = "link" | "embed" | null;
 
 const PROMPTS: Record<Exclude<Pending, null>, { title: string; label: string; button: string }> = {
   link: { title: "Agregar enlace", label: "Dirección del enlace", button: "Agregar" },
-  image: { title: "Insertar imagen", label: "Dirección de la imagen", button: "Insertar" },
   embed: { title: "Insertar video", label: "Enlace de YouTube o Instagram", button: "Insertar" },
 };
 
@@ -72,7 +74,15 @@ function ToolButton({
   );
 }
 
-function Toolbar({ editor, onAsk }: { editor: Editor; onAsk: (kind: Pending) => void }) {
+function Toolbar({
+  editor,
+  onAsk,
+  onPickImage,
+}: {
+  editor: Editor;
+  onAsk: (kind: Pending) => void;
+  onPickImage: () => void;
+}) {
   const state = useEditorState({
     editor,
     selector: ({ editor: current }) => ({
@@ -148,7 +158,7 @@ function Toolbar({ editor, onAsk }: { editor: Editor; onAsk: (kind: Pending) => 
         active={state.link}
         onClick={() => (state.link ? chain().unsetLink().run() : onAsk("link"))}
       />
-      <ToolButton label="Insertar imagen" icon={ImagePlus} onClick={() => onAsk("image")} />
+      <ToolButton label="Insertar imagen" icon={ImagePlus} onClick={onPickImage} />
       <ToolButton label="Insertar video" icon={VideoIcon} onClick={() => onAsk("embed")} />
       {separator}
       <ToolButton
@@ -167,6 +177,16 @@ function Toolbar({ editor, onAsk }: { editor: Editor; onAsk: (kind: Pending) => 
   );
 }
 
+const uploadAll = async (files: File[], insert: (asset: MediaAsset) => void) => {
+  for (const file of files) {
+    try {
+      insert(await uploadMedia(file));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "No pudimos subir el archivo.");
+    }
+  }
+};
+
 export function RichEditor({
   value,
   onChange,
@@ -180,6 +200,8 @@ export function RichEditor({
   const [pending, setPending] = useState<Pending>(null);
   const [address, setAddress] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [picking, setPicking] = useState(false);
+  const insertAssetRef = useRef<(asset: MediaAsset, at?: number) => void>(() => undefined);
 
   const editor = useEditor({
     extensions: allExtensions,
@@ -187,6 +209,22 @@ export function RichEditor({
     editorProps: {
       attributes: { class: "note-editor", "aria-label": "Texto de la nota" },
       transformPastedHTML: cleanPastedHtml,
+      // Dropping or pasting a file uploads it and leaves it where it landed.
+      handleDrop: (view, event) => {
+        const files = [...(event.dataTransfer?.files ?? [])];
+        if (files.length === 0) return false;
+        event.preventDefault();
+        const at = view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos;
+        void uploadAll(files, (asset) => insertAssetRef.current(asset, at));
+        return true;
+      },
+      handlePaste: (_view, event) => {
+        const files = [...(event.clipboardData?.files ?? [])];
+        if (files.length === 0) return false;
+        event.preventDefault();
+        void uploadAll(files, (asset) => insertAssetRef.current(asset));
+        return true;
+      },
     },
     onUpdate: ({ editor: current }) => {
       const html = current.getHTML();
@@ -205,6 +243,16 @@ export function RichEditor({
     lastEmitted.current = value;
     editor.commands.setContent(removeOldControls(value), { emitUpdate: false });
   }, [editor, value]);
+
+  const insertAsset = (asset: MediaAsset, at?: number) => {
+    const node = asset.mime_type?.startsWith("video/")
+      ? { type: "video", attrs: { src: asset.url, controls: "true" } }
+      : { type: "image", attrs: { src: asset.url, alt: asset.alt } };
+    const chain = editor?.chain().focus();
+    if (at === undefined) chain?.insertContent(node).run();
+    else chain?.insertContentAt(at, node).run();
+  };
+  insertAssetRef.current = insertAsset;
 
   if (!editor) return <div className="min-h-[29rem] animate-pulse rounded-2xl bg-muted" />;
 
@@ -234,18 +282,23 @@ export function RichEditor({
     } else if (!/^https:\/\//i.test(url)) {
       setError("La dirección debe empezar con https://");
       return;
-    } else if (pending === "link") {
-      editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
     } else {
-      editor.chain().focus().setImage({ src: url, alt: "" }).run();
+      editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
     }
     setPending(null);
   };
 
   return (
     <div className="rounded-2xl border bg-card">
-      <Toolbar editor={editor} onAsk={ask} />
+      <Toolbar editor={editor} onAsk={ask} onPickImage={() => setPicking(true)} />
       <EditorContent editor={editor} />
+      <ImagePicker
+        open={picking}
+        onOpenChange={setPicking}
+        accept={MEDIA_TYPES}
+        title="Insertar imagen o video"
+        onPick={(asset) => insertAsset(asset)}
+      />
 
       <Dialog open={pending !== null} onOpenChange={(open) => !open && setPending(null)}>
         <DialogContent>
