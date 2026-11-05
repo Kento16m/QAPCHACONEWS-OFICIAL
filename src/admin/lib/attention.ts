@@ -40,7 +40,7 @@ export const attentionItems = (stats: AttentionInput): AttentionItem[] => {
     {
       id: "breaking",
       count: stale_breaking,
-      title: pick(stale_breaking, "Última hora vencida", "Últimas horas vencidas"),
+      title: pick(stale_breaking, "Última hora sin vencimiento", "Últimas horas sin vencimiento"),
       detail: "Publicadas hace más de 24 horas",
       action: "Revisar",
       to: "/portada",

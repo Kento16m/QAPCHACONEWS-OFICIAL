@@ -24,7 +24,7 @@ import {
   updateAlt,
   type MediaAsset,
 } from "../lib/media";
-import { Skeleton, Thumb } from "../ui/Field";
+import { SearchField, Skeleton, Thumb } from "../ui/Field";
 
 export const Route = createFileRoute("/imagenes")({ component: ImagesPage });
 
@@ -172,7 +172,7 @@ function ImagesPage() {
 
   return (
     <>
-      <header className="mb-5 flex flex-wrap items-center gap-3">
+      <header className="mb-5 flex min-h-10 flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold">Imágenes</h1>
         {data && (
           <p className="text-muted-foreground">
@@ -186,8 +186,7 @@ function ImagesPage() {
       </header>
 
       <section>
-        <Input
-          type="search"
+        <SearchField
           aria-label="Buscar imágenes"
           value={term}
           onChange={(event) => {
@@ -195,7 +194,7 @@ function ImagesPage() {
             setPage(1);
           }}
           placeholder="Buscar por descripción"
-          className="h-10 max-w-md rounded-lg bg-card"
+          className="max-w-md"
         />
 
         {isError ? (
@@ -227,7 +226,7 @@ function ImagesPage() {
                 <button
                   type="button"
                   onClick={() => setChosen(asset)}
-                  className="group w-full overflow-hidden rounded-xl border bg-card text-left transition-colors duration-150 hover:border-primary"
+                  className="group w-full overflow-hidden rounded-2xl border bg-card text-left transition-colors duration-150 hover:border-primary"
                 >
                   {asset.mime_type?.startsWith("video/") ? (
                     <video

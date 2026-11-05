@@ -58,3 +58,20 @@ describe("attentionItems", () => {
     expect(item?.title).toBe("Borradores sin tocar");
   });
 });
+
+describe("breaking news without an end", () => {
+  const base = {
+    homepage_open_slots: 0,
+    stale_breaking: 2,
+    stale_drafts: 0,
+    scheduled_24h: 0,
+    comments_24h: 0,
+  };
+
+  it("uses the same words as Portada", () => {
+    expect(attentionItems(base)[0]?.title).toBe("Últimas horas sin vencimiento");
+    expect(attentionItems({ ...base, stale_breaking: 1 })[0]?.title).toBe(
+      "Última hora sin vencimiento",
+    );
+  });
+});

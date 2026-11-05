@@ -33,6 +33,14 @@ beforeEach(() => {
 });
 
 describe("listArticles", () => {
+  it("orders by publication date, with what is not published yet on top", async () => {
+    await listArticles({ page: 1 });
+    expect(calls.filter(([name]) => name === "order").map(([, ...args]) => args)).toEqual([
+      ["published_at", { ascending: false, nullsFirst: true }],
+      ["updated_at", { ascending: false }],
+    ]);
+  });
+
   it("asks the database for one page and the total", async () => {
     answer = { data: [], error: null, count: 60 };
     const result = await listArticles({ page: 3 });

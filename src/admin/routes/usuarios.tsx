@@ -18,7 +18,7 @@ import { useDebouncedValue } from "@/hooks/use-news";
 import { updateAuthorRole, updateUserAccess } from "@/lib/admin";
 import { listUsers, PAGE_SIZE, type UserRow } from "../lib/manage";
 import { useSession } from "../lib/session";
-import { Select, Skeleton } from "../ui/Field";
+import { SearchField, Select, Skeleton } from "../ui/Field";
 import { LoadError, Pager } from "../ui/Pager";
 
 export const Route = createFileRoute("/usuarios")({
@@ -85,7 +85,7 @@ function UsersPage() {
 
   return (
     <>
-      <header className="mb-5 flex flex-wrap items-center gap-3">
+      <header className="mb-5 flex min-h-10 flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold">Usuarios</h1>
         {data && (
           <p className="text-muted-foreground">
@@ -96,8 +96,7 @@ function UsersPage() {
 
       <section className="rounded-2xl border bg-card">
         <div className="border-b p-4">
-          <Input
-            type="search"
+          <SearchField
             aria-label="Buscar usuarios"
             value={term}
             onChange={(event) => {
@@ -106,7 +105,7 @@ function UsersPage() {
               void navigate({ search: {}, replace: true });
             }}
             placeholder="Buscar por nombre o correo"
-            className="h-10 max-w-md rounded-lg"
+            className="max-w-md"
           />
         </div>
 

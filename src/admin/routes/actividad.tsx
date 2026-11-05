@@ -3,7 +3,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useDebouncedValue } from "@/hooks/use-news";
 import { cn } from "@/lib/utils";
 import {
@@ -18,7 +17,7 @@ import {
   type ActivityRow,
 } from "../lib/manage";
 import { useSession } from "../lib/session";
-import { Select, Skeleton } from "../ui/Field";
+import { SearchField, Select, Skeleton } from "../ui/Field";
 import { LoadError, Pager } from "../ui/Pager";
 
 export const Route = createFileRoute("/actividad")({ component: ActivityPage });
@@ -29,6 +28,11 @@ const when = new Intl.DateTimeFormat("es-PY", {
   month: "short",
   hour: "2-digit",
   minute: "2-digit",
+});
+
+const money = new Intl.NumberFormat("es-PY", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
 });
 
 const ACTIONS: Record<string, string> = {
@@ -94,7 +98,7 @@ function ActivityList() {
         {data.rows.map((row) => (
           <li
             key={row.id}
-            className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b p-4 last:border-b-0"
+            className="flex flex-col gap-x-3 gap-y-1.5 border-b p-4 last:border-b-0 sm:flex-row sm:items-center"
           >
             <p className="min-w-0 flex-1">
               <span className="font-medium">{row.actor_name ?? row.actor_email ?? "Sistema"}</span>{" "}
@@ -103,19 +107,23 @@ function ActivityList() {
               )}
               {sentence(row)}
             </p>
-            <span className="text-[0.8125rem] text-muted-foreground">
-              {when.format(new Date(row.created_at))}
-            </span>
-            {row.entity === "article" && row.action === "deleted" && row.entity_id && (
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={restore.isPending}
-                onClick={() => restore.mutate(row.entity_id as string)}
-              >
-                Restaurar
-              </Button>
-            )}
+            <div className="flex items-center justify-between gap-3 sm:shrink-0">
+              <span className="whitespace-nowrap text-[0.8125rem] text-muted-foreground sm:w-32 sm:text-right">
+                {when.format(new Date(row.created_at))}
+              </span>
+              <div className="sm:w-24 sm:text-right">
+                {row.entity === "article" && row.action === "deleted" && row.entity_id && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={restore.isPending}
+                    onClick={() => restore.mutate(row.entity_id as string)}
+                  >
+                    Restaurar
+                  </Button>
+                )}
+              </div>
+            </div>
           </li>
         ))}
       </ul>
@@ -148,8 +156,7 @@ function AccessList() {
   return (
     <>
       <div className="flex flex-wrap items-center gap-3 border-b p-4">
-        <Input
-          type="search"
+        <SearchField
           aria-label="Buscar accesos"
           value={term}
           onChange={(event) => {
@@ -157,7 +164,7 @@ function AccessList() {
             setPage(1);
           }}
           placeholder="Buscar por nombre o correo"
-          className="h-10 max-w-xs rounded-lg"
+          className="w-full max-w-xs"
         />
         <Select
           aria-label="Filtrar por estado"
@@ -271,7 +278,10 @@ function AiUsage() {
     <p className="mb-4 text-muted-foreground">
       Asistente de IA, últimos 30 días: <span className="font-medium text-foreground">{uses}</span>{" "}
       {uses === 1 ? "uso" : "usos"}, cerca de{" "}
-      <span className="font-medium text-foreground">US$ {dollars.toFixed(2)}</span>.
+      <span className="whitespace-nowrap font-medium text-foreground">
+        US$ {money.format(dollars)}
+      </span>
+      .
     </p>
   );
 }

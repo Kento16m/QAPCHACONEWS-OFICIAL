@@ -29,21 +29,24 @@ const shortDate = new Intl.DateTimeFormat("es-PY", {
 });
 
 const Card = ({ className, children }: { className?: string; children: React.ReactNode }) => (
-  <section className={cn("rounded-2xl border bg-card p-5", className)}>{children}</section>
+  <section className={cn("min-w-0 rounded-2xl border bg-card p-5", className)}>{children}</section>
 );
 
 const Skeleton = ({ className }: { className: string }) => (
   <div className={cn("animate-pulse rounded-lg bg-muted", className)} />
 );
 
-type Change = { text: string; rise: boolean };
+type Change = { value?: string; caption: string; rise?: boolean };
+
+const signed = (value: number, unit = "") => `${value > 0 ? "+" : "−"}${Math.abs(value)}${unit}`;
 
 const readsChange = (percent: number | null | undefined): Change | undefined => {
   if (percent === undefined) return undefined;
-  if (percent === null) return { text: "Sin datos previos", rise: false };
-  if (percent === 0) return { text: "Igual que la semana anterior", rise: false };
+  if (percent === null) return { caption: "Sin datos previos" };
+  if (percent === 0) return { caption: "Igual que los 7 días anteriores" };
   return {
-    text: `${percent > 0 ? "+" : "−"}${Math.abs(percent)}% en 7 días`,
+    value: signed(percent, "%"),
+    caption: "Últimos 7 días frente a los 7 anteriores",
     rise: percent > 0,
   };
 };
@@ -53,11 +56,11 @@ const commentsChange = (
   before: number | undefined,
 ): Change | undefined => {
   if (now === undefined || before === undefined) return undefined;
-  if (now === before) return { text: "Igual que ayer", rise: false };
-  const difference = now - before;
+  if (now === before) return { caption: "Igual que las 24 h anteriores" };
   return {
-    text: `${difference > 0 ? "+" : "−"}${Math.abs(difference)} frente a ayer`,
-    rise: difference > 0,
+    value: signed(now - before),
+    caption: "Frente a las 24 h anteriores",
+    rise: now > before,
   };
 };
 
@@ -73,21 +76,24 @@ function Figure({
   return (
     <Card>
       <p className="text-muted-foreground">{label}</p>
-      {value === undefined ? (
-        <Skeleton className="mt-2 h-8 w-20" />
-      ) : (
-        <p className="mt-1.5 text-3xl font-semibold">{number.format(value)}</p>
-      )}
-      {change && (
-        <p
-          className={cn(
-            "mt-2 inline-block rounded-full px-2 py-0.5 text-xs font-medium",
-            change.rise ? "bg-success-soft text-success" : "bg-muted text-muted-foreground",
-          )}
-        >
-          {change.text}
-        </p>
-      )}
+      <div className="mt-1.5 flex flex-wrap items-center gap-2">
+        {value === undefined ? (
+          <Skeleton className="h-8 w-20" />
+        ) : (
+          <p className="text-3xl font-semibold">{number.format(value)}</p>
+        )}
+        {change?.value && (
+          <span
+            className={cn(
+              "rounded-full px-2 py-0.5 text-xs font-medium",
+              change.rise ? "bg-success-soft text-success" : "bg-muted text-muted-foreground",
+            )}
+          >
+            {change.value}
+          </span>
+        )}
+      </div>
+      {change && <p className="mt-1.5 text-[0.8125rem] text-muted-foreground">{change.caption}</p>}
     </Card>
   );
 }
@@ -119,7 +125,7 @@ function AttentionRow({ item }: { item: AttentionItem }) {
 function Attention({ stats }: { stats: DashboardStats | undefined }) {
   const items = stats ? attentionItems(stats) : [];
   return (
-    <Card className="lg:col-span-4">
+    <Card className="order-first lg:order-none lg:col-span-4">
       <h2 className="mb-2 text-lg font-semibold">Requiere atención</h2>
       {!stats ? (
         <div className="space-y-3 pt-1">
@@ -230,7 +236,7 @@ function Today() {
 
   return (
     <>
-      <header className="mb-5 flex flex-wrap items-baseline gap-x-3">
+      <header className="mb-5 flex min-h-10 flex-wrap items-center gap-x-3">
         <h1 className="text-2xl font-semibold">Hoy</h1>
         <p className="text-muted-foreground first-letter:uppercase">
           {longDate.format(new Date())}
@@ -246,23 +252,30 @@ function Today() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Figure
-          label="Lecturas totales"
-          value={stats?.total_reads}
-          change={readsChange(readsPercent)}
-        />
-        <Figure label="Notas publicadas" value={stats?.published} />
-        <Figure
-          label="Comentarios, 24 h"
-          value={stats?.comments_24h}
-          change={commentsChange(stats?.comments_24h, commentsBefore)}
-        />
-        <Figure label="Suscriptores confirmados" value={stats?.subscribers} />
-      </div>
-
-      <div className="mt-4 grid gap-4 lg:grid-cols-12">
-        <ReadsCard className="lg:col-span-8" />
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="grid grid-cols-2 gap-4 lg:col-span-12 lg:grid-cols-4">
+          <Figure
+            label="Lecturas totales"
+            value={stats?.total_reads}
+            change={readsChange(readsPercent)}
+          />
+          <Figure
+            label="Notas publicadas"
+            value={stats?.published}
+            change={stats && { caption: `${stats.articles_total - stats.published} sin publicar` }}
+          />
+          <Figure
+            label="Comentarios, 24 h"
+            value={stats?.comments_24h}
+            change={commentsChange(stats?.comments_24h, commentsBefore)}
+          />
+          <Figure
+            label="Suscriptores"
+            value={stats?.subscribers}
+            change={stats && { caption: "Solo los confirmados" }}
+          />
+        </div>
+        <ReadsCard className="min-w-0 lg:col-span-8" />
         <Attention stats={stats} />
         <MostRead stats={stats} />
         <BySection stats={stats} />

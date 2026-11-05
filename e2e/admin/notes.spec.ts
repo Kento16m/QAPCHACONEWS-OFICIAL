@@ -894,11 +894,12 @@ test("finish: Hoy shows the rise in reads and says which period its lists cover"
   await signIn(page, "editor");
   await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
   const reads = page.locator("section").filter({ hasText: "Lecturas totales" });
-  await expect(reads).toContainText(/\+\d+% en 7 días/);
+  await expect(reads).toContainText(/\+\d+%/);
+  await expect(reads).toContainText("Últimos 7 días frente a los 7 anteriores");
   await expect(page.locator("section").filter({ hasText: "Comentarios, 24 h" })).toContainText(
-    /ayer/,
+    "24 h anteriores",
   );
-  await expect(page.getByText("Suscriptores confirmados")).toBeVisible();
+  await expect(page.getByText("Solo los confirmados")).toBeVisible();
   await expect(page.locator("section").filter({ hasText: "Más leídas" }).last()).toContainText(
     "Desde el inicio",
   );
@@ -1000,6 +1001,10 @@ test("finish: on a phone the calendar is a list, filters fold away and names sta
   created.push(note.id);
   await signIn(page, "admin");
   await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+
+  const urgent = await page.getByRole("heading", { name: "Requiere atención" }).boundingBox();
+  const figures = await page.getByText("Lecturas totales").boundingBox();
+  expect(urgent?.y ?? Infinity).toBeLessThan(figures?.y ?? 0);
 
   await page.goto("/calendario");
   await expect(page.getByRole("link", { name: title })).toBeInViewport();

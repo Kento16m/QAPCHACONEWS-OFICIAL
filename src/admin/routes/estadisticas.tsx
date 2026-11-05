@@ -33,7 +33,8 @@ function Ranking({
 
   return (
     <section className="min-w-0 rounded-2xl border bg-card p-5">
-      <h2 className="mb-3 text-lg font-semibold">{title}</h2>
+      <h2 className="text-lg font-semibold">{title}</h2>
+      <p className="mb-3 text-[0.8125rem] text-muted-foreground">Últimos 30 días</p>
       {isError ? (
         <LoadError what="esta lista" onRetry={() => void refetch()} />
       ) : isPending ? (
@@ -90,7 +91,7 @@ function StatsPage() {
 
   return (
     <>
-      <header className="mb-5 flex flex-wrap items-baseline gap-3">
+      <header className="mb-5 flex min-h-10 flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold">Estadísticas</h1>
         {now !== undefined && (
           <p className="text-muted-foreground">

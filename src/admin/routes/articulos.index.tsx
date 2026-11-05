@@ -28,7 +28,7 @@ import {
   type ArticleRow,
 } from "../lib/articles";
 import { useSession } from "../lib/session";
-import { Card, Select, Skeleton, StatusBadge, STATUS_OPTIONS } from "../ui/Field";
+import { Card, SearchField, Select, Skeleton, StatusBadge, STATUS_OPTIONS } from "../ui/Field";
 
 type Search = {
   page: number;
@@ -143,7 +143,7 @@ function ArticlesPage() {
 
   return (
     <>
-      <header className="mb-5 flex flex-wrap items-center gap-3">
+      <header className="mb-5 flex min-h-10 flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold">Artículos</h1>
         {data && (
           <p className="text-muted-foreground">
@@ -154,20 +154,13 @@ function ArticlesPage() {
 
       <Card className="p-0">
         <div className="flex flex-wrap items-center gap-3 border-b p-4">
-          <label className="relative min-w-56 flex-1">
-            <span className="sr-only">Buscar notas</span>
-            <Search
-              className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
-              aria-hidden
-            />
-            <Input
-              type="search"
-              value={term}
-              onChange={(event) => setTerm(event.target.value)}
-              placeholder="Buscar por título o resumen"
-              className="h-10 rounded-lg bg-card pl-9"
-            />
-          </label>
+          <SearchField
+            aria-label="Buscar notas"
+            value={term}
+            onChange={(event) => setTerm(event.target.value)}
+            placeholder="Buscar por título o resumen"
+            className="min-w-56 flex-1"
+          />
           <Button
             variant="outline"
             className="h-10 rounded-lg sm:hidden"

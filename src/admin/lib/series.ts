@@ -80,6 +80,18 @@ export const smoothPath = (points: { x: number; y: number }[]) => {
     .join(" ");
 };
 
+/** Which days get a date under the chart: evenly spaced, and always the last one. */
+export const axisTicks = (count: number, labels = 7) => {
+  if (count === 0) return [];
+  const every = Math.max(1, Math.ceil(count / labels));
+  const last = count - 1;
+  const ticks: number[] = [];
+  for (let index = 0; index < last; index += every) {
+    if (last - index >= every * 0.6) ticks.push(index);
+  }
+  return [...ticks, last];
+};
+
 export const hasEnoughHistory = (rows: DayReads[]) =>
   rows.filter((row) => row.reads > 0).length >= MIN_DAYS_WITH_READS;
 

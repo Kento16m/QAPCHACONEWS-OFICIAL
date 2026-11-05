@@ -99,7 +99,7 @@ function CommentsPage() {
 
   return (
     <>
-      <header className="mb-5 flex flex-wrap items-center gap-3">
+      <header className="mb-5 flex min-h-10 flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold">Comentarios</h1>
         {data && (
           <p className="text-muted-foreground">

@@ -1,5 +1,6 @@
 import { useState, type ComponentProps } from "react";
-import { ImageOff } from "lucide-react";
+import { ImageOff, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 export function Select({ className, ...props }: ComponentProps<"select">) {
@@ -11,6 +12,18 @@ export function Select({ className, ...props }: ComponentProps<"select">) {
       )}
       {...props}
     />
+  );
+}
+
+export function SearchField({ className, ...props }: ComponentProps<"input">) {
+  return (
+    <label className={cn("relative block", className)}>
+      <Search
+        className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+        aria-hidden
+      />
+      <Input type="search" className="h-10 rounded-lg bg-card pl-9" {...props} />
+    </label>
   );
 }
 

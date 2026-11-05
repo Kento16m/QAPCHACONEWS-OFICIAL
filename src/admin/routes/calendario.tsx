@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import {
+  agendaDays,
   canMove,
   dayKey,
   listCalendar,
@@ -118,14 +119,10 @@ function CalendarPage() {
     return days;
   }, [data]);
 
-  // On a phone what matters first is today and what is coming, then what already went out.
-  const agenda = useMemo(() => {
-    const days = [...byDay].filter(([day]) => day.startsWith(prefix));
-    return [
-      ...days.filter(([day]) => day >= today),
-      ...days.filter(([day]) => day < today).reverse(),
-    ];
-  }, [byDay, prefix, today]);
+  const agenda = useMemo(
+    () => agendaDays([...byDay.keys()], prefix, today),
+    [byDay, prefix, today],
+  );
 
   const move = useMutation({
     mutationFn: ({ note, day }: { note: CalendarNote; day: string }) =>
@@ -172,7 +169,7 @@ function CalendarPage() {
 
   return (
     <>
-      <header className="mb-5 flex flex-wrap items-center gap-3">
+      <header className="mb-5 flex min-h-10 flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold">Calendario</h1>
         <p className="text-muted-foreground first-letter:uppercase">
           {monthName.format(new Date(Date.UTC(year, month - 1, 1)))}
@@ -226,7 +223,7 @@ function CalendarPage() {
                 No hay notas este mes.
               </p>
             )}
-            {agenda.map(([day, notes]) => (
+            {agenda.map((day) => (
               <div key={day} className="rounded-2xl border bg-card p-3">
                 <h2 className="mb-2 flex items-center gap-2 font-medium">
                   <span className="inline-block first-letter:uppercase">
@@ -238,11 +235,15 @@ function CalendarPage() {
                     </span>
                   )}
                 </h2>
-                <ul className="space-y-1.5">
-                  {notes.map((note) => (
-                    <NoteChip key={note.id} note={note} onAskMove={askMove} />
-                  ))}
-                </ul>
+                {byDay.has(day) ? (
+                  <ul className="space-y-1.5">
+                    {byDay.get(day)?.map((note) => (
+                      <NoteChip key={note.id} note={note} onAskMove={askMove} />
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-muted-foreground">Nada para hoy.</p>
+                )}
               </div>
             ))}
           </section>

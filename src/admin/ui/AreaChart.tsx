@@ -1,6 +1,7 @@
 import { useId, useState, type PointerEvent } from "react";
 import { ChevronRight } from "lucide-react";
-import { niceMax, smoothPath, type DayReads } from "../lib/series";
+import { cn } from "@/lib/utils";
+import { axisTicks, niceMax, smoothPath, type DayReads } from "../lib/series";
 
 const WIDTH = 800;
 const HEIGHT = 240;
@@ -23,7 +24,7 @@ export function AreaChart({
   const line = smoothPath(rows.map((row, index) => ({ x: xOf(index), y: yOf(row.reads) })));
   const area = `${line} L${WIDTH} ${HEIGHT} L0 ${HEIGHT} Z`;
   const ticks = [1, 0.75, 0.5, 0.25, 0];
-  const labelEvery = Math.max(1, Math.ceil(rows.length / 7));
+  const dates = axisTicks(rows.length);
 
   const onMove = (event: PointerEvent<HTMLDivElement>) => {
     const box = event.currentTarget.getBoundingClientRect();
@@ -106,15 +107,24 @@ export function AreaChart({
           )}
         </div>
       </div>
-      <div
-        aria-hidden
-        className="ml-11 mt-1.5 flex justify-between whitespace-nowrap text-xs text-muted-foreground max-sm:[&>*:nth-child(even)]:hidden"
-      >
-        {rows
-          .filter((_, index) => index % labelEvery === 0)
-          .map((row) => (
-            <span key={row.day}>{formatLabel(row.day)}</span>
-          ))}
+      <div aria-hidden className="relative ml-11 mt-1.5 h-4 text-xs text-muted-foreground">
+        {dates.map((index, position) => {
+          const fromEnd = dates.length - 1 - position;
+          return (
+            <span
+              key={index}
+              className={cn(
+                "absolute whitespace-nowrap",
+                position === 0 ? "" : fromEnd === 0 ? "-translate-x-full" : "-translate-x-1/2",
+                // On a phone there is room for every other date, counting from today.
+                fromEnd % 2 === 1 && "max-sm:hidden",
+              )}
+              style={{ left: `${(xOf(index) / WIDTH) * 100}%` }}
+            >
+              {formatLabel(rows[index]?.day ?? "")}
+            </span>
+          );
+        })}
       </div>
       <details className="group mt-3">
         <summary className="flex w-fit cursor-pointer list-none items-center gap-1 text-[0.8125rem] text-muted-foreground [&::-webkit-details-marker]:hidden">

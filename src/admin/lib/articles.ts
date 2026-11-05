@@ -36,6 +36,7 @@ export const listArticles = async ({ page, q, status, categoryId, authorId }: Ar
   let query = requireSupabaseClient()
     .from("articles")
     .select(LIST_SELECT, { count: "exact" })
+    .order("published_at", { ascending: false, nullsFirst: true })
     .order("updated_at", { ascending: false })
     .range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
 

@@ -14,6 +14,16 @@ const plain = (text: string) =>
     .replace(/\p{Diacritic}/gu, "")
     .toLowerCase();
 
+const NOTES_SHOWN = 6;
+
+/** The text before the word, the word, and the text after. */
+export const matchParts = (text: string, q: string): [string, string, string] => {
+  const term = plain(q.trim());
+  const at = term ? plain(text).indexOf(term) : -1;
+  if (at < 0) return [text, "", ""];
+  return [text.slice(0, at), text.slice(at, at + term.length), text.slice(at + term.length)];
+};
+
 export const paletteResults = (
   q: string,
   role: "editor" | "admin",
@@ -35,12 +45,18 @@ export const paletteResults = (
 
   return [
     ...actions,
-    ...notes.map((note) => ({
-      id: note.id,
-      kind: "note" as const,
-      label: note.title,
-      to: `/articulos/${note.id}`,
-    })),
+    ...[
+      ...notes.filter((note) => plain(note.title).includes(term)),
+      ...notes.filter((note) => !plain(note.title).includes(term)),
+    ]
+      .slice(0, NOTES_SHOWN)
+      .map((note) => ({
+        id: note.id,
+        kind: "note" as const,
+        label: note.title,
+        detail: plain(note.title).includes(term) ? undefined : "En el resumen",
+        to: `/articulos/${note.id}`,
+      })),
     ...(role === "admin"
       ? users.map((user) => ({
           id: user.id,

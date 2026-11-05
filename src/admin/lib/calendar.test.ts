@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canMove, dayKey, monthGrid, moveToDay, monthRange } from "./calendar";
+import { agendaDays, canMove, dayKey, monthGrid, moveToDay, monthRange } from "./calendar";
 
 describe("dayKey", () => {
   it("uses the day in Paraguay, not in UTC", () => {
@@ -66,5 +66,31 @@ describe("canMove", () => {
   it("refuses notes that are not scheduled", () => {
     expect(canMove({ status: "published", scheduled_at: null }, "2026-11-20", now)).toBe(false);
     expect(canMove({ status: "draft", scheduled_at: null }, "2026-11-20", now)).toBe(false);
+  });
+});
+
+describe("agendaDays", () => {
+  const days = ["2026-11-02", "2026-11-04", "2026-11-20", "2026-10-30"];
+
+  it("starts with today and what is coming, then what already went out", () => {
+    expect(agendaDays(days, "2026-11", "2026-11-05")).toEqual([
+      "2026-11-05",
+      "2026-11-20",
+      "2026-11-04",
+      "2026-11-02",
+    ]);
+  });
+
+  it("always shows today in the current month, even with nothing on it", () => {
+    expect(agendaDays([], "2026-11", "2026-11-05")).toEqual(["2026-11-05"]);
+  });
+
+  it("does not repeat today when it has notes", () => {
+    expect(agendaDays(["2026-11-05"], "2026-11", "2026-11-05")).toEqual(["2026-11-05"]);
+  });
+
+  it("does not bring today into another month", () => {
+    expect(agendaDays(["2026-12-01"], "2026-12", "2026-11-05")).toEqual(["2026-12-01"]);
+    expect(agendaDays([], "2026-12", "2026-11-05")).toEqual([]);
   });
 });

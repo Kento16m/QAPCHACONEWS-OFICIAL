@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  axisTicks,
   comparedToPrevious,
   deltaPercent,
   fillMissingDays,
@@ -141,5 +142,22 @@ describe("smoothPath", () => {
   it("copes with one point and with none", () => {
     expect(smoothPath([{ x: 5, y: 5 }])).toBe("M5 5");
     expect(smoothPath([])).toBe("");
+  });
+});
+
+describe("axisTicks", () => {
+  it("always ends on the last day, so the end of the line reads as today", () => {
+    expect(axisTicks(30)).toEqual([0, 5, 10, 15, 20, 25, 29]);
+    expect(axisTicks(31)).toEqual([0, 5, 10, 15, 20, 25, 30]);
+    expect(axisTicks(7)).toEqual([0, 1, 2, 3, 4, 5, 6]);
+  });
+
+  it("drops the label that would crowd the last one", () => {
+    expect(axisTicks(12)).toEqual([0, 2, 4, 6, 8, 11]);
+  });
+
+  it("copes with one day and with none", () => {
+    expect(axisTicks(1)).toEqual([0]);
+    expect(axisTicks(0)).toEqual([]);
   });
 });

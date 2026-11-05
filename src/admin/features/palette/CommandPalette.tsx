@@ -7,7 +7,7 @@ import { useDebouncedValue } from "@/hooks/use-news";
 import { cn } from "@/lib/utils";
 import { listArticles } from "../../lib/articles";
 import { listUsers } from "../../lib/manage";
-import { paletteResults } from "../../lib/palette";
+import { matchParts, paletteResults } from "../../lib/palette";
 
 const ICONS = { action: Zap, note: FileText, user: User };
 
@@ -45,7 +45,7 @@ export function CommandPalette({ role }: { role: "editor" | "admin" }) {
       paletteResults(
         q,
         role,
-        term.length >= 2 ? (notes.data?.rows.slice(0, 6) ?? []) : [],
+        term.length >= 2 ? (notes.data?.rows ?? []) : [],
         term.length >= 2 ? (users.data?.rows.slice(0, 4) ?? []) : [],
       ),
     [q, role, term, notes.data, users.data],
@@ -122,6 +122,7 @@ export function CommandPalette({ role }: { role: "editor" | "admin" }) {
             )}
             {items.map((item, index) => {
               const Icon = ICONS[item.kind];
+              const [before, match, after] = matchParts(item.label, q);
               return (
                 <li
                   key={`${item.kind}-${item.id}`}
@@ -137,7 +138,9 @@ export function CommandPalette({ role }: { role: "editor" | "admin" }) {
                 >
                   <Icon className="size-4 shrink-0" aria-hidden />
                   <span className={cn("min-w-0 truncate", !item.detail && "flex-1")}>
-                    {item.label}
+                    {before}
+                    <mark className="bg-transparent font-semibold text-link">{match}</mark>
+                    {after}
                   </span>
                   {item.detail && (
                     <span className="min-w-0 flex-1 truncate text-right text-[0.8125rem] text-muted-foreground">

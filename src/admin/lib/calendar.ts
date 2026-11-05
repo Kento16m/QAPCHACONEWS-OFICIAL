@@ -28,6 +28,17 @@ export type CalendarNote = {
   scheduled_at: string | null;
 };
 
+/** For a list: today and what is coming, then what already went out. Today is always there. */
+export const agendaDays = (days: string[], month: string, today: string) => {
+  const shown = new Set(days.filter((day) => day.startsWith(month)));
+  if (today.startsWith(month)) shown.add(today);
+  const sorted = [...shown].sort();
+  return [
+    ...sorted.filter((day) => day >= today),
+    ...sorted.filter((day) => day < today).reverse(),
+  ];
+};
+
 /** The day a moment falls on in Paraguay, as YYYY-MM-DD. */
 export const dayKey = (iso: string) => formatDay.format(new Date(iso));
 

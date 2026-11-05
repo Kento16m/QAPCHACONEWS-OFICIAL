@@ -290,7 +290,7 @@ function HomepagePage() {
 
   return (
     <>
-      <header className="mb-5 flex flex-wrap items-center gap-3">
+      <header className="mb-5 flex min-h-10 flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold">Portada</h1>
         <p aria-live="polite" className="text-muted-foreground">
           {dirty ? "Cambios sin guardar" : "Lo que ves es lo que hay en el sitio"}

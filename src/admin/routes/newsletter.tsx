@@ -92,7 +92,7 @@ function NewsletterPage() {
 
   return (
     <>
-      <header className="mb-5 flex flex-wrap items-center gap-3">
+      <header className="mb-5 flex min-h-10 flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold">Newsletter</h1>
         {data && (
           <p className="text-muted-foreground">
@@ -136,7 +136,7 @@ function NewsletterPage() {
                   <th scope="col" className="px-4 py-3 font-normal">
                     Correo
                   </th>
-                  <th scope="col" className="py-3 pr-4 font-normal">
+                  <th scope="col" className="hidden py-3 pr-4 font-normal sm:table-cell">
                     Estado
                   </th>
                   <th scope="col" className="hidden py-3 pr-4 font-normal sm:table-cell">
@@ -150,8 +150,15 @@ function NewsletterPage() {
               <tbody>
                 {data.rows.map((row) => (
                   <tr key={row.id} className="border-b last:border-b-0">
-                    <td className="break-all px-4 py-3 font-medium">{row.email}</td>
-                    <td className="py-3 pr-4 text-muted-foreground">{stateOf(row)}</td>
+                    <td className="px-4 py-3 [overflow-wrap:anywhere]">
+                      <span className="font-medium">{row.email}</span>
+                      <span className="block text-[0.8125rem] text-muted-foreground sm:hidden">
+                        {stateOf(row)}
+                      </span>
+                    </td>
+                    <td className="hidden py-3 pr-4 text-muted-foreground sm:table-cell">
+                      {stateOf(row)}
+                    </td>
                     <td className="hidden py-3 pr-4 text-muted-foreground sm:table-cell">
                       {row.subscribed_at ? day.format(new Date(row.subscribed_at)) : "—"}
                     </td>
