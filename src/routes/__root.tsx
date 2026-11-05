@@ -9,7 +9,7 @@ import {
   Scripts,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useRef, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -18,8 +18,24 @@ import { SiteHeader } from "@/components/news/SiteHeader";
 import { CookieBanner } from "@/components/news/CookieBanner";
 import { SiteFooter } from "@/components/news/SiteFooter";
 import { Toaster } from "@/components/ui/sonner";
-import { AuthProvider } from "@/hooks/useAuth";
-import { AuthDialog } from "@/components/auth/AuthDialog";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
+
+const AuthDialog = lazy(() =>
+  import("@/components/auth/AuthDialog").then((module) => ({ default: module.AuthDialog })),
+);
+
+// Sign-in forms are only downloaded the first time someone opens them.
+function AuthDialogWhenOpened() {
+  const { dialogOpen } = useAuth();
+  const opened = useRef(false);
+  if (dialogOpen) opened.current = true;
+  if (!opened.current) return null;
+  return (
+    <Suspense fallback={null}>
+      <AuthDialog />
+    </Suspense>
+  );
+}
 
 function NotFoundComponent() {
   return (
@@ -119,14 +135,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
       { rel: "icon", href: "/favicon.png", type: "image/png" },
-      { rel: "apple-touch-icon", href: "/logo%201.png", sizes: "180x180" },
+      { rel: "apple-touch-icon", href: "/favicon.png" },
       { rel: "manifest", href: "/site.webmanifest" },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap",
-      },
     ],
   }),
   shellComponent: RootShell,
@@ -164,7 +174,7 @@ function RootComponent() {
         </main>
         {!isAdminRoute && <SiteFooter />}
         {!isAdminRoute && <CookieBanner />}
-        <AuthDialog />
+        <AuthDialogWhenOpened />
       </AuthProvider>
       <Toaster position="top-center" />
     </QueryClientProvider>

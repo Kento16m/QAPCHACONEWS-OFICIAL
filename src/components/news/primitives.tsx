@@ -33,7 +33,8 @@ export function Logo({
 
   const resolvedVariant = variant === "auto" ? (isDarkMode ? "dark" : "light") : variant;
 
-  const src = resolvedVariant === "dark" ? "/logo%201.png" : "/logo%202.png";
+  const isDark = resolvedVariant === "dark";
+  const src = isDark ? "/logo-dark.webp" : "/logo-light.webp";
 
   if (failed) {
     return (
@@ -52,6 +53,8 @@ export function Logo({
     <img
       src={src}
       alt="QAP ChacoNews"
+      width={isDark ? 204 : 200}
+      height={128}
       loading="eager"
       onError={() => setFailed(true)}
       className={cn("h-11 w-auto object-contain", className)}

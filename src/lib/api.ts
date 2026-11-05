@@ -123,7 +123,6 @@ export const getFeaturedArticle = async (): Promise<Article | null> => {
       .from("articles")
       .select(makeArticleSelect(false))
       .eq("status", "published")
-      .lte("published_at", new Date().toISOString())
       .order("published_at", { ascending: false })
       .limit(1);
 
@@ -144,7 +143,6 @@ export const getBreakingArticles = async (): Promise<Article[]> => {
     .from("articles")
     .select(makeArticleSelect(false))
     .eq("status", "published")
-    .lte("published_at", new Date().toISOString())
     .eq("is_breaking", true)
     .order("published_at", { ascending: false })
     .limit(10);
@@ -159,7 +157,6 @@ export const getMostReadArticles = async (limit = 5): Promise<Article[]> => {
     .from("articles")
     .select(makeArticleSelect(false))
     .eq("status", "published")
-    .lte("published_at", new Date().toISOString())
     .order("views_count", { ascending: false })
     .limit(limit);
 
@@ -173,7 +170,6 @@ export const getLatestArticles = async (limit = 6): Promise<Article[]> => {
     .from("articles")
     .select(makeArticleSelect(false))
     .eq("status", "published")
-    .lte("published_at", new Date().toISOString())
     .order("published_at", { ascending: false })
     .limit(limit);
 
@@ -198,7 +194,6 @@ export const getArticlesByCategory = async (
       { count: "exact" },
     )
     .eq("status", "published")
-    .lte("published_at", new Date().toISOString())
     .eq("category.slug", slug)
     .order("published_at", { ascending: false })
     .range(from, to);
@@ -229,7 +224,6 @@ export const getArticlesByTag = async (
       { count: "exact" },
     )
     .eq("status", "published")
-    .lte("published_at", new Date().toISOString())
     .eq("tags.tag.slug", slug)
     .order("published_at", { ascending: false })
     .range(from, to);
@@ -250,7 +244,6 @@ export const getArticleBySlug = async (slug: string): Promise<Article | null> =>
     .select(makeArticleSelect())
     .eq("slug", slug)
     .eq("status", "published")
-    .lte("published_at", new Date().toISOString())
     .maybeSingle();
 
   if (error && error.code !== "PGRST116") {
@@ -270,7 +263,6 @@ export const getRelatedArticles = async (
     .from("articles")
     .select(makeArticleSelect(false))
     .eq("status", "published")
-    .lte("published_at", new Date().toISOString())
     .eq("category_id", categoryId)
     .neq("id", articleId)
     .order("published_at", { ascending: false })
@@ -308,8 +300,7 @@ export const searchArticles = async (
       "id, title, slug, subtitle, excerpt, cover_image_url, is_featured, is_breaking, reading_time_minutes, seo_title, seo_description, views_count, published_at, category:categories(id,name,slug,color,sort_order), author:public_profiles(full_name,avatar_url), tags:article_tags(tag:tags(id,name,slug))",
       { count: "exact" },
     )
-    .eq("status", "published")
-    .lte("published_at", new Date().toISOString());
+    .eq("status", "published");
 
   if (!query) {
     const { data, error, count } = await baseQuery

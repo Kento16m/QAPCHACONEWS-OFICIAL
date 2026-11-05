@@ -26,8 +26,7 @@ import { createSlug } from "@/lib/slug";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useCategories } from "@/hooks/use-news";
-import { isAdminHostAllowed } from "@/lib/admin-access";
-import { isProtectedAdminEmail } from "@/lib/admin";
+import { isAdminHostAllowed, isProtectedAdminEmail } from "@/lib/admin-access";
 import { getProfileColor } from "@/lib/profile-colors";
 import { requireSupabaseClient } from "@/lib/supabase";
 import { CurrencyTicker } from "@/components/news/SiteHeader";

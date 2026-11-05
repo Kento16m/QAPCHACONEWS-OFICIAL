@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "./assets/vendor/fonts/fonts.css";
 @import "./assets/vendor/flags/flags.css";
 @import "./assets/vendor/weather-icons/css/weather-icons.css";
 @source "../src";

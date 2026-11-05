@@ -61,3 +61,10 @@ export const getAdminRedirectUrl = () => {
   if (firstAllowedHost) return `https://${firstAllowedHost}/`;
   return "/";
 };
+
+const PROTECTED_ADMIN_EMAILS = ["kentoterakawa@gmail.com"];
+
+export const isProtectedAdminEmail = (email?: string | null) => {
+  if (!email) return false;
+  return PROTECTED_ADMIN_EMAILS.includes(email.trim().toLowerCase());
+};

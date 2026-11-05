@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight, Mail } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
+import { parseEmail } from "@/lib/email";
 import { Button } from "@/components/ui/button";
 import {
   useArticlesByCategory,
@@ -241,19 +241,17 @@ export function CategoryBlocks() {
   );
 }
 
-const emailSchema = z.string().trim().email().max(255);
-
 export function Newsletter() {
   const [email, setEmail] = useState("");
   const sub = useSubscribe();
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    const parsed = emailSchema.safeParse(email);
-    if (!parsed.success) {
+    const parsed = parseEmail(email);
+    if (!parsed) {
       toast.error("Ingresá un correo electrónico válido.");
       return;
     }
-    sub.mutate(parsed.data, {
+    sub.mutate(parsed, {
       onSuccess: () => {
         trackNewsletterSignup("homepage");
         toast.success("¡Listo! Te suscribiste a QAP ChacoNews.");

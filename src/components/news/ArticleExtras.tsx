@@ -1,7 +1,7 @@
 import { Check, Facebook, Link2, Twitter } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import { z } from "zod";
+import { parseEmail } from "@/lib/email";
 import { Button } from "@/components/ui/button";
 import { useSubscribe } from "@/hooks/use-news";
 import { trackArticleShare, trackNewsletterSignup } from "@/lib/analytics";
@@ -121,19 +121,17 @@ export function ShareButtons({ title, vertical }: { title: string; vertical?: bo
   );
 }
 
-const emailSchema = z.string().trim().email().max(255);
-
 export function NewsletterCompact() {
   const [email, setEmail] = useState("");
   const sub = useSubscribe();
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    const parsed = emailSchema.safeParse(email);
-    if (!parsed.success) {
+    const parsed = parseEmail(email);
+    if (!parsed) {
       toast.error("Ingresá un correo electrónico válido.");
       return;
     }
-    sub.mutate(parsed.data, {
+    sub.mutate(parsed, {
       onSuccess: () => {
         trackNewsletterSignup("article_compact");
         toast.success("¡Te suscribiste a QAP ChacoNews!");

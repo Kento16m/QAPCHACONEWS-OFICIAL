@@ -22,9 +22,15 @@
     <meta name="theme-color" content="#0B1220" />
     <title>QAP ChacoNews</title>
     <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="preconnect" href="%VITE_SUPABASE_URL%" crossorigin />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Visible before the JavaScript loads; React replaces it. -->
+      <div style="min-height: 100vh; display: flex; justify-content: center; padding-top: 12px">
+        <img src="/logo-light.webp" width="69" height="44" alt="QAP ChacoNews" />
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

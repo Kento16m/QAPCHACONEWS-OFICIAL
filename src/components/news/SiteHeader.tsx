@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { User, Menu, Moon, Search, Sun, CloudSun, MapPin, LoaderCircle, X } from "lucide-react";
@@ -7,7 +8,6 @@ import { useCategories, useDebouncedValue } from "@/hooks/use-news";
 import { Logo } from "./primitives";
 import { Ticker } from "./Ticker";
 import { useAuth } from "@/hooks/useAuth";
-import { UserMenu } from "@/components/auth/UserMenu";
 import { Button } from "@/components/ui/button";
 import { SheetClose } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
@@ -33,14 +33,32 @@ import {
   type ForecastDay,
   type WeatherCurrent,
 } from "@/lib/weather";
-import { WeatherDashboard } from "@/components/weather/WeatherDashboard";
 import { CURRENCY_MODAL_LIST, CURRENCY_PREVIEW, fetchExchangeRates } from "@/lib/exchange-rate";
+
+// Only signed-in people see this menu, and its libraries are heavy.
+const UserMenu = lazy(() =>
+  import("@/components/auth/UserMenu").then((module) => ({ default: module.UserMenu })),
+);
+
+// The full forecast is only downloaded when someone opens it.
+const WeatherDashboard = lazy(() =>
+  import("@/components/weather/WeatherDashboard").then((module) => ({
+    default: module.WeatherDashboard,
+  })),
+);
 
 function AuthControl() {
   const { user, loading, openAuthDialog } = useAuth();
   if (loading)
     return <span className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-secondary" />;
-  if (user) return <UserMenu />;
+  if (user)
+    return (
+      <Suspense
+        fallback={<span className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-secondary" />}
+      >
+        <UserMenu />
+      </Suspense>
+    );
   return (
     <>
       <Button
@@ -666,7 +684,11 @@ function WeatherForecastModal() {
                     isDarkMode ? "bg-slate-950" : "bg-slate-50",
                   )}
                 >
-                  <WeatherDashboard theme={isDarkMode ? "dark" : "light"} variant="modal" />
+                  <Suspense
+                    fallback={<LoaderCircle className="mx-auto mt-10 h-6 w-6 animate-spin" />}
+                  >
+                    <WeatherDashboard theme={isDarkMode ? "dark" : "light"} variant="modal" />
+                  </Suspense>
                 </div>
               )}
             </div>

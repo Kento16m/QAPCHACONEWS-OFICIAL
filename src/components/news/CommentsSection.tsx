@@ -987,9 +987,9 @@ export function CommentsSection({ articleId }: { articleId: string }) {
         <div className="mb-5 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-[#5b4de6]" />
-            <h3 className="text-[1.55rem] font-black tracking-[-0.04em] text-slate-900 sm:text-[2rem]">
+            <h2 className="text-[1.55rem] font-black tracking-[-0.04em] text-slate-900 sm:text-[2rem]">
               Comentarios
-            </h3>
+            </h2>
           </div>
 
           <div className="flex w-full items-center gap-1 rounded-full border border-[#e8e5f7] bg-[#f7f7fb] p-1 sm:w-auto">
@@ -1001,7 +1001,7 @@ export function CommentsSection({ articleId }: { articleId: string }) {
                 className={`flex-1 rounded-full px-3 py-2 text-xs font-medium transition-all sm:flex-none sm:px-4 sm:text-sm ${
                   sortMode === option
                     ? "bg-white text-slate-900 shadow-sm ring-1 ring-slate-200"
-                    : "text-slate-500 hover:text-slate-800"
+                    : "text-slate-600 hover:text-slate-800"
                 }`}
               >
                 {option === "popular" ? "Popular" : "Más recientes"}

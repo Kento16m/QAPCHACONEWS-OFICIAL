@@ -28,13 +28,6 @@ export interface AdminArticle {
   author: { id: string; full_name: string | null } | null;
 }
 
-export const PROTECTED_ADMIN_EMAILS = ["kentoterakawa@gmail.com"];
-
-export const isProtectedAdminEmail = (email?: string | null) => {
-  if (!email) return false;
-  return PROTECTED_ADMIN_EMAILS.includes(email.trim().toLowerCase());
-};
-
 export interface AdminAuthor {
   id: string;
   full_name: string | null;

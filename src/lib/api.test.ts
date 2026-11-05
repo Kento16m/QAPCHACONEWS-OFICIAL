@@ -110,6 +110,20 @@ describe("list queries", () => {
     expect(selectedColumns()).toMatch(/\bcontent\b/);
   });
 
+  // A visitor's clock can be wrong, which would hide fresh articles. The database policy uses its own.
+  it.each([
+    ["latest", () => getLatestArticles()],
+    ["most read", () => getMostReadArticles()],
+    ["breaking", () => getBreakingArticles()],
+    ["related", () => getRelatedArticles("a1", "c1")],
+    ["featured", () => getFeaturedArticle()],
+    ["article page", () => getArticleBySlug("nota")],
+    ["search", () => searchArticles("chaco")],
+  ])("%s does not filter dates with the browser's clock", async (_name, query) => {
+    await query();
+    expect(calledWith("lte")).toHaveLength(0);
+  });
+
   it("limits breaking news to 10", async () => {
     await getBreakingArticles();
     expect(calledWith("limit")[0]?.args[0]).toBe(10);
