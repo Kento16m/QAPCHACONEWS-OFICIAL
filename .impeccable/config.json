@@ -20,6 +20,42 @@
         ],
         "createdAt": "2026-11-05T15:42:20.793Z",
         "reason": "Claude: the preview box repeats the public site's existing font on purpose, so a note looks as readers see it; the panel itself uses Outfit"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "plus jakarta sans",
+        "files": [
+          "src/admin/theme.css"
+        ],
+        "createdAt": "2026-11-05T20:16:22.411Z",
+        "reason": "Claude: the preview box repeats the public site's font on purpose, so a note looks as readers see it; the panel itself uses Outfit"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          "src/test/page-shell.test.ts"
+        ],
+        "createdAt": "2026-11-05T20:16:22.703Z",
+        "reason": "Claude: this test checks the public site's fonts; DESIGN.md covers only the panel"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/**"
+        ],
+        "createdAt": "2026-11-05T20:16:23.008Z",
+        "reason": "Claude: discarded direction mockups, kept out of git and never shipped"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/**"
+        ],
+        "createdAt": "2026-11-05T20:16:23.369Z",
+        "reason": "Claude: discarded direction mockups, kept out of git and never shipped"
       }
     ]
   }
