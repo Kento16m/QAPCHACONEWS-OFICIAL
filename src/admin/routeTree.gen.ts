@@ -14,6 +14,7 @@ import { Route as ActividadRouteImport } from './routes/actividad'
 import { Route as CalendarioRouteImport } from './routes/calendario'
 import { Route as CategoriasRouteImport } from './routes/categorias'
 import { Route as ComentariosRouteImport } from './routes/comentarios'
+import { Route as EstadisticasRouteImport } from './routes/estadisticas'
 import { Route as ImagenesRouteImport } from './routes/imagenes'
 import { Route as NewsletterRouteImport } from './routes/newsletter'
 import { Route as PortadaRouteImport } from './routes/portada'
@@ -45,6 +46,11 @@ const CategoriasRoute = CategoriasRouteImport.update({
 const ComentariosRoute = ComentariosRouteImport.update({
   id: '/comentarios',
   path: '/comentarios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EstadisticasRoute = EstadisticasRouteImport.update({
+  id: '/estadisticas',
+  path: '/estadisticas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ImagenesRoute = ImagenesRouteImport.update({
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/calendario': typeof CalendarioRoute
   '/categorias': typeof CategoriasRoute
   '/comentarios': typeof ComentariosRoute
+  '/estadisticas': typeof EstadisticasRoute
   '/imagenes': typeof ImagenesRoute
   '/newsletter': typeof NewsletterRoute
   '/portada': typeof PortadaRoute
@@ -103,6 +110,7 @@ export interface FileRoutesByTo {
   '/calendario': typeof CalendarioRoute
   '/categorias': typeof CategoriasRoute
   '/comentarios': typeof ComentariosRoute
+  '/estadisticas': typeof EstadisticasRoute
   '/imagenes': typeof ImagenesRoute
   '/newsletter': typeof NewsletterRoute
   '/portada': typeof PortadaRoute
@@ -118,6 +126,7 @@ export interface FileRoutesById {
   '/calendario': typeof CalendarioRoute
   '/categorias': typeof CategoriasRoute
   '/comentarios': typeof ComentariosRoute
+  '/estadisticas': typeof EstadisticasRoute
   '/imagenes': typeof ImagenesRoute
   '/newsletter': typeof NewsletterRoute
   '/portada': typeof PortadaRoute
@@ -134,6 +143,7 @@ export interface FileRouteTypes {
     | '/calendario'
     | '/categorias'
     | '/comentarios'
+    | '/estadisticas'
     | '/imagenes'
     | '/newsletter'
     | '/portada'
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/calendario'
     | '/categorias'
     | '/comentarios'
+    | '/estadisticas'
     | '/imagenes'
     | '/newsletter'
     | '/portada'
@@ -162,6 +173,7 @@ export interface FileRouteTypes {
     | '/calendario'
     | '/categorias'
     | '/comentarios'
+    | '/estadisticas'
     | '/imagenes'
     | '/newsletter'
     | '/portada'
@@ -177,6 +189,7 @@ export interface RootRouteChildren {
   CalendarioRoute: typeof CalendarioRoute
   CategoriasRoute: typeof CategoriasRoute
   ComentariosRoute: typeof ComentariosRoute
+  EstadisticasRoute: typeof EstadisticasRoute
   ImagenesRoute: typeof ImagenesRoute
   NewsletterRoute: typeof NewsletterRoute
   PortadaRoute: typeof PortadaRoute
@@ -221,6 +234,13 @@ declare module '@tanstack/react-router' {
       path: '/comentarios'
       fullPath: '/comentarios'
       preLoaderRoute: typeof ComentariosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/estadisticas': {
+      id: '/estadisticas'
+      path: '/estadisticas'
+      fullPath: '/estadisticas'
+      preLoaderRoute: typeof EstadisticasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/imagenes': {
@@ -281,6 +301,7 @@ const rootRouteChildren: RootRouteChildren = {
   CalendarioRoute: CalendarioRoute,
   CategoriasRoute: CategoriasRoute,
   ComentariosRoute: ComentariosRoute,
+  EstadisticasRoute: EstadisticasRoute,
   ImagenesRoute: ImagenesRoute,
   NewsletterRoute: NewsletterRoute,
   PortadaRoute: PortadaRoute,

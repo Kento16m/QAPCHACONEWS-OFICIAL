@@ -125,7 +125,7 @@ function NewsletterPage() {
         ) : data.rows.length === 0 ? (
           <p className="p-10 text-center text-lg font-medium">Todavía no hay suscriptores</p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="relative overflow-x-auto">
             <table className="w-full text-left">
               <thead className="text-xs text-muted-foreground">
                 <tr className="border-b">

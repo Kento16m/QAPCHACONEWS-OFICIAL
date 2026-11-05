@@ -202,7 +202,7 @@ function AccessList() {
           Ningún acceso coincide con esos filtros.
         </p>
       ) : (
-        <div className="overflow-x-auto">
+        <div className="relative overflow-x-auto">
           <table className="w-full text-left">
             <thead className="text-xs text-muted-foreground">
               <tr className="border-b">

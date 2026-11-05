@@ -73,6 +73,7 @@ const READY = new Set([
   "/comentarios",
   "/newsletter",
   "/usuarios",
+  "/estadisticas",
   "/actividad",
   "/categorias",
 ]);

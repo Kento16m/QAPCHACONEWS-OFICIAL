@@ -377,6 +377,28 @@ select pg_temp.check('anon does not read the activity', pg_temp.exec('anon', nul
 select pg_temp.check('nobody forges activity', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', $s$insert into public.activity_log (action, entity, summary) values ('x', 'x', 'x')$s$), 'err:42501');
 select pg_temp.check('nobody erases activity', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', 'delete from public.activity_log'), 'err:42501');
 
+-- Panel: reads per day
+select pg_temp.setup($s$insert into public.articles (id, title, slug, content, status, published_at) values ('a0000000-0000-0000-0000-00000000eee1', 'Lecturas', 'lecturas-test', 'x', 'published', now() - interval '1 hour')$s$);
+select pg_temp.setup($s$insert into public.articles (id, title, slug, content, status) values ('a0000000-0000-0000-0000-00000000eee2', 'Borrador lecturas', 'borrador-lecturas-test', 'x', 'draft')$s$);
+select pg_temp.check('a reader counts a view', pg_temp.exec('anon', null, $s$select public.incrementar_vista('a0000000-0000-0000-0000-00000000eee1')$s$), 'ok:1');
+select pg_temp.setup($s$select public.incrementar_vista('a0000000-0000-0000-0000-00000000eee1')$s$);
+select pg_temp.check('the total goes up', pg_temp.val($s$select views_count from public.articles where id = 'a0000000-0000-0000-0000-00000000eee1'$s$), '2');
+select pg_temp.check('the day goes up by the same', pg_temp.val($s$select views from public.article_views_daily where article_id = 'a0000000-0000-0000-0000-00000000eee1'$s$), '2');
+select pg_temp.setup($s$select public.incrementar_vista('a0000000-0000-0000-0000-00000000eee2')$s$);
+select pg_temp.check('a draft counts nowhere', pg_temp.val($s$select count(*) from public.article_views_daily where article_id = 'a0000000-0000-0000-0000-00000000eee2'$s$), '0');
+select pg_temp.check('late at night still counts as that day in Paraguay', pg_temp.val($s$select private.local_day('2026-11-05 02:30:00+00')$s$), '2026-11-04');
+select pg_temp.check('anon cannot read reads per day', pg_temp.exec('anon', null, 'select 1 from public.article_views_daily'), 'err:42501');
+select pg_temp.check('reader cannot read reads per day', pg_temp.exec('authenticated', '00000000-0000-0000-0000-000000000001', 'select 1 from public.article_views_daily'), 'ok:0');
+select pg_temp.check('reader cannot read the series', pg_temp.exec('authenticated', '00000000-0000-0000-0000-000000000001', $s$select * from public.admin_reads_series(current_date - 1, current_date + 1)$s$), 'err:42501');
+select pg_temp.check('editor reads the series', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$select * from public.admin_reads_series(current_date - 2, current_date + 2)$s$), 'ok:1');
+select pg_temp.check('anon cannot read the ranking', pg_temp.exec('anon', null, $s$select * from public.admin_reads_by('article', current_date, current_date)$s$), 'err:42501');
+select pg_temp.check('editor reads the ranking by note', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$select * from public.admin_reads_by('article', current_date - 2, current_date + 2)$s$), 'ok:1');
+select pg_temp.check('editor reads the ranking by section', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$select * from public.admin_reads_by('category', current_date - 2, current_date + 2)$s$), 'ok:1');
+select pg_temp.check('editor reads the ranking by author', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$select * from public.admin_reads_by('author', current_date - 2, current_date + 2)$s$), 'ok:1');
+select pg_temp.check('an unknown grouping is refused', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$select * from public.admin_reads_by('x', current_date, current_date)$s$), 'err:22023');
+select pg_temp.setup($s$delete from public.articles where id = 'a0000000-0000-0000-0000-00000000eee1'$s$);
+select pg_temp.check('deleting a note removes its daily reads', pg_temp.val($s$select count(*) from public.article_views_daily where article_id = 'a0000000-0000-0000-0000-00000000eee1'$s$), '0');
+
 -- Structure
 select pg_temp.check('every public table has RLS', pg_temp.val($s$select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity$s$), '0');
 select pg_temp.check('anon has no whole-table write access', pg_temp.val($s$select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and has_table_privilege('anon', c.oid, 'INSERT, UPDATE, DELETE')$s$), '0');

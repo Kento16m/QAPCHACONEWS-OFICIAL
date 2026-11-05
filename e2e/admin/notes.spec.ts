@@ -697,3 +697,30 @@ test("an editor cannot open administrator screens by address", async ({ page }) 
     await expect(page.getByText("Esta pantalla es solo para administradores.")).toBeVisible();
   }
 });
+
+test("reads per day reach the chart and the rankings", async ({ page }) => {
+  const title = `E2E lecturas ${STAMP}`;
+  const id = await makeNote(title);
+  await api(`/rest/v1/articles?id=eq.${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: "published", published_at: new Date().toISOString() }),
+  });
+  const day = (ago: number) =>
+    new Date(Date.now() - ago * 86_400_000 - 3 * 3_600_000).toISOString().slice(0, 10);
+  await api("/rest/v1/article_views_daily", {
+    method: "POST",
+    body: JSON.stringify(
+      [0, 1, 2, 3].map((ago) => ({ article_id: id, day: day(ago), views: 1000 + ago })),
+    ),
+  });
+
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await expect(page.getByText("Ver como tabla")).toBeVisible();
+
+  await page.goto("/estadisticas");
+  await expect(page.getByRole("link", { name: title })).toBeVisible();
+  await expect(page.getByText(/lecturas en 30 días/)).toBeVisible();
+  await page.getByRole("button", { name: "12 meses" }).click();
+  await expect(page.getByText("Ver como tabla")).toBeVisible();
+});

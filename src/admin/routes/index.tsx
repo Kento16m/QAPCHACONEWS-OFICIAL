@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { useDashboard, type DashboardStats } from "../features/today/api";
+import { ReadsCard } from "../features/today/ReadsCard";
 import { attentionItems, type AttentionItem } from "../lib/attention";
 import { isReady } from "../lib/nav";
 import { cn } from "@/lib/utils";
@@ -201,13 +202,7 @@ function Today() {
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-12">
-        <Card className="lg:col-span-8">
-          <h2 className="text-lg font-semibold">Lecturas por día</h2>
-          <p className="mt-1 max-w-prose text-muted-foreground">
-            El gráfico se completa solo a medida que el sitio cuente lecturas por día. Mientras
-            tanto, mirá el total por sección y las notas más leídas.
-          </p>
-        </Card>
+        <ReadsCard className="lg:col-span-8" />
         <Attention stats={stats} />
         <MostRead stats={stats} />
         <BySection stats={stats} />

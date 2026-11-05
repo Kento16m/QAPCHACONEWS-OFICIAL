@@ -257,6 +257,32 @@ export type Database = {
           },
         ]
       }
+      article_views_daily: {
+        Row: {
+          article_id: string
+          day: string
+          views: number
+        }
+        Insert: {
+          article_id: string
+          day: string
+          views?: number
+        }
+        Update: {
+          article_id?: string
+          day?: string
+          views?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_views_daily_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       articles: {
         Row: {
           author_id: string | null
@@ -655,6 +681,21 @@ export type Database = {
           is_protected: boolean
           role: Database["public"]["Enums"]["user_role"]
           total: number
+        }[]
+      }
+      admin_reads_by: {
+        Args: { p_dimension: string; p_from: string; p_to: string }
+        Returns: {
+          id: string
+          label: string
+          reads: number
+        }[]
+      }
+      admin_reads_series: {
+        Args: { p_from: string; p_to: string }
+        Returns: {
+          day: string
+          reads: number
         }[]
       }
       admin_restore_article: {
