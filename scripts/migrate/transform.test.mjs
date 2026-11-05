@@ -1,6 +1,12 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { assertTargets, dollarQuote, planMigration, summarize } from "./transform.mjs";
+import {
+  assertNotCutOver,
+  assertTargets,
+  dollarQuote,
+  planMigration,
+  summarize,
+} from "./transform.mjs";
 
 const A1 = "a0000000-0000-0000-0000-000000000001";
 const A2 = "a0000000-0000-0000-0000-000000000002";
@@ -197,5 +203,17 @@ describe("assertTargets", () => {
 
   it("refuses to copy a project onto itself", () => {
     expect(() => assertTargets({ source: "same", target: "same", production: PROD })).toThrow();
+  });
+});
+
+describe("assertNotCutOver", () => {
+  it("allows the copy before the switch", () => {
+    expect(() => assertNotCutOver([])).not.toThrow();
+  });
+
+  it("refuses the copy after the switch, because it would replace real data", () => {
+    expect(() => assertNotCutOver([{ done_at: "2026-11-10T00:00:00Z" }])).toThrow(
+      /ya se hizo el cambio/,
+    );
   });
 });

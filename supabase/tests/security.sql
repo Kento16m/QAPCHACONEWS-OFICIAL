@@ -229,6 +229,10 @@ select pg_temp.check('category delete keeps the article', pg_temp.exec('postgres
 select pg_temp.check('anon cannot read the archive', pg_temp.exec('anon', null, 'select 1 from private.legacy_data'), 'err:42501');
 select pg_temp.check('admin cannot read the archive through the API', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', 'select 1 from private.legacy_data'), 'err:42501');
 
+-- The switch lock is not reachable over the API
+select pg_temp.check('anon cannot read the switch lock', pg_temp.exec('anon', null, 'select 1 from private.cutover'), 'err:42501');
+select pg_temp.check('admin cannot clear the switch lock', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', 'delete from private.cutover'), 'err:42501');
+
 -- Structure
 select pg_temp.check('every public table has RLS', pg_temp.val($s$select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity$s$), '0');
 select pg_temp.check('anon has no whole-table write access', pg_temp.val($s$select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and has_table_privilege('anon', c.oid, 'INSERT, UPDATE, DELETE')$s$), '0');

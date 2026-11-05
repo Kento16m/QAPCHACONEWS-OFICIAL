@@ -105,3 +105,8 @@ export const assertTargets = ({ source, target, production }) => {
   if (target === production) throw new Error("La producción solo se lee: no puede ser el destino.");
   if (source === target) throw new Error("El origen y el destino no pueden ser el mismo proyecto.");
 };
+
+// After the switch the target holds real data, and this copy would replace it.
+export const assertNotCutOver = (rows) => {
+  if (rows.length > 0) throw new Error("Ya se hizo el cambio: esta copia borraría datos reales.");
+};

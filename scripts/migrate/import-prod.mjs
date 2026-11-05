@@ -2,7 +2,14 @@
 // Production is only ever read, through Supabase's read-only endpoint. Rows stay in memory: nothing
 // is written to disk and no personal data is printed, because this includes emails and password hashes.
 // Usage: SOURCE_TOKEN=... TARGET_TOKEN=... node scripts/migrate/import-prod.mjs [--dry-run]
-import { assertTargets, dollarQuote, planMigration, summarize } from "./transform.mjs";
+// After the switch, once: TARGET_TOKEN=... node scripts/migrate/import-prod.mjs --lock
+import {
+  assertNotCutOver,
+  assertTargets,
+  dollarQuote,
+  planMigration,
+  summarize,
+} from "./transform.mjs";
 
 const PRODUCTION = "nkkgwjvmdxggvyzehlzp";
 const SOURCE = PRODUCTION;
@@ -11,7 +18,9 @@ const OWNER_EMAIL = "kentoterakawa@gmail.com";
 const API = "https://api.supabase.com/v1/projects";
 
 const { SOURCE_TOKEN, TARGET_TOKEN } = process.env;
-if (!SOURCE_TOKEN || !TARGET_TOKEN) throw new Error("Definí SOURCE_TOKEN y TARGET_TOKEN.");
+const LOCK = process.argv.includes("--lock");
+if (!TARGET_TOKEN || (!LOCK && !SOURCE_TOKEN))
+  throw new Error("Definí SOURCE_TOKEN y TARGET_TOKEN.");
 assertTargets({ source: SOURCE, target: TARGET, production: PRODUCTION });
 
 // Database errors can quote the failing row or query, so only the summary is printed.
@@ -147,6 +156,13 @@ const writableAuthColumns = async (table) => {
   const source = await readSource(query);
   return source.map((row) => row.column_name).filter((column) => target.has(column));
 };
+
+if (LOCK) {
+  await runTarget("insert into private.cutover (done_at) values (now());");
+  console.log("Copia bloqueada: ya no puede volver a correr.");
+  process.exit(0);
+}
+assertNotCutOver(await runTarget("select done_at from private.cutover"));
 
 console.log("Leyendo producción (solo lectura)...");
 const source = {};
