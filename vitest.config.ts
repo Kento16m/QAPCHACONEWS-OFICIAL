@@ -8,7 +8,7 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["./src/test/setup.ts"],
-    include: ["src/**/*.{test,spec}.{ts,tsx}", "netlify/**/*.test.mjs", "supabase/functions/**/*.test.ts"],
+    include: ["src/**/*.{test,spec}.{ts,tsx}", "netlify/**/*.test.mjs", "scripts/**/*.test.mjs", "supabase/functions/**/*.test.ts"],
     env: { TZ: "America/Asuncion" },
   },
   resolve: {

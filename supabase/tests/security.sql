@@ -192,7 +192,7 @@ select pg_temp.check('same email in other case is a duplicate', pg_temp.exec('an
 select pg_temp.check('anon cannot list subscribers', pg_temp.exec('anon', null, 'select email from public.newsletter_subscribers'), 'err:42501');
 select pg_temp.check('reader cannot list subscribers', pg_temp.exec('authenticated', '00000000-0000-0000-0000-000000000001', 'select email from public.newsletter_subscribers'), 'ok:0');
 select pg_temp.check('editor cannot list subscribers', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', 'select email from public.newsletter_subscribers'), 'ok:0');
-select pg_temp.check('admin lists subscribers', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', 'select email from public.newsletter_subscribers'), 'ok:1');
+select pg_temp.check('admin lists subscribers', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', $s$select email from public.newsletter_subscribers where email = 'a@test.invalid'$s$), 'ok:1');
 
 -- Finding 14: the audit log cannot be forged or erased
 select set_config('request.headers', '{"x-forwarded-for":"203.0.113.9, 10.0.0.1"}', true);
@@ -224,6 +224,10 @@ select pg_temp.check('article delete removes its comments', pg_temp.val($s$selec
 select pg_temp.check('article delete removes its tags', pg_temp.val($s$select count(*) from public.article_tags where article_id = 'a0000000-0000-0000-0000-000000000001'$s$), '0');
 select pg_temp.check('comment delete removes its likes', pg_temp.val('select count(*) from public.comment_likes where comment_id = 9001'), '0');
 select pg_temp.check('category delete keeps the article', pg_temp.exec('postgres', null, $s$delete from public.categories where id = 'c0000000-0000-0000-0000-000000000001'$s$), 'ok:1');
+
+-- The archive of old rows is not reachable over the API
+select pg_temp.check('anon cannot read the archive', pg_temp.exec('anon', null, 'select 1 from private.legacy_data'), 'err:42501');
+select pg_temp.check('admin cannot read the archive through the API', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', 'select 1 from private.legacy_data'), 'err:42501');
 
 -- Structure
 select pg_temp.check('every public table has RLS', pg_temp.val($s$select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity$s$), '0');
