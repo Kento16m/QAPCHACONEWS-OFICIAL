@@ -74,6 +74,118 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_usage: {
+        Row: {
+          day: string
+          input_tokens: number
+          output_tokens: number
+          user_id: string
+          uses: number
+        }
+        Insert: {
+          day: string
+          input_tokens?: number
+          output_tokens?: number
+          user_id: string
+          uses?: number
+        }
+        Update: {
+          day?: string
+          input_tokens?: number
+          output_tokens?: number
+          user_id?: string
+          uses?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_usage_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      article_revisions: {
+        Row: {
+          article_id: string
+          category_id: string | null
+          content: string
+          cover_image_url: string | null
+          created_at: string
+          edited_by: string | null
+          excerpt: string | null
+          id: number
+          is_deletion: boolean
+          seo_description: string | null
+          seo_title: string | null
+          slug: string
+          subtitle: string | null
+          title: string
+        }
+        Insert: {
+          article_id: string
+          category_id?: string | null
+          content: string
+          cover_image_url?: string | null
+          created_at?: string
+          edited_by?: string | null
+          excerpt?: string | null
+          id?: never
+          is_deletion?: boolean
+          seo_description?: string | null
+          seo_title?: string | null
+          slug: string
+          subtitle?: string | null
+          title: string
+        }
+        Update: {
+          article_id?: string
+          category_id?: string | null
+          content?: string
+          cover_image_url?: string | null
+          created_at?: string
+          edited_by?: string | null
+          excerpt?: string | null
+          id?: never
+          is_deletion?: boolean
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string
+          subtitle?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_revisions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "article_revisions_edited_by_fkey"
+            columns: ["edited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "article_revisions_edited_by_fkey"
+            columns: ["edited_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       article_tags: {
         Row: {
           article_id: string
@@ -409,6 +521,10 @@ export type Database = {
     }
     Functions: {
       admin_dashboard_stats: { Args: never; Returns: Json }
+      admin_restore_article: {
+        Args: { p_revision_id: number }
+        Returns: string
+      }
       admin_set_user_block: {
         Args: { p_blocked: boolean; p_reason: string; p_user_id: string }
         Returns: {
@@ -482,6 +598,14 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      service_record_ai_tokens: {
+        Args: { p_input: number; p_output: number; p_user_id: string }
+        Returns: undefined
+      }
+      service_reserve_ai_use: {
+        Args: { p_user_id: string }
+        Returns: undefined
       }
     }
     Enums: {

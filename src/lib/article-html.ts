@@ -97,18 +97,18 @@ function stripAdminMediaControls(html: string) {
 export function prepareArticleHtml(html: string) {
   const normalized = stripAdminMediaControls(normalizeArticleContent(html));
   return DOMPurify.sanitize(normalized, {
-      ADD_TAGS: ["iframe", "figure", "figcaption", "video"],
-      ADD_ATTR: [
-        "allow",
-        "allowfullscreen",
-        "frameborder",
-        "loading",
-        "referrerpolicy",
-        "playsinline",
-        "webkitallowfullscreen",
-        "mozallowfullscreen",
-      ],
-      ALLOWED_URI_REGEXP:
-        /^(?:(?:(?:f|ht)tps?|mailto|tel|data):|[^a-z]|[\w\-._~!$&'()*+,;=:@/?%#[\]\\]*$)/i,
-    });
+    ADD_TAGS: ["iframe", "figure", "figcaption", "video"],
+    ADD_ATTR: [
+      "allow",
+      "allowfullscreen",
+      "frameborder",
+      "loading",
+      "referrerpolicy",
+      "playsinline",
+      "webkitallowfullscreen",
+      "mozallowfullscreen",
+    ],
+    ALLOWED_URI_REGEXP:
+      /^(?:(?:(?:f|ht)tps?|mailto|tel|data):|[^a-z]|[\w\-._~!$&'()*+,;=:@/?%#[\]\\]*$)/i,
+  });
 }

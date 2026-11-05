@@ -175,3 +175,91 @@ test("an old note with media opens and saves without losing it", async ({ page }
   expect(stored.content).toContain("<strong>Fuerte</strong>");
   expect(stored.content).not.toContain("×");
 });
+
+test("an earlier version can be compared and brought back", async ({ page }) => {
+  const id = await makeNote(`E2E historial ${STAMP}`, "<p>Primera redacción.</p>");
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await openNote(page, id);
+
+  await page.getByRole("tab", { name: "Historial" }).click();
+  await expect(page.getByText("Todavía no hay versiones anteriores")).toBeVisible();
+
+  await page.locator(".note-editor").click();
+  await page.keyboard.press("Control+A");
+  await page.keyboard.type("Segunda redacción.");
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  await expect(page.getByText("Guardado.")).toBeVisible();
+
+  await page.getByRole("button", { name: /Cambiada por/ }).click();
+  await expect(page.getByRole("dialog").locator("del")).toContainText("Primera");
+  await expect(page.getByRole("dialog").locator("ins")).toContainText("Segunda");
+  await page.getByRole("button", { name: "Usar esta versión" }).click();
+
+  await expect(page.locator(".note-editor")).toContainText("Primera redacción.");
+  await expect(page.getByText("Cambios sin guardar")).toBeVisible();
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  await expect(page.getByText("Todo guardado")).toBeVisible();
+
+  const [stored] = await api(`/rest/v1/articles?id=eq.${id}&select=content`);
+  expect(stored.content).toContain("Primera redacción.");
+  const versions = await api(`/rest/v1/article_revisions?article_id=eq.${id}&select=id`);
+  expect(versions).toHaveLength(2);
+});
+
+const mockAssistant = (page: Page, result: unknown, status = 200) =>
+  page.route("**/functions/v1/editor-assist", (route) =>
+    route.fulfill({
+      status,
+      contentType: "application/json",
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: JSON.stringify(status === 200 ? { result } : result),
+    }),
+  );
+
+test("the assistant suggests and nothing changes until it is accepted", async ({ page }) => {
+  const id = await makeNote(`E2E asistente ${STAMP}`, "<p>El presidente hablo ayer.</p>");
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await openNote(page, id);
+  await page.getByRole("tab", { name: "Asistente" }).click();
+
+  await mockAssistant(page, { titles: ["Título sugerido", "Otro título"] });
+  await page.getByRole("button", { name: "Títulos" }).click();
+  await expect(page.getByText("Título sugerido")).toBeVisible();
+  await expect(page.getByPlaceholder("Título de la nota")).toHaveValue(`E2E asistente ${STAMP}`);
+  await page
+    .getByRole("listitem")
+    .filter({ hasText: "Otro título" })
+    .getByRole("button", { name: "Descartar" })
+    .click();
+  await expect(page.getByText("Otro título")).toHaveCount(0);
+  await page.getByRole("button", { name: "Usar" }).click();
+  await expect(page.getByPlaceholder("Título de la nota")).toHaveValue("Título sugerido");
+
+  await page.unroute("**/functions/v1/editor-assist");
+  await mockAssistant(page, {
+    fixes: [{ original: "hablo", replacement: "habló", reason: "Falta la tilde" }],
+  });
+  await page.getByRole("button", { name: "Ortografía" }).click();
+  await expect(page.getByText("Falta la tilde")).toBeVisible();
+  await expect(page.locator(".note-editor")).toContainText("hablo ayer");
+  await page.getByRole("button", { name: "Corregir" }).click();
+  await expect(page.locator(".note-editor")).toContainText("habló ayer");
+});
+
+test("when the assistant fails, the note is untouched and writing goes on", async ({ page }) => {
+  const id = await makeNote(`E2E asistente caído ${STAMP}`, "<p>Texto intacto.</p>");
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await openNote(page, id);
+  await page.getByRole("tab", { name: "Asistente" }).click();
+
+  await mockAssistant(page, { error: "El asistente no respondió." }, 502);
+  await page.getByRole("button", { name: "Resumen" }).click();
+  await expect(page.getByRole("alert")).toContainText("Podés seguir escribiendo");
+  await page.locator(".note-editor").click();
+  await page.keyboard.press("End");
+  await page.keyboard.type(" Más texto.");
+  await expect(page.locator(".note-editor")).toContainText("Texto intacto. Más texto.");
+});

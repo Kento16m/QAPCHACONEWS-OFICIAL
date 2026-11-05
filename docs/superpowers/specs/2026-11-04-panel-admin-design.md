@@ -106,7 +106,7 @@ Arriba, cuatro cifras: lecturas, notas publicadas, comentarios de 24 horas y sus
 
 Panel lateral del editor. Sugiere títulos, resumen, SEO y etiquetas, y corrige ortografía. Cada sugerencia se acepta o se descarta por separado; la corrección muestra el cambio exacto antes de aplicarlo.
 
-- Edge Function `editor-assist`: verifica sesión y rol, y llama a Anthropic con `ANTHROPIC_API_KEY`. Modelo configurable por `ANTHROPIC_MODEL`, por defecto `claude-sonnet-5-5`. *(Decisión mía: se confirma con precios reales al implementarla.)*
+- Edge Function `editor-assist`: verifica sesión y rol, y llama a Anthropic con `ANTHROPIC_API_KEY`. Modelo configurable por `ANTHROPIC_MODEL`, por defecto `claude-opus-5-5` con esfuerzo bajo. Probado con una nota real: cerca de 1 centavo de dólar por pedido.
 - Las instrucciones prohíben agregar hechos, cifras o citas. El texto de la nota se trata como datos: nunca como instrucciones.
 - Tope por persona y por día, y tabla `ai_usage` con el consumo. Un Administrador ve el consumo en Actividad.
 - Si falla o se alcanza el tope, muestra el motivo y el editor sigue igual.

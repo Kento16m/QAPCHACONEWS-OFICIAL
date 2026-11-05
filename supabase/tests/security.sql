@@ -250,6 +250,49 @@ select pg_temp.check('that failure keeps the old tags', pg_temp.val($s$select co
 select pg_temp.check('replacing removes the rest', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$select public.replace_article_tags('a0000000-0000-0000-0000-000000000002', '{b0000000-0000-0000-0000-000000000002}')$s$), 'ok:1');
 select pg_temp.check('one tag is left', pg_temp.val($s$select count(*) from public.article_tags where article_id = 'a0000000-0000-0000-0000-000000000002'$s$), '1');
 
+-- Panel: version history
+select pg_temp.setup($s$insert into public.articles (id, title, slug, content, status) values ('a0000000-0000-0000-0000-00000000aaaa', 'Original', 'historial-test', 'texto uno', 'draft')$s$);
+select pg_temp.check('a new note has no versions', pg_temp.val($s$select count(*) from public.article_revisions where article_id = 'a0000000-0000-0000-0000-00000000aaaa'$s$), '0');
+select pg_temp.check('editor edits the note', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$update public.articles set content = 'texto dos' where id = 'a0000000-0000-0000-0000-00000000aaaa'$s$), 'ok:1');
+select pg_temp.check('editing keeps the old text', pg_temp.val($s$select content from public.article_revisions where article_id = 'a0000000-0000-0000-0000-00000000aaaa' order by id desc limit 1$s$), 'texto uno');
+select pg_temp.check('the version records who changed it', pg_temp.val($s$select edited_by from public.article_revisions where article_id = 'a0000000-0000-0000-0000-00000000aaaa' order by id desc limit 1$s$), '00000000-0000-0000-0000-00000000000e');
+select pg_temp.setup($s$update public.articles set views_count = views_count + 1 where id = 'a0000000-0000-0000-0000-00000000aaaa'$s$);
+select pg_temp.check('a read creates no version', pg_temp.val($s$select count(*) from public.article_revisions where article_id = 'a0000000-0000-0000-0000-00000000aaaa'$s$), '1');
+select pg_temp.setup($s$update public.articles set status = 'published', published_at = now() where id = 'a0000000-0000-0000-0000-00000000aaaa'$s$);
+select pg_temp.check('publishing creates no version', pg_temp.val($s$select count(*) from public.article_revisions where article_id = 'a0000000-0000-0000-0000-00000000aaaa'$s$), '1');
+select pg_temp.setup($s$update public.articles set content = content where id = 'a0000000-0000-0000-0000-00000000aaaa'$s$);
+select pg_temp.check('saving without changes creates no version', pg_temp.val($s$select count(*) from public.article_revisions where article_id = 'a0000000-0000-0000-0000-00000000aaaa'$s$), '1');
+select pg_temp.check('anon cannot read versions', pg_temp.exec('anon', null, 'select 1 from public.article_revisions'), 'err:42501');
+select pg_temp.check('reader cannot read versions', pg_temp.exec('authenticated', '00000000-0000-0000-0000-000000000001', $s$select 1 from public.article_revisions where article_id = 'a0000000-0000-0000-0000-00000000aaaa'$s$), 'ok:0');
+select pg_temp.check('editor reads versions', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$select 1 from public.article_revisions where article_id = 'a0000000-0000-0000-0000-00000000aaaa'$s$), 'ok:1');
+select pg_temp.check('nobody writes versions directly', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', $s$delete from public.article_revisions$s$), 'err:42501');
+select pg_temp.setup($s$do $d$ begin for i in 1..55 loop update public.articles set content = 'v' || i where id = 'a0000000-0000-0000-0000-00000000aaaa'; end loop; end $d$$s$);
+select pg_temp.check('only the last 50 versions stay', pg_temp.val($s$select count(*) from public.article_revisions where article_id = 'a0000000-0000-0000-0000-00000000aaaa'$s$), '50');
+select pg_temp.check('the oldest versions are the ones removed', pg_temp.val($s$select count(*) from public.article_revisions where article_id = 'a0000000-0000-0000-0000-00000000aaaa' and content = 'texto uno'$s$), '0');
+select pg_temp.check('editor cannot restore through the admin function', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$select public.admin_restore_article(1)$s$), 'err:42501');
+select pg_temp.setup($s$delete from public.articles where id = 'a0000000-0000-0000-0000-00000000aaaa'$s$);
+select pg_temp.check('deleting a note keeps its text', pg_temp.val($s$select content from public.article_revisions where article_id = 'a0000000-0000-0000-0000-00000000aaaa' and is_deletion$s$), 'v55');
+select pg_temp.check('admin restores a deleted note', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', $s$select public.admin_restore_article((select id from public.article_revisions where article_id = 'a0000000-0000-0000-0000-00000000aaaa' and is_deletion))$s$), 'ok:1');
+select pg_temp.check('the restored note is a draft with its text', pg_temp.val($s$select status || ':' || content from public.articles where id = 'a0000000-0000-0000-0000-00000000aaaa'$s$), 'draft:v55');
+
+-- Panel: assistant usage
+select pg_temp.check('editor cannot reserve assistant use directly', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$select public.service_reserve_ai_use('00000000-0000-0000-0000-00000000000e')$s$), 'err:42501');
+select pg_temp.check('anon cannot reserve assistant use', pg_temp.exec('anon', null, $s$select public.service_reserve_ai_use('00000000-0000-0000-0000-00000000000e')$s$), 'err:42501');
+select pg_temp.check('the function reserves a use', pg_temp.exec('service_role', null, $s$select public.service_reserve_ai_use('00000000-0000-0000-0000-00000000000e')$s$), 'ok:1');
+select pg_temp.check('the use is counted', pg_temp.val($s$select uses from public.ai_usage where user_id = '00000000-0000-0000-0000-00000000000e'$s$), '1');
+select pg_temp.check('the function records tokens', pg_temp.exec('service_role', null, $s$select public.service_record_ai_tokens('00000000-0000-0000-0000-00000000000e', 10, 5)$s$), 'ok:1');
+select pg_temp.check('tokens are stored', pg_temp.val($s$select input_tokens + output_tokens from public.ai_usage where user_id = '00000000-0000-0000-0000-00000000000e'$s$), '15');
+select pg_temp.check('admin reads usage', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', $s$select 1 from public.ai_usage where user_id = '00000000-0000-0000-0000-00000000000e'$s$), 'ok:1');
+select pg_temp.check('editor does not read usage', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', 'select 1 from public.ai_usage'), 'ok:0');
+select pg_temp.check('nobody changes usage over the API', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', 'delete from public.ai_usage'), 'err:42501');
+select pg_temp.setup($s$update public.ai_usage set uses = 99 where user_id = '00000000-0000-0000-0000-00000000000e'$s$);
+select pg_temp.check('use number 100 is allowed', pg_temp.exec('service_role', null, $s$select public.service_reserve_ai_use('00000000-0000-0000-0000-00000000000e')$s$), 'ok:1');
+select pg_temp.check('use number 101 is refused', pg_temp.exec('service_role', null, $s$select public.service_reserve_ai_use('00000000-0000-0000-0000-00000000000e')$s$), 'err:QC429');
+select pg_temp.check('another person still has room', pg_temp.exec('service_role', null, $s$select public.service_reserve_ai_use('00000000-0000-0000-0000-00000000000a')$s$), 'ok:1');
+select pg_temp.setup($s$update public.ai_usage set uses = 400 where user_id = '00000000-0000-0000-0000-00000000000a'$s$);
+select pg_temp.check('the team cap stops everyone', pg_temp.exec('service_role', null, $s$select public.service_reserve_ai_use('00000000-0000-0000-0000-000000000001')$s$), 'err:QC429');
+select pg_temp.setup($s$delete from public.ai_usage$s$);
+
 -- Structure
 select pg_temp.check('every public table has RLS', pg_temp.val($s$select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity$s$), '0');
 select pg_temp.check('anon has no whole-table write access', pg_temp.val($s$select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and has_table_privilege('anon', c.oid, 'INSERT, UPDATE, DELETE')$s$), '0');

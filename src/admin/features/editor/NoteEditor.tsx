@@ -13,6 +13,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import type { Editor } from "@tiptap/core";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getArticleTagIds, type AdminArticle, type ArticleStatus } from "@/lib/admin";
@@ -29,7 +30,9 @@ import {
 } from "../../lib/save-article";
 import { useSession } from "../../lib/session";
 import { StatusBadge } from "../../ui/Field";
+import { AiPanel } from "./AiPanel";
 import { ConflictDialog } from "./ConflictDialog";
+import { History } from "./History";
 import { PreviewDialog } from "./PreviewDialog";
 import { SidePanel } from "./SidePanel";
 
@@ -53,6 +56,7 @@ export function NoteEditor({ article }: { article: AdminArticle | null }) {
 
   const [saving, setSaving] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [editor, setEditor] = useState<Editor | null>(null);
   const [conflict, setConflict] = useState<AdminArticle | null>(null);
   const [pendingIssues, setPendingIssues] = useState<Issue[] | null>(null);
 
@@ -89,6 +93,7 @@ export function NoteEditor({ article }: { article: AdminArticle | null }) {
         clearDraft(saved.updated_at);
         queryClient.setQueryData(["admin", "article", saved.id], saved);
         void queryClient.invalidateQueries({ queryKey: ["admin", "articles"] });
+        void queryClient.invalidateQueries({ queryKey: ["admin", "revisions"] });
         void queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
         toast.success(
           status === "published" && form.status !== "published" ? "Nota publicada." : "Guardado.",
@@ -227,9 +232,45 @@ export function NoteEditor({ article }: { article: AdminArticle | null }) {
               className="h-14 rounded-2xl bg-card px-5 text-xl font-semibold md:text-xl"
             />
           </label>
-          <RichEditor value={form.content} onChange={setContent} />
+          <RichEditor value={form.content} onChange={setContent} onEditorReady={setEditor} />
         </div>
-        <SidePanel form={form} onChange={change} issues={issues} tagsReady={tagsReady} />
+        <SidePanel
+          form={form}
+          onChange={change}
+          issues={issues}
+          tagsReady={tagsReady}
+          extraTabs={[
+            {
+              id: "asistente",
+              label: "Asistente",
+              content: <AiPanel form={form} editor={editor} onChange={change} />,
+            },
+            {
+              id: "historial",
+              label: "Historial",
+              content: (
+                <History
+                  articleId={article?.id ?? null}
+                  form={form}
+                  onRestore={(revision) => {
+                    change({
+                      title: revision.title,
+                      excerpt: revision.excerpt ?? "",
+                      content: revision.content,
+                      cover_image_url: revision.cover_image_url ?? "",
+                      category_id: revision.category_id,
+                      seo_title: revision.seo_title ?? "",
+                      seo_description: revision.seo_description ?? "",
+                    });
+                    toast.success(
+                      "Versión cargada en el editor. Revisala y guardá para aplicarla.",
+                    );
+                  }}
+                />
+              ),
+            },
+          ]}
+        />
       </div>
 
       <PreviewDialog form={form} open={previewOpen} onOpenChange={setPreviewOpen} />
