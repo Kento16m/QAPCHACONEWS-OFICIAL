@@ -519,3 +519,43 @@ test("an editor can choose a colleague as author", async ({ page }) => {
   await enter(page, id);
   await expect(page.getByLabel("Autor").getByRole("option", { name: "admin E2E" })).toHaveCount(1);
 });
+
+test("a scheduled note appears in the calendar and can change date", async ({ page }) => {
+  const title = `E2E calendario ${STAMP}`;
+  const when = new Date(Date.now() + 3 * 86_400_000);
+  when.setUTCHours(13, 30, 0, 0);
+  const [note] = await api("/rest/v1/articles", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({
+      title,
+      slug: `e2e-calendario-${STAMP}`,
+      content: "<p>x</p>",
+      status: "scheduled",
+      scheduled_at: when.toISOString(),
+    }),
+  });
+  created.push(note.id);
+
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await page.goto("/calendario");
+  // Three days ahead can fall in next month.
+  if ((await page.getByRole("link", { name: title }).count()) === 0) {
+    await page.waitForTimeout(800);
+    if ((await page.getByRole("link", { name: title }).count()) === 0) {
+      await page.getByRole("button", { name: "Mes siguiente" }).click();
+    }
+  }
+  await expect(page.getByRole("link", { name: title })).toBeVisible();
+
+  const later = new Date(when.getTime() + 2 * 86_400_000);
+  const day = later.toISOString().slice(0, 10);
+  await page.getByRole("button", { name: `Cambiar la fecha de ${title}` }).click();
+  await page.getByLabel("Nueva fecha").fill(day);
+  await page.getByRole("button", { name: "Cambiar fecha" }).click();
+  await expect(page.getByText("Fecha cambiada.")).toBeVisible();
+
+  const [stored] = await api(`/rest/v1/articles?id=eq.${note.id}&select=scheduled_at`);
+  expect(new Date(stored.scheduled_at).toISOString()).toBe(later.toISOString());
+});
