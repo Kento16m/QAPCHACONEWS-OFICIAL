@@ -2,6 +2,7 @@
 // its report, so the transaction rolls back and the database keeps no test data.
 // Usage: SUPABASE_ACCESS_TOKEN=... SUPABASE_PROJECT_REF=... npm run test:db
 import { readFileSync } from "node:fs";
+import { assertTestTarget } from "./lib/test-target.mjs";
 
 const token = process.env.SUPABASE_ACCESS_TOKEN;
 const ref = process.env.SUPABASE_PROJECT_REF;
@@ -9,6 +10,8 @@ if (!token || !ref) {
   console.error("Set SUPABASE_ACCESS_TOKEN and SUPABASE_PROJECT_REF.");
   process.exit(2);
 }
+
+assertTestTarget(ref);
 
 const query = readFileSync(new URL("../supabase/tests/security.sql", import.meta.url), "utf8");
 const response = await fetch(`https://api.supabase.com/v1/projects/${ref}/database/query`, {

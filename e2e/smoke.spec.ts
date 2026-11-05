@@ -1,6 +1,7 @@
 // Real browser against a real Supabase project, with temporary data removed at the end.
 // Usage: E2E_SUPABASE_URL=... E2E_ANON_KEY=... E2E_SERVICE_KEY=... npm run test:e2e
 import { readFileSync } from "node:fs";
+import { assertTestTarget } from "../scripts/lib/test-target.mjs";
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 
 const {
@@ -11,8 +12,8 @@ const {
 
 if (!BASE || !ANON || !SERVICE)
   throw new Error("Set E2E_SUPABASE_URL, E2E_ANON_KEY and E2E_SERVICE_KEY.");
-// These tests create and delete data: they must never run against the live site's database.
-if (BASE.includes("nkkgwjvmdxggvyzehlzp")) throw new Error("Refusing to run against production.");
+// These tests create and delete data.
+assertTestTarget(BASE);
 
 const STAMP = Date.now();
 const PASSWORD = "Temp-e2e-Pass-92!";

@@ -25,7 +25,7 @@ npm run dev
 | `npm run test:db` | Permisos y reglas de la base | `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF` |
 | `npm run test:e2e` | La app completa en un navegador | `SUPABASE_ACCESS_TOKEN` |
 
-`test:db` y `test:e2e` se niegan a correr contra el proyecto de producción.
+`test:db` y `test:e2e` corren solo en el proyecto de pruebas: se niegan a usar un proyecto con datos reales.
 
 ## Base de datos
 
