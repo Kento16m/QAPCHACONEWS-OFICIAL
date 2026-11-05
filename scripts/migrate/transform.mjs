@@ -108,5 +108,5 @@ export const assertTargets = ({ source, target, production }) => {
 
 // After the switch the target holds real data, and this copy would replace it.
 export const assertNotCutOver = (rows) => {
-  if (rows.length > 0) throw new Error("Ya se hizo el cambio: esta copia borraría datos reales.");
+  if (rows.length > 0) throw new Error("Esta copia no puede correr: ya se hizo el cambio y borraría datos reales.");
 };
