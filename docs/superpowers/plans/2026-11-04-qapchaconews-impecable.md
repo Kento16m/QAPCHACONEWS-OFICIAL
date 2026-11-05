@@ -50,7 +50,7 @@ Casos que ninguna prueba cubría y que más afectarían a una persona real. Cada
 2. **Imágenes con URL de la base vieja:** al apagar esa base no debe romperse ninguna portada, imagen interna ni avatar (Tarea 2.3).
 3. **Editor que pierde la sesión o la conexión mientras escribe:** recupera el texto al volver (Tarea 1.3).
 4. **Búsqueda con `( ) , % " \` o solo espacios:** nunca da error, y un comentario con solo emojis se publica bien (Tareas 1.1 y 1.7).
-5. **Servicio externo caído** (OpenWeather, cotizaciones, OpenAI): la página sigue usable y nada sin moderar se publica (Tarea 1.7).
+5. **Servicio externo caído** (OpenWeather, cotizaciones, Gemini): la página sigue usable y nada sin moderar se publica (Tarea 1.7).
 
 ---
 
@@ -62,7 +62,7 @@ Casos que ninguna prueba cubría y que más afectarían a una persona real. Cada
 
 - [ ] Revocar los dos tokens de Supabase compartidos por chat.
 - [ ] Cambiar la clave de OpenWeather y guardar la nueva en `.env` local.
-- [ ] Guardar `OPENAI_API_KEY` como secreto en el proyecto nuevo.
+- [ ] Guardar `GEMINI_API_KEY` como secreto en el proyecto nuevo.
 - [ ] Responder las [decisiones pendientes](#decisiones-pendientes-del-dueño).
 
 ### Tarea 0.2: confirmar y parchear producción
@@ -189,7 +189,7 @@ El banner ya existía, pero su decisión no afectaba a nada: GA arrancaba aunque
 - [ ] Corregir el PDF de Control de Acceso, que hoy siempre muestra "bloqueado" porque `noopener` hace que `window.open` devuelva `null`.
 - [ ] Capturar y mostrar los errores de borrado de artículos y de categorías.
 - [ ] Test (Review Focus 5): con OpenWeather y cotizaciones respondiendo 500, la portada carga y los widgets muestran su estado de error.
-- [ ] Test (Review Focus 4): un comentario con solo emojis se publica, y si OpenAI falla se ve un mensaje y no se guarda nada.
+- [ ] Test (Review Focus 4): un comentario con solo emojis se publica, y si Gemini falla se ve un mensaje y no se guarda nada.
 - [ ] Verde y commit.
 
 ### Tarea 1.8: prueba real en navegador

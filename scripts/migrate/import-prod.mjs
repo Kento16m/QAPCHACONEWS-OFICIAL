@@ -22,7 +22,8 @@ const safeMessage = (text) =>
     .slice(0, 400);
 
 const readSource = async (query) => {
-  if (!/^\s*(select|with)\b/i.test(query)) throw new Error("Solo se permiten lecturas en el origen.");
+  if (!/^\s*(select|with)\b/i.test(query))
+    throw new Error("Solo se permiten lecturas en el origen.");
   const response = await fetch(`${API}/${SOURCE}/database/query/read-only`, {
     method: "POST",
     headers: { Authorization: `Bearer ${SOURCE_TOKEN}`, "Content-Type": "application/json" },
@@ -89,7 +90,16 @@ const COLUMNS = {
     "updated_at",
   ],
   article_tags: ["article_id", "tag_id", "created_at"],
-  comments: ["id", "article_id", "user_id", "parent_id", "body", "like_count", "created_at", "updated_at"],
+  comments: [
+    "id",
+    "article_id",
+    "user_id",
+    "parent_id",
+    "body",
+    "like_count",
+    "created_at",
+    "updated_at",
+  ],
   comment_likes: ["comment_id", "user_id", "created_at"],
   newsletter_subscribers: ["id", "email", "confirmed", "subscribed_at", "unsubscribed_at"],
   admin_access_logs: [
@@ -140,11 +150,16 @@ const writableAuthColumns = async (table) => {
 
 console.log("Leyendo producción (solo lectura)...");
 const source = {};
-for (const table of PUBLIC_TABLES) source[table] = await readSource(`select * from public.${table}`);
+for (const table of PUBLIC_TABLES)
+  source[table] = await readSource(`select * from public.${table}`);
 const userColumns = await writableAuthColumns("users");
 const identityColumns = await writableAuthColumns("identities");
-const users = await readSource(`select ${userColumns.map((c) => `"${c}"`).join(", ")} from auth.users`);
-const identities = await readSource(`select ${identityColumns.map((c) => `"${c}"`).join(", ")} from auth.identities`);
+const users = await readSource(
+  `select ${userColumns.map((c) => `"${c}"`).join(", ")} from auth.users`,
+);
+const identities = await readSource(
+  `select ${identityColumns.map((c) => `"${c}"`).join(", ")} from auth.identities`,
+);
 
 const plan = planMigration(source);
 const expected = {
@@ -191,7 +206,11 @@ const statements = [
   insertRows("public.article_tags", COLUMNS.article_tags, source.article_tags),
   insertRows("public.comments", COLUMNS.comments, plan.comments),
   insertRows("public.comment_likes", COLUMNS.comment_likes, plan.comment_likes),
-  insertRows("public.newsletter_subscribers", COLUMNS.newsletter_subscribers, source.newsletter_subscribers),
+  insertRows(
+    "public.newsletter_subscribers",
+    COLUMNS.newsletter_subscribers,
+    source.newsletter_subscribers,
+  ),
   insertRows("public.admin_access_logs", COLUMNS.admin_access_logs, source.admin_access_logs),
   insertRows("private.legacy_data", ["source_table", "source_id", "reason", "row"], plan.archive),
   "alter table public.profiles enable trigger profiles_set_updated_at;",
@@ -232,7 +251,8 @@ const failures = [];
 for (const [key, value] of Object.entries(expected)) {
   if (Number(counts[key]) !== value) failures.push(`${key}: ${counts[key]} en lugar de ${value}`);
 }
-if (Number(counts.like_total) !== plan.comment_likes.length) failures.push("el contador de likes no coincide");
+if (Number(counts.like_total) !== plan.comment_likes.length)
+  failures.push("el contador de likes no coincide");
 if (Number(counts.protected) !== 1) failures.push(`cuentas protegidas: ${counts.protected}`);
 for (const [name, query] of Object.entries(FINGERPRINTS)) {
   const [[{ f: from }], [{ f: to }]] = [await readSource(query), await runTarget(query)];

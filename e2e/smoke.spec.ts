@@ -403,6 +403,15 @@ test.describe("comments", () => {
     page,
   }) => {
     await prepare(page);
+    // The fail-closed rules are unit tested; here, what the reader sees when the function refuses.
+    await page.route("**/functions/v1/moderate-comment", (route) =>
+      route.fulfill({
+        status: 502,
+        contentType: "application/json",
+        headers: { "Access-Control-Allow-Origin": "*" },
+        body: JSON.stringify({ error: "La moderación falló temporalmente. Inténtalo nuevamente." }),
+      }),
+    );
     await page.goto(`/noticia/${articleSlug}`);
     await loginAndWait(page, "reader");
 
@@ -411,8 +420,9 @@ test.describe("comments", () => {
     await box.fill(draft);
     await page.locator("button:visible:has(svg.lucide-send)").first().click();
 
-    // No OPENAI_API_KEY in the test project: the function must fail closed.
-    await expect(page.getByText("La moderación no está configurada en el servidor.")).toBeVisible();
+    await expect(
+      page.getByText("La moderación falló temporalmente. Inténtalo nuevamente."),
+    ).toBeVisible();
     // The draft stays in the text boxes to retry, but must not appear as a published comment.
     await expect(page.getByText(draft).and(page.locator(":not(textarea)"))).toHaveCount(0);
     await expect(box).toHaveValue(draft);

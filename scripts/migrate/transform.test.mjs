@@ -46,7 +46,12 @@ describe("planMigration", () => {
     const plan = planMigration(source({ comments: [comment(1, A1), comment(2, GONE)] }));
     expect(ids(plan.comments)).toEqual([1]);
     expect(plan.archive).toEqual([
-      { source_table: "comments", source_id: "2", reason: "article_missing", row: comment(2, GONE) },
+      {
+        source_table: "comments",
+        source_id: "2",
+        reason: "article_missing",
+        row: comment(2, GONE),
+      },
     ]);
   });
 
@@ -99,17 +104,31 @@ describe("planMigration", () => {
   });
 
   it("imports likes of imported comments and archives the rest", () => {
-    const like = (id, comment_id, user_id = U1) => ({ id, comment_id, user_id, created_at: "2026-10-01T00:00:00Z" });
+    const like = (id, comment_id, user_id = U1) => ({
+      id,
+      comment_id,
+      user_id,
+      created_at: "2026-10-01T00:00:00Z",
+    });
     const plan = planMigration(
-      source({ comments: [comment(1, A1), comment(2, GONE)], comment_likes: [like(10, 1), like(11, 2)] }),
+      source({
+        comments: [comment(1, A1), comment(2, GONE)],
+        comment_likes: [like(10, 1), like(11, 2)],
+      }),
     );
-    expect(plan.comment_likes).toEqual([{ comment_id: 1, user_id: U1, created_at: "2026-10-01T00:00:00Z" }]);
-    expect(plan.archive.find((entry) => entry.source_table === "comment_likes")?.source_id).toBe("11");
+    expect(plan.comment_likes).toEqual([
+      { comment_id: 1, user_id: U1, created_at: "2026-10-01T00:00:00Z" },
+    ]);
+    expect(plan.archive.find((entry) => entry.source_table === "comment_likes")?.source_id).toBe(
+      "11",
+    );
   });
 
   it("removes duplicate likes, which the new primary key would reject", () => {
     const like = (id) => ({ id, comment_id: 1, user_id: U1, created_at: "2026-10-01T00:00:00Z" });
-    const plan = planMigration(source({ comments: [comment(1, A1)], comment_likes: [like(10), like(11)] }));
+    const plan = planMigration(
+      source({ comments: [comment(1, A1)], comment_likes: [like(10), like(11)] }),
+    );
     expect(plan.comment_likes).toHaveLength(1);
     expect(plan.archive.find((entry) => entry.source_id === "11")?.reason).toBe("duplicate_like");
   });
@@ -135,8 +154,13 @@ describe("planMigration", () => {
       comment_likes: [{ id: 9, comment_id: 2, user_id: U1 }],
     });
     const plan = planMigration(data);
-    expect(plan.comments.length + plan.archive.filter((e) => e.source_table === "comments").length).toBe(3);
-    expect(summarize(plan)).toMatchObject({ comments: 1, archived: { comments: 2, comment_likes: 1 } });
+    expect(
+      plan.comments.length + plan.archive.filter((e) => e.source_table === "comments").length,
+    ).toBe(3);
+    expect(summarize(plan)).toMatchObject({
+      comments: 1,
+      archived: { comments: 2, comment_likes: 1 },
+    });
   });
 });
 
@@ -160,11 +184,15 @@ describe("assertTargets", () => {
   const PROD = "nkkgwjvmdxggvyzehlzp";
 
   it("allows copying from production to another project", () => {
-    expect(() => assertTargets({ source: PROD, target: "ooswoucakxnymtdblrzd", production: PROD })).not.toThrow();
+    expect(() =>
+      assertTargets({ source: PROD, target: "ooswoucakxnymtdblrzd", production: PROD }),
+    ).not.toThrow();
   });
 
   it("refuses to write to production", () => {
-    expect(() => assertTargets({ source: "x", target: PROD, production: PROD })).toThrow(/producción/);
+    expect(() => assertTargets({ source: "x", target: PROD, production: PROD })).toThrow(
+      /producción/,
+    );
   });
 
   it("refuses to copy a project onto itself", () => {

@@ -1,5 +1,6 @@
 ﻿import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { hasBlockedWord } from "./blocked-words.ts";
+import { moderateWithGemini } from "./moderation.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -67,26 +68,23 @@ Deno.serve(async (req) => {
       );
     }
 
-    const openAiKey = Deno.env.get("OPENAI_API_KEY");
-    if (!openAiKey)
+    const geminiKey = Deno.env.get("GEMINI_API_KEY");
+    if (!geminiKey)
       return json({ error: "La moderación no está configurada en el servidor." }, 500);
 
-    const moderationResponse = await fetch("https://api.openai.com/v1/moderations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${openAiKey}` },
-      body: JSON.stringify({ input: normalized, model: "omni-moderation-latest" }),
-      signal: AbortSignal.timeout(10_000),
-    });
-    const moderationData = await moderationResponse.json().catch(() => null);
+    const verdict = await moderateWithGemini(
+      normalized,
+      geminiKey,
+      fetch,
+      Deno.env.get("GEMINI_MODEL"),
+    );
 
     // If moderation cannot answer, nothing gets published.
-    const result = moderationData?.results?.[0];
-    if (!moderationResponse.ok || !result) {
-      console.error("OpenAI moderation failed:", moderationResponse.status, moderationData);
+    if (verdict === "unavailable") {
       return json({ error: "La moderación falló temporalmente. Inténtalo nuevamente." }, 502);
     }
 
-    if (result.flagged) {
+    if (verdict === "blocked") {
       return json(
         {
           error:

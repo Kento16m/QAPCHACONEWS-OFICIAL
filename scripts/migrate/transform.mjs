@@ -33,7 +33,7 @@ export const planMigration = (source) => {
   }
 
   // A reply needs its parent, and removing one parent can orphan a whole thread.
-  for (let changed = true; changed; ) {
+  for (let changed = true; changed;) {
     changed = false;
     for (const comment of kept.values()) {
       if (comment.parent_id !== null && !kept.has(comment.parent_id)) {
