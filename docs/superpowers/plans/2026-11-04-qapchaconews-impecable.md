@@ -4,7 +4,7 @@
 
 **Goal:** llevar a producción un sitio de noticias seguro, rápido y bien posicionado, con un panel propio en `admin.qapchaconews.com`, y poder mantenerlo sin miedo a romperlo.
 
-**Architecture:** React y Vite como SPA en Netlify, con Supabase como base, autenticación, almacenamiento y funciones. La seguridad vive en la base (RLS y permisos por columna), no en el navegador. Sitio y panel salen del mismo repositorio como dos compilaciones y dos sitios de Netlify.
+**Architecture:** React y Vite como SPA en Netlify, con Supabase como base, autenticación, almacenamiento y funciones. La seguridad vive en la base (RLS y permisos por columna), no en el navegador. Sitio y panel salen del mismo repositorio como dos compilaciones: el sitio en Netlify y el panel en Hostinger.
 
 **Tech Stack:** React 19, TanStack Router y Query, Tailwind 4, Vite, Vitest, Playwright (nuevo), Supabase (Postgres 17, Auth, Storage, Edge Functions, pg_cron), Netlify Functions y Edge Functions.
 
@@ -313,7 +313,7 @@ Requiere aprobación explícita del dueño el mismo día.
 
 Esta fase necesita su propia especificación y su propio plan: empieza con las skills de brainstorming e impeccable, porque el diseño visual y la experiencia de los editores merecen decidirse contigo. Estas son las decisiones de partida que propongo.
 
-- **Estructura:** mismo repositorio, entrada `admin.html`, código en `src/admin/`, `vite.admin.config.ts` y salida `dist-admin`. Reutiliza `article-form.ts` y `use-article-form.ts`.
+- **Estructura:** mismo repositorio, entrada `src/admin/index.html`, código en `src/admin/`, `vite.admin.config.ts` y salida `dist-admin`. Reutiliza `article-form.ts` y `use-article-form.ts`.
 - **Alojamiento (decidido):** `admin.qapchaconews.com` va en **Hostinger**; el sitio público sigue en Netlify. Hostinger sirve archivos estáticos, así que el panel habla solo con Supabase y no tiene funciones propias: sin `/api/clima` ni `/api/cotizaciones` en su dominio. Un `.htaccess` propio aporta la ruta única de la SPA, CSP, `noindex` y HTTPS obligatorio, porque el dominio principal ya exige HTTPS en sus subdominios. Falta definir cómo se publica: GitHub Actions por FTP o Git de Hostinger.
 - **Acceso:** pantalla de inicio de sesión propia. Se elimina `admin-access.ts`, porque el permiso real ya lo aplica la base. Administradores con doble factor (TOTP) obligatorio y comprobado en RLS.
 - **Secciones:** Resumen, Artículos, Editor, Comentarios, Categorías, Etiquetas, Usuarios, Newsletter y Control de Acceso.

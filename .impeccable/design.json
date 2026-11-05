@@ -1,0 +1,770 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-05T20:14:42.529Z",
+  "title": "Design System: QAP Chaco News, panel de administración",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Newsroom Blue",
+        "canonical": "#465fff",
+        "tonalRamp": [
+          "#040038",
+          "#100773",
+          "#2124ad",
+          "#3545e4",
+          "#5472fe",
+          "#829fff",
+          "#b5c7fe",
+          "#e8eefe"
+        ]
+      },
+      "primary-foreground": {
+        "role": "neutral",
+        "displayName": "White on Fill",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "background": {
+        "role": "neutral",
+        "displayName": "Pale Ground",
+        "canonical": "#f9fafb",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252526",
+          "#414243",
+          "#606162",
+          "#818283",
+          "#a4a5a6",
+          "#c8c9ca",
+          "#eeeeef"
+        ]
+      },
+      "foreground": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#1d2939",
+        "tonalRamp": [
+          "#070b12",
+          "#1d2631",
+          "#384352",
+          "#556275",
+          "#758497",
+          "#99a6b8",
+          "#bfcad9",
+          "#e7effa"
+        ]
+      },
+      "card": {
+        "role": "neutral",
+        "displayName": "Card White",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "link": {
+        "role": "primary",
+        "displayName": "Link Blue",
+        "canonical": "#3641f5",
+        "tonalRamp": [
+          "#040038",
+          "#110078",
+          "#2118b7",
+          "#343cf1",
+          "#5471ff",
+          "#829fff",
+          "#b5c7fe",
+          "#e8eefe"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Soft Fill",
+        "canonical": "#f2f4f7",
+        "tonalRamp": [
+          "#0b0b0c",
+          "#242527",
+          "#414244",
+          "#606164",
+          "#818285",
+          "#a3a5a7",
+          "#c8c9cb",
+          "#edeef0"
+        ]
+      },
+      "muted-foreground": {
+        "role": "neutral",
+        "displayName": "Quiet Ink",
+        "canonical": "#5d6679",
+        "tonalRamp": [
+          "#080b12",
+          "#202530",
+          "#3b4251",
+          "#586174",
+          "#798296",
+          "#9ca5b7",
+          "#c2c9d8",
+          "#e9effa"
+        ]
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Selection Wash",
+        "canonical": "#ecf3ff",
+        "tonalRamp": [
+          "#090b0f",
+          "#22252b",
+          "#3d424b",
+          "#5c626c",
+          "#7c838d",
+          "#a0a5af",
+          "#c5c9d1",
+          "#ebeff5"
+        ]
+      },
+      "accent-foreground": {
+        "role": "primary",
+        "displayName": "Selection Ink",
+        "canonical": "#3641f5",
+        "tonalRamp": [
+          "#040038",
+          "#110078",
+          "#2118b7",
+          "#343cf1",
+          "#5471ff",
+          "#829fff",
+          "#b5c7fe",
+          "#e8eefe"
+        ]
+      },
+      "destructive": {
+        "role": "tertiary",
+        "displayName": "Danger Red",
+        "canonical": "#d92d20",
+        "tonalRamp": [
+          "#220000",
+          "#4e0000",
+          "#810000",
+          "#b90000",
+          "#e43a2b",
+          "#ff7462",
+          "#ffb3a7",
+          "#ffe9e5"
+        ]
+      },
+      "destructive-text": {
+        "role": "tertiary",
+        "displayName": "Error Text Red",
+        "canonical": "#b42318",
+        "tonalRamp": [
+          "#220000",
+          "#4e0000",
+          "#820000",
+          "#b12015",
+          "#da4a3b",
+          "#f97968",
+          "#feb3a7",
+          "#ffe9e5"
+        ]
+      },
+      "success": {
+        "role": "secondary",
+        "displayName": "Good News Green",
+        "canonical": "#027a48",
+        "tonalRamp": [
+          "#001004",
+          "#002e17",
+          "#00502d",
+          "#027444",
+          "#359864",
+          "#68b989",
+          "#9bdab3",
+          "#cefcde"
+        ]
+      },
+      "success-soft": {
+        "role": "secondary",
+        "displayName": "Good News Wash",
+        "canonical": "#ecfdf3",
+        "tonalRamp": [
+          "#070d0a",
+          "#1f2722",
+          "#39453e",
+          "#57655d",
+          "#77877e",
+          "#9ba9a1",
+          "#c1ccc6",
+          "#e8f1ec"
+        ]
+      },
+      "warning": {
+        "role": "secondary",
+        "displayName": "Asking Amber",
+        "canonical": "#b54708",
+        "tonalRamp": [
+          "#200000",
+          "#441200",
+          "#712700",
+          "#a13d00",
+          "#cc5c28",
+          "#eb865c",
+          "#feb598",
+          "#fee9e1"
+        ]
+      },
+      "warning-soft": {
+        "role": "secondary",
+        "displayName": "Asking Wash",
+        "canonical": "#fffaeb",
+        "tonalRamp": [
+          "#0d0b07",
+          "#27251d",
+          "#454237",
+          "#656154",
+          "#878275",
+          "#a9a599",
+          "#ccc9bf",
+          "#f1eee7"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#e4e7ec",
+        "tonalRamp": [
+          "#0a0b0d",
+          "#242528",
+          "#404246",
+          "#5f6166",
+          "#808287",
+          "#a3a5a9",
+          "#c7c9cd",
+          "#edeef1"
+        ]
+      },
+      "input": {
+        "role": "neutral",
+        "displayName": "Field Stroke",
+        "canonical": "#d0d5dd",
+        "tonalRamp": [
+          "#0a0b0e",
+          "#232529",
+          "#3f4248",
+          "#5d6168",
+          "#7e838a",
+          "#a1a5ac",
+          "#c6c9cf",
+          "#eceff3"
+        ]
+      },
+      "ring": {
+        "role": "primary",
+        "displayName": "Keyboard Ring",
+        "canonical": "#465fff",
+        "tonalRamp": [
+          "#040038",
+          "#100773",
+          "#2124ad",
+          "#3545e4",
+          "#5472fe",
+          "#829fff",
+          "#b5c7fe",
+          "#e8eefe"
+        ]
+      },
+      "dark-background": {
+        "role": "neutral",
+        "displayName": "Pale Ground (dark theme)",
+        "canonical": "#101828",
+        "tonalRamp": [
+          "#080b13",
+          "#1f2531",
+          "#3a4252",
+          "#576175",
+          "#788397",
+          "#9ba5b8",
+          "#c1c9d9",
+          "#e8effb"
+        ]
+      },
+      "dark-foreground": {
+        "role": "neutral",
+        "displayName": "Ink (dark theme)",
+        "canonical": "#f2f4f7",
+        "tonalRamp": [
+          "#0b0b0c",
+          "#242527",
+          "#414244",
+          "#606164",
+          "#818285",
+          "#a3a5a7",
+          "#c8c9cb",
+          "#edeef0"
+        ]
+      },
+      "dark-card": {
+        "role": "neutral",
+        "displayName": "Card White (dark theme)",
+        "canonical": "#1a2231",
+        "tonalRamp": [
+          "#080b12",
+          "#1f2530",
+          "#3a4251",
+          "#586273",
+          "#798395",
+          "#9ca5b7",
+          "#c2c9d8",
+          "#e9eff9"
+        ]
+      },
+      "dark-link": {
+        "role": "primary",
+        "displayName": "Link Blue (dark theme)",
+        "canonical": "#9cb9ff",
+        "tonalRamp": [
+          "#030921",
+          "#152248",
+          "#2b3f73",
+          "#465e9d",
+          "#6580c2",
+          "#8ba4e0",
+          "#b4c9fa",
+          "#e7efff"
+        ]
+      },
+      "dark-muted": {
+        "role": "neutral",
+        "displayName": "Soft Fill (dark theme)",
+        "canonical": "#232e40",
+        "tonalRamp": [
+          "#070b13",
+          "#1e2531",
+          "#384253",
+          "#556276",
+          "#768399",
+          "#9aa6b9",
+          "#c0cada",
+          "#e7effb"
+        ]
+      },
+      "dark-muted-foreground": {
+        "role": "neutral",
+        "displayName": "Quiet Ink (dark theme)",
+        "canonical": "#a6b0c0",
+        "tonalRamp": [
+          "#080b11",
+          "#20252e",
+          "#3b424e",
+          "#596270",
+          "#798392",
+          "#9da6b3",
+          "#c2cad5",
+          "#e9eff7"
+        ]
+      },
+      "dark-accent": {
+        "role": "primary",
+        "displayName": "Selection Wash (dark theme)",
+        "canonical": "#252f5a",
+        "tonalRamp": [
+          "#06091c",
+          "#1c233f",
+          "#353f66",
+          "#515e8e",
+          "#7180b1",
+          "#95a3d0",
+          "#bcc8ed",
+          "#e9eeff"
+        ]
+      },
+      "dark-accent-foreground": {
+        "role": "primary",
+        "displayName": "Selection Ink (dark theme)",
+        "canonical": "#c2d6ff",
+        "tonalRamp": [
+          "#050b18",
+          "#1b253a",
+          "#34425f",
+          "#506184",
+          "#7082a8",
+          "#95a5c7",
+          "#bcc9e6",
+          "#e7efff"
+        ]
+      },
+      "dark-destructive-text": {
+        "role": "tertiary",
+        "displayName": "Error Text Red (dark theme)",
+        "canonical": "#fda29b",
+        "tonalRamp": [
+          "#1d0102",
+          "#431211",
+          "#6c2927",
+          "#954541",
+          "#bb6661",
+          "#db8d87",
+          "#f7b7b1",
+          "#fee9e7"
+        ]
+      },
+      "dark-success": {
+        "role": "secondary",
+        "displayName": "Good News Green (dark theme)",
+        "canonical": "#6ce9a6",
+        "tonalRamp": [
+          "#001004",
+          "#002e18",
+          "#00502f",
+          "#027446",
+          "#009b5f",
+          "#53bd85",
+          "#8edeaf",
+          "#c5ffdb"
+        ]
+      },
+      "dark-success-soft": {
+        "role": "secondary",
+        "displayName": "Good News Wash (dark theme)",
+        "canonical": "#0b3b2a",
+        "tonalRamp": [
+          "#000f08",
+          "#0f2b20",
+          "#254b3b",
+          "#3f6c59",
+          "#608e79",
+          "#87b09d",
+          "#b1d2c2",
+          "#ddf5e9"
+        ]
+      },
+      "dark-warning": {
+        "role": "secondary",
+        "displayName": "Asking Amber (dark theme)",
+        "canonical": "#fec84b",
+        "tonalRamp": [
+          "#140900",
+          "#322200",
+          "#553e00",
+          "#7c5b00",
+          "#a47b02",
+          "#cb9d31",
+          "#e8c478",
+          "#ffecc7"
+        ]
+      },
+      "dark-warning-soft": {
+        "role": "secondary",
+        "displayName": "Asking Wash (dark theme)",
+        "canonical": "#40290c",
+        "tonalRamp": [
+          "#130901",
+          "#312210",
+          "#533d25",
+          "#765c3f",
+          "#987d5f",
+          "#b9a085",
+          "#dac5b0",
+          "#fbecdb"
+        ]
+      },
+      "dark-border": {
+        "role": "neutral",
+        "displayName": "Hairline (dark theme)",
+        "canonical": "#2b3648",
+        "tonalRamp": [
+          "#070b13",
+          "#1e2531",
+          "#384253",
+          "#566276",
+          "#768398",
+          "#9aa6b9",
+          "#c0cada",
+          "#e8effb"
+        ]
+      },
+      "dark-input": {
+        "role": "neutral",
+        "displayName": "Field Stroke (dark theme)",
+        "canonical": "#3d4a5f",
+        "tonalRamp": [
+          "#070b14",
+          "#1d2532",
+          "#374255",
+          "#546278",
+          "#75839a",
+          "#99a6bb",
+          "#bfcadb",
+          "#e7effc"
+        ]
+      },
+      "dark-ring": {
+        "role": "primary",
+        "displayName": "Keyboard Ring (dark theme)",
+        "canonical": "#7592ff",
+        "tonalRamp": [
+          "#03032d",
+          "#131b5b",
+          "#27368c",
+          "#4055bc",
+          "#5e79e3",
+          "#839ffe",
+          "#b5c7ff",
+          "#e8eeff"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "The large number on a figure card."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "The one page title."
+      },
+      "note-title": {
+        "displayName": "Note Title",
+        "purpose": "The note title field in the editor."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card titles and dialog titles."
+      },
+      "reading": {
+        "displayName": "Reading",
+        "purpose": "The note body in the editor, in a 34rem column."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "All interface text by default."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "The line beneath a title, row details, segmented options."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Pills, rail group names, row-level buttons and counters."
+      }
+    },
+    "shadows": [
+      {
+        "name": "floating-layer",
+        "value": "0 10px 15px -3px #0000001a, 0 4px 6px -4px #0000001a",
+        "purpose": "Dialogs, menus, the mobile sheet and toasts."
+      },
+      {
+        "name": "emptied-small",
+        "value": "0 0 #0000",
+        "purpose": "The theme's --shadow-sm override: what keeps page controls flat."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-color",
+        "value": "150ms",
+        "purpose": "Color changes on hover and selection."
+      },
+      {
+        "name": "state-layout",
+        "value": "200ms",
+        "purpose": "Rail collapse and dialog entrance."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0.01ms",
+        "purpose": "Applied to all motion under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The main action of a screen, such as Nueva nota or Actualizar.",
+      "html": "<button class=\"ds-btn-primary\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14\"/><path d=\"M12 5v14\"/></svg>Nueva nota</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border: 0; border-radius: 8px; background: var(--primary, #465fff); color: #fff; font-family: 'Outfit Variable', ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color 150ms; } .ds-btn-primary:hover { background: color-mix(in oklab, var(--primary, #465fff) 90%, transparent); } .ds-btn-primary:focus-visible { outline: 2px solid var(--ring, #465fff); outline-offset: 2px; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "The default for everything that is not the main action.",
+      "html": "<button class=\"ds-btn-outline\">Vista previa</button>",
+      "css": ".ds-btn-outline { height: 40px; padding: 0 16px; border: 1px solid var(--input, #d0d5dd); border-radius: 8px; background: var(--background, #f9fafb); color: var(--foreground, #1d2939); font-family: 'Outfit Variable', ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color 150ms, color 150ms; } .ds-btn-outline:hover { background: var(--accent, #ecf3ff); color: var(--accent-foreground, #3641f5); } .ds-btn-outline:focus-visible { outline: 2px solid var(--ring, #465fff); outline-offset: 2px; }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Delete actions and the confirming button that follows them.",
+      "html": "<button class=\"ds-btn-danger\">Borrar nota</button>",
+      "css": ".ds-btn-danger { height: 36px; padding: 0 16px; border: 0; border-radius: 8px; background: var(--destructive, #d92d20); color: #fff; font-family: 'Outfit Variable', ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color 150ms; } .ds-btn-danger:hover { background: color-mix(in oklab, var(--destructive, #d92d20) 90%, transparent); } .ds-btn-danger:focus-visible { outline: 2px solid var(--ring, #465fff); outline-offset: 2px; }"
+    },
+    {
+      "name": "Search Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "A page-level field with its leading line icon.",
+      "html": "<label class=\"ds-search\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m21 21-4.34-4.34\"/><circle cx=\"11\" cy=\"11\" r=\"8\"/></svg><input type=\"search\" placeholder=\"Buscar por título o resumen\" aria-label=\"Buscar\"></label>",
+      "css": ".ds-search { position: relative; display: block; width: 280px; color: var(--muted-foreground, #5d6679); } .ds-search svg { position: absolute; left: 12px; top: 12px; } .ds-search input { width: 100%; height: 40px; padding: 0 12px 0 36px; border: 1px solid var(--input, #d0d5dd); border-radius: 8px; background: var(--card, #fff); color: var(--foreground, #1d2939); font-family: 'Outfit Variable', ui-sans-serif, system-ui, sans-serif; font-size: 14px; } .ds-search input:focus-visible { outline: none; box-shadow: 0 0 0 1px var(--ring, #465fff); }"
+    },
+    {
+      "name": "Select",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "A native select with its drawn line arrow.",
+      "html": "<select class=\"ds-select\" aria-label=\"Filtrar por estado\"><option>Todos los estados</option><option>Publicada</option></select>",
+      "css": ".ds-select { appearance: none; height: 40px; padding: 0 32px 0 12px; border: 1px solid var(--input, #d0d5dd); border-radius: 8px; background: var(--card, #fff) url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2398a2b3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\") no-repeat right 10px center; color: var(--foreground, #1d2939); font-family: 'Outfit Variable', ui-sans-serif, system-ui, sans-serif; font-size: 14px; transition: border-color 150ms; } .ds-select:hover { border-color: var(--muted-foreground, #5d6679); } .ds-select:focus-visible { outline: 2px solid var(--ring, #465fff); outline-offset: 2px; }"
+    },
+    {
+      "name": "Rail Item",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Rail navigation with its counter, in resting and active states.",
+      "html": "<nav class=\"ds-nav\"><a href=\"#\" class=\"ds-nav-item ds-nav-active\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect width=\"7\" height=\"9\" x=\"3\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"14\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"9\" x=\"14\" y=\"12\" rx=\"1\"/><rect width=\"7\" height=\"5\" x=\"3\" y=\"16\" rx=\"1\"/></svg><span>Hoy</span></a><a href=\"#\" class=\"ds-nav-item\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M7.9 20A9 9 0 1 0 4 16.1L2 22Z\"/></svg><span>Comentarios</span><small>2</small></a></nav>",
+      "css": ".ds-nav { width: 232px; font-family: 'Outfit Variable', ui-sans-serif, system-ui, sans-serif; } .ds-nav-item { display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 12px; border-radius: 8px; color: var(--foreground, #1d2939); font-size: 14px; font-weight: 500; text-decoration: none; transition: background-color 150ms; } .ds-nav-item small { margin-left: auto; font-size: 12px; } .ds-nav-item:hover { background: var(--muted, #f2f4f7); } .ds-nav-active, .ds-nav-active:hover { background: var(--accent, #ecf3ff); color: var(--accent-foreground, #3641f5); } .ds-nav-item:focus-visible { outline: 2px solid var(--ring, #465fff); outline-offset: 2px; }"
+    },
+    {
+      "name": "Change Pills",
+      "kind": "chip",
+      "refersTo": "pill-rise",
+      "description": "Green for a rise, neutral for a fall.",
+      "html": "<span class=\"ds-pill ds-pill-rise\">+2</span> <span class=\"ds-pill ds-pill-fall\">−12%</span>",
+      "css": ".ds-pill { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-family: 'Outfit Variable', ui-sans-serif, system-ui, sans-serif; font-size: 12px; font-weight: 500; font-variant-numeric: tabular-nums; } .ds-pill-rise { background: var(--success-soft, #ecfdf3); color: var(--success, #027a48); } .ds-pill-fall { background: var(--muted, #f2f4f7); color: var(--muted-foreground, #5d6679); }"
+    },
+    {
+      "name": "Figure Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The base card: 1 px hairline, 16 px corners, 20 px padding, no shadow.",
+      "html": "<section class=\"ds-card\"><p class=\"ds-card-label\">Lecturas, 7 días</p><div class=\"ds-card-row\"><strong>312</strong><span class=\"ds-card-pill\">−12%</span></div><p class=\"ds-card-note\">259 desde el inicio</p></section>",
+      "css": ".ds-card { width: 240px; padding: 20px; border: 1px solid var(--border, #e4e7ec); border-radius: 16px; background: var(--card, #fff); color: var(--foreground, #1d2939); font-family: 'Outfit Variable', ui-sans-serif, system-ui, sans-serif; font-size: 14px; font-variant-numeric: tabular-nums; } .ds-card p { margin: 0; } .ds-card-label { color: var(--muted-foreground, #5d6679); } .ds-card-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; } .ds-card-row strong { font-size: 30px; font-weight: 600; line-height: 1.2; } .ds-card-pill { padding: 2px 8px; border-radius: 9999px; background: var(--muted, #f2f4f7); color: var(--muted-foreground, #5d6679); font-size: 12px; font-weight: 500; } .ds-card-note { color: var(--muted-foreground, #5d6679); font-size: 13px; }"
+    },
+    {
+      "name": "Attention Row",
+      "kind": "custom",
+      "refersTo": "attention-count",
+      "description": "A pending task on Hoy: count tile, title and detail, and one action.",
+      "html": "<div class=\"ds-attention\"><span class=\"ds-attention-count\">3</span><div><p class=\"ds-attention-title\">Lugares libres en portada</p><p class=\"ds-attention-detail\">Se rellenan solos con lo más reciente</p></div><a href=\"#\">Elegir</a></div>",
+      "css": ".ds-attention { display: flex; align-items: center; gap: 12px; width: 340px; padding: 12px 0; font-family: 'Outfit Variable', ui-sans-serif, system-ui, sans-serif; font-size: 14px; color: var(--foreground, #1d2939); } .ds-attention p { margin: 0; } .ds-attention-count { display: flex; flex-shrink: 0; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 8px; background: var(--warning-soft, #fffaeb); color: var(--warning, #b54708); font-weight: 600; } .ds-attention-title { font-weight: 500; } .ds-attention-detail { color: var(--muted-foreground, #5d6679); font-size: 13px; } .ds-attention a { margin-left: auto; color: var(--link, #3641f5); font-weight: 600; text-decoration: none; } .ds-attention a:hover { text-decoration: underline; } .ds-attention a:focus-visible { outline: 2px solid var(--ring, #465fff); outline-offset: 2px; }"
+    },
+    {
+      "name": "Period Control",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "The chart's segmented control: a soft-fill track with a flat, card-colored selected chip.",
+      "html": "<div class=\"ds-segment\" role=\"group\" aria-label=\"Período\"><button>12 meses</button><button aria-pressed=\"true\">30 días</button><button>7 días</button></div>",
+      "css": ".ds-segment { display: inline-flex; padding: 4px; border-radius: 8px; background: var(--muted, #f2f4f7); font-family: 'Outfit Variable', ui-sans-serif, system-ui, sans-serif; } .ds-segment button { padding: 4px 12px; border: 0; border-radius: 8px; background: transparent; color: var(--muted-foreground, #5d6679); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; transition: background-color 150ms; } .ds-segment button[aria-pressed=\"true\"] { background: var(--card, #fff); color: var(--foreground, #1d2939); } .ds-segment button:focus-visible { outline: 2px solid var(--ring, #465fff); outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Morning Desk",
+    "overview": "The panel is where a small newsroom sits down, sees what needs them, and gets to work. It plays the modern admin category straight, in the manner of TailAdmin and built from scratch: a white rail and top bar over a pale grey ground, thin-bordered cards, one blue accent. Nothing in the navigation or the controls asks to be learned. The craft is in the restraint and in the finish: figures that align, states that are always accounted for, a keyboard outline that nothing can hide.\n\nDensity is that of a working tool. Body text is 14 px, standard controls are 40 px tall, and the page fits a dense board of figures, a chart and a list of pending work on one screen. The one place the system slows down is the note editor, which gives the text a larger size and a narrow reading column, because that is where someone writes rather than operates.\n\nLight and dark are equal, complete themes rather than one derived from the other. The text pairings the panel uses measure AA or better in both. The QAP logo identifies the product; the rest of the world stays blue and neutral.",
+    "keyCharacteristics": [
+      "White rail and top bar over a pale grey ground, with content on thin-bordered 16 px cards.",
+      "One accent, used for actions and selection.",
+      "Color carries meaning only: amber asks, red warns, green reports good news.",
+      "Flat at rest; only layers that float over the page cast a shadow.",
+      "Outfit throughout, with tabular figures everywhere.",
+      "A real phone layout that reorders the work rather than shrinking the desktop.",
+      "Motion of 150 to 200 ms, on state changes only."
+    ],
+    "rules": [
+      {
+        "name": "The One Blue Rule",
+        "body": "Blue means \"act here\" or \"you are here\". If an element is neither an action, a selection nor the data line of a chart, it stays neutral.",
+        "section": "colors"
+      },
+      {
+        "name": "The Falls Stay Neutral Rule",
+        "body": "A figure that falls gets a neutral pill, with the minus sign carrying the direction. It never turns red: fewer readers on a slow week is not an error, and red is reserved for trouble.",
+        "section": "colors"
+      },
+      {
+        "name": "The Green Reports Rule",
+        "body": "Green only reports something good that has already happened: a rise, a published note, a passed review, an inserted word. It is never decoration and never the color of a button.",
+        "section": "colors"
+      },
+      {
+        "name": "The Red Is Trouble Rule",
+        "body": "Inside the panel's own interface, red appears only for errors, danger and removed text. The logo's red tag and the public-site preview box sit outside this rule: they are the brand and the public site, shown as they are.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Rule",
+        "body": "Every number in the panel uses tabular figures, set once on the body. Columns of readings, counters and dates align without any per-table work.",
+        "section": "typography"
+      },
+      {
+        "name": "The Sentence Case Rule",
+        "body": "Group names, table headers and labels are in sentence case and in Spanish as a person says them. Dates that the formatter gives in lowercase only get their first letter capitalized.",
+        "section": "typography"
+      },
+      {
+        "name": "The Reading Column Rule",
+        "body": "The note body keeps a 34rem measure inside whatever width the editor has, by padding its sides rather than narrowing the card. It falls back to 20 px of padding on a phone.",
+        "section": "layout"
+      },
+      {
+        "name": "The Flat Control Rule",
+        "body": "Nothing that sits on the page casts a shadow. A control shows its edge with a border and its state with color. The shared primary button and checkbox still cast a faint 1 to 3 px shadow from another step that the theme did not empty. That is leftover from the shared library, not a pattern to copy.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** use the theme's tokens for every color and add both the light and the dark value for anything new, measured to AA.",
+      "**Do** keep controls at 8 px corners and cards and dialogs at 16 px.",
+      "**Do** show a fall in a neutral pill with its minus sign.",
+      "**Do** keep the unlayered keyboard outline rule at the end of the theme, outside any CSS layer, so a component's own reset cannot hide where the keyboard is.",
+      "**Do** keep transitions at 150 to 200 ms and on state changes only, with the reduced-motion override in place.",
+      "**Do** change the job on a phone, not only the width: urgent work first, an agenda rather than a month grid, filters behind one control.",
+      "**Do** keep the note body at the 34rem reading column.",
+      "**Do** give every chart its table and every loading, empty and failed state its own line."
+    ],
+    "donts": [
+      "**Don't** color a fall red or an ordinary status amber; each functional hue keeps its meaning.",
+      "**Don't** add a shadow to anything that sits on the page.",
+      "**Don't** use the blue fill for a decorative element, or a second accent color.",
+      "**Don't** use the public site's red, Playfair Display or Plus Jakarta Sans outside the preview box.",
+      "**Don't** leave a native select arrow or date icon unstyled in a new control.",
+      "**Don't** copy TailAdmin's code, images or brand; it is the reference for the category, not a source."
+    ]
+  }
+}
