@@ -77,7 +77,7 @@ Permisos: **A** = Administrador, **E** = Editor. Un lector no entra al panel. La
 | **Imágenes** | A, E | Biblioteca con buscador, texto alternativo y las dos formas de carga |
 | **Comentarios** | A modera, E lee | Bandeja en vivo por nota y fecha; borrar y bloquear al autor |
 | **Estadísticas** | A, E | Lecturas por día, nota, sección y autor |
-| **Newsletter** | A | Suscriptores, exportar CSV, redactar y enviar |
+| **Newsletter** | A | Suscriptores y exportar CSV. Enviar queda en espera de un servicio de correo |
 | **Usuarios** | A | Lista con correo, rol y bloqueo; la cuenta protegida no se puede tocar |
 | **Actividad** | A | Quién hizo qué, más el control de acceso actual con sus filtros |
 | **Categorías y etiquetas** | A | Crear, editar y borrar |
@@ -142,7 +142,7 @@ Tabla `media_assets`: URL, origen (subida o enlace), ruta en Storage, texto alte
 
 Hoy solo se guarda la lista. Los 8 suscriptores importados figuran confirmados, pero un suscriptor nuevo queda sin confirmar para siempre porque no existe ese paso.
 
-- Servicio de correo: **Resend** salvo que el dueño prefiera otro. Secreto `RESEND_API_KEY` y dominio verificado por DNS.
+- **En espera:** el dueño decidió no usar Resend por el momento. Lo que sigue describe el envío para cuando elija un servicio de correo. Hasta entonces, el panel muestra la lista, permite borrar y exportar, y un suscriptor nuevo sigue quedando sin confirmar.
 - **Doble confirmación:** el formulario público llama a una función que envía el correo de confirmación, con límite de intentos.
 - Redactar: elegir notas y una introducción, enviarse una prueba, confirmar la cantidad de destinatarios y enviar.
 - Tabla `newsletter_campaigns` con estado y conteos: un reintento no duplica envíos.
@@ -184,7 +184,7 @@ Cada una se puede probar por separado. El panel viejo sigue funcionando hasta la
 3. **Organizar:** Imágenes, Portada (con el cambio público) y Calendario.
 4. **Gestionar:** Comentarios, Usuarios, Categorías y etiquetas, Actividad.
 5. **Medir:** Estadísticas y las cifras completas de Hoy.
-6. **Comunicar:** Newsletter y doble confirmación.
+6. **Comunicar:** enviar newsletter y doble confirmación. En espera de un servicio de correo; la lista de suscriptores va en la Etapa 4.
 7. **Salir:** quitar `/admin` del sitio público, retirar las columnas viejas y activar el segundo factor obligatorio.
 
 Desde la Etapa 1 cada etapa se publica en Hostinger para que el equipo la use; el panel viejo sigue disponible hasta la Etapa 7.
@@ -206,4 +206,4 @@ Componentes internos, biblioteca de arrastre, forma exacta de las tablas no desc
 - **Etapa 0:** acceso a Netlify, un token nuevo de solo lectura para la copia final, correo de sesión (SMTP) y un segundo proyecto de Supabase para pruebas.
 - **Etapa 1:** acceso a Hostinger.
 - **Etapa 2:** guardar `ANTHROPIC_API_KEY` en Supabase.
-- **Etapa 6:** cuenta del servicio de correo y registros DNS.
+- **Etapa 6, cuando se retome:** elegir un servicio de correo y sus registros DNS.

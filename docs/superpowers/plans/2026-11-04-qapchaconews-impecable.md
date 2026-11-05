@@ -307,6 +307,8 @@ Requiere aprobación explícita del dueño el mismo día.
 
 ## Fase 4: panel en `admin.qapchaconews.com`
 
+**Plan propio:** [2026-11-05-panel-admin.md](2026-11-05-panel-admin.md), que manda sobre lo que sigue en esta fase.
+
 **Sale cuando:** el panel nuevo cubre todo lo del actual, `/admin` desaparece del sitio público y el JavaScript público no contiene código del panel.
 
 Esta fase necesita su propia especificación y su propio plan: empieza con las skills de brainstorming e impeccable, porque el diseño visual y la experiencia de los editores merecen decidirse contigo. Estas son las decisiones de partida que propongo.
