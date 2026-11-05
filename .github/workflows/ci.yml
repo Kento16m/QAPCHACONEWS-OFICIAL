@@ -18,7 +18,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Tipos
-        run: npx tsc --noEmit
+        run: npx tsc --noEmit && npx tsc -p tsconfig.admin.json --noEmit
       - name: Estilo y errores
         run: npx eslint src e2e netlify scripts --max-warnings 11
       - name: Pruebas
@@ -29,5 +29,12 @@ jobs:
           # Public test values: the build only needs them to exist.
           VITE_SUPABASE_URL: https://example.supabase.co
           VITE_SUPABASE_ANON_KEY: public-anon-key
+      - name: Compilación del panel
+        run: npm run build:admin
+        env:
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_ANON_KEY: public-anon-key
+      - name: El sitio público no lleva código del panel
+        run: npm run check:split
       - name: Ninguna dependencia con avisos altos
         run: npm audit --omit=dev --audit-level=high

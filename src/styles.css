@@ -4,6 +4,7 @@
 @import "./assets/vendor/flags/flags.css";
 @import "./assets/vendor/weather-icons/css/weather-icons.css";
 @source "../src";
+@source not "./admin";
 
 @custom-variant dark (&:is(.dark *));
 

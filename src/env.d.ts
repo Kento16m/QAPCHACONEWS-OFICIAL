@@ -5,6 +5,7 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_ANON_KEY?: string;
   readonly VITE_ADMIN_HOST?: string;
   readonly VITE_ADMIN_SUBDOMAIN?: string;
+  readonly VITE_ADMIN_REQUIRE_MFA?: string;
   readonly VITE_APP_URL?: string;
 }
 

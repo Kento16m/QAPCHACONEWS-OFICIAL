@@ -3,9 +3,11 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     "vite.config.ts",
+    "vite.admin.config.ts",
     "vitest.config.ts",
     "eslint.config.js"
   ],
+  "exclude": ["src/admin"],
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",
