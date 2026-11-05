@@ -312,3 +312,49 @@ test("an address that is not an image is refused", async ({ page }) => {
   await page.getByRole("button", { name: "Usar esta imagen" }).click();
   await expect(page.getByRole("alert")).toContainText("https://");
 });
+
+test("choosing the homepage and breaking news", async ({ page }) => {
+  const title = `E2E portada ${STAMP}`;
+  const [note] = await api("/rest/v1/articles", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({
+      title,
+      slug: `e2e-portada-${STAMP}`,
+      content: "<p>x</p>",
+      status: "published",
+      published_at: new Date(Date.now() - 86_400_000 * 400).toISOString(),
+    }),
+  });
+  created.push(note.id);
+
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await page.goto("/portada");
+  const main = page.getByRole("article", { name: "Nota principal" });
+  await expect(main).toBeVisible();
+  await main.getByRole("button", { name: /Elegir|Cambiar/ }).click();
+  await page.getByRole("searchbox", { name: "Buscar nota" }).fill(title);
+  await page.getByRole("button", { name: title }).click();
+  await expect(main).toContainText(title);
+  await page.getByRole("button", { name: "Guardar portada" }).click();
+  await expect(page.getByText("Portada actualizada.")).toBeVisible();
+  const slots = await api("/rest/v1/homepage_slots?position=eq.1&select=article_id");
+  expect(slots[0].article_id).toBe(note.id);
+
+  await page.getByRole("button", { name: "Agregar" }).click();
+  await page.getByRole("searchbox", { name: "Buscar nota" }).fill(title);
+  await page.getByRole("button", { name: title }).click();
+  await expect(page.getByRole("listitem").filter({ hasText: title })).toBeVisible();
+  await expect
+    .poll(
+      async () =>
+        (await api(`/rest/v1/articles?id=eq.${note.id}&select=is_breaking`))[0].is_breaking,
+    )
+    .toBe(true);
+  const [stored] = await api(`/rest/v1/articles?id=eq.${note.id}&select=breaking_until`);
+  const hours = (new Date(stored.breaking_until).getTime() - Date.now()) / 3_600_000;
+  expect(Math.round(hours)).toBe(24);
+
+  await api("/rest/v1/homepage_slots?position=gte.1", { method: "DELETE" });
+});

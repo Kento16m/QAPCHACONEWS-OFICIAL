@@ -7,8 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   useArticlesByCategory,
   useCategories,
-  useFeaturedArticle,
-  useLatestArticles,
+  useHomepage,
   useMostRead,
   useSubscribe,
 } from "@/hooks/use-news";
@@ -25,7 +24,8 @@ import {
 } from "./primitives";
 
 export function MiniStrip() {
-  const { data, isLoading, isError } = useLatestArticles(4);
+  const { data: home, isLoading, isError } = useHomepage();
+  const data = home?.strip;
   if (isError) return <StateMessage error>No pudimos cargar las noticias.</StateMessage>;
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -37,7 +37,8 @@ export function MiniStrip() {
 }
 
 export function HeroArticle() {
-  const { data: a, isLoading, isError } = useFeaturedArticle();
+  const { data: home, isLoading, isError } = useHomepage();
+  const a = home?.hero;
   if (isLoading) return <CardSkeleton className="h-[460px] lg:h-[520px]" />;
   if (isError || !a) return <StateMessage error={isError}>No hay una nota destacada.</StateMessage>;
   return (
@@ -68,7 +69,8 @@ export function HeroArticle() {
 }
 
 export function LatestPanel() {
-  const { data, isLoading, isError } = useLatestArticles(5);
+  const { data: home, isLoading, isError } = useHomepage();
+  const data = home?.latest;
   return (
     <aside className="flex flex-col rounded-3xl bg-navy p-6 text-navy-foreground">
       <div className="mb-4 flex items-center justify-between">
@@ -113,8 +115,8 @@ export function LatestPanel() {
 }
 
 export function BentoGrid() {
-  const { data, isLoading, isError } = useLatestArticles(10);
-  const items = data?.slice(5, 10);
+  const { data: home, isLoading, isError } = useHomepage();
+  const items = home?.featured;
   if (isError) return <StateMessage error>No pudimos cargar esta sección.</StateMessage>;
   if (isLoading)
     return (

@@ -22,6 +22,7 @@ import { useArticleForm } from "@/hooks/use-article-form";
 import { RichEditor } from "../../editor/RichEditor";
 import {
   ArticleConflictError,
+  breakingUntilFor,
   fetchArticle,
   prePublishIssues,
   replaceTags,
@@ -75,7 +76,11 @@ export function NoteEditor({ article }: { article: AdminArticle | null }) {
       const next = { ...form, status, author_id: form.author_id ?? session?.user.id ?? null };
       let payload;
       try {
-        payload = buildArticlePayload(next, article, new Date());
+        const now = new Date();
+        payload = {
+          ...buildArticlePayload(next, article, now),
+          breaking_until: breakingUntilFor(next.is_breaking, article, now),
+        };
       } catch (error) {
         toast.error(error instanceof Error ? error.message : "Revisá los datos de la nota.");
         return;

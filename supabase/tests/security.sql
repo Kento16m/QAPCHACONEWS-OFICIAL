@@ -304,6 +304,24 @@ select pg_temp.check('editor describes an image', pg_temp.exec('authenticated', 
 select pg_temp.check('editor cannot change an image address', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$update public.media_assets set url = 'https://evil.test/x' where url = 'https://x.test/a.webp'$s$), 'err:42501');
 select pg_temp.check('editor removes an image', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$delete from public.media_assets where url = 'https://x.test/a.webp'$s$), 'ok:1');
 
+-- Panel: homepage
+select pg_temp.setup($s$insert into public.articles (id, title, slug, content, status, published_at) values ('a0000000-0000-0000-0000-00000000bbb1', 'Portada', 'portada-test', 'x', 'published', now() - interval '1 hour'), ('a0000000-0000-0000-0000-00000000bbb2', 'Portada 2', 'portada2-test', 'x', 'published', now() - interval '2 hours')$s$);
+select pg_temp.check('anon cannot choose the homepage', pg_temp.exec('anon', null, $s$select public.replace_homepage_slots('{a0000000-0000-0000-0000-00000000bbb1}')$s$), 'err:42501');
+select pg_temp.check('reader cannot choose the homepage', pg_temp.exec('authenticated', '00000000-0000-0000-0000-000000000001', $s$select public.replace_homepage_slots('{a0000000-0000-0000-0000-00000000bbb1}')$s$), 'err:42501');
+select pg_temp.check('editor chooses the homepage', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$select public.replace_homepage_slots(array['a0000000-0000-0000-0000-00000000bbb1'::uuid, null, 'a0000000-0000-0000-0000-00000000bbb2'::uuid])$s$), 'ok:1');
+select pg_temp.check('each note keeps its place', pg_temp.val($s$select string_agg(position::text, ',' order by position) from public.homepage_slots$s$), '1,3');
+select pg_temp.check('anyone can read the homepage', pg_temp.exec('anon', null, 'select 1 from public.homepage_slots'), 'ok:2');
+select pg_temp.check('nobody writes the homepage directly', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', 'delete from public.homepage_slots'), 'err:42501');
+select pg_temp.check('a draft cannot go on the homepage', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$select public.replace_homepage_slots('{a0000000-0000-0000-0000-000000000002}')$s$), 'err:QC400');
+select pg_temp.check('a refused change keeps the homepage', pg_temp.val('select count(*) from public.homepage_slots'), '2');
+select pg_temp.check('one note cannot take two places', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$select public.replace_homepage_slots('{a0000000-0000-0000-0000-00000000bbb1,a0000000-0000-0000-0000-00000000bbb1}')$s$), 'err:QC400');
+select pg_temp.check('the homepage has six places', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$select public.replace_homepage_slots(array[null,null,null,null,null,null,'a0000000-0000-0000-0000-00000000bbb1'::uuid])$s$), 'err:QC400');
+select pg_temp.setup($s$select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-00000000000e","role":"authenticated"}', true)$s$);
+select pg_temp.check('open places are counted', pg_temp.val($s$select (public.admin_dashboard_stats())->>'homepage_open_slots'$s$), '4');
+select pg_temp.setup($s$delete from public.articles where id = 'a0000000-0000-0000-0000-00000000bbb2'$s$);
+select pg_temp.check('deleting a note empties its place', pg_temp.val($s$select article_id is null from public.homepage_slots where position = 3$s$), 'true');
+select pg_temp.setup($s$delete from public.homepage_slots$s$);
+
 -- Structure
 select pg_temp.check('every public table has RLS', pg_temp.val($s$select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity$s$), '0');
 select pg_temp.check('anon has no whole-table write access', pg_temp.val($s$select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and has_table_privilege('anon', c.oid, 'INSERT, UPDATE, DELETE')$s$), '0');

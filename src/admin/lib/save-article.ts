@@ -30,7 +30,7 @@ export const fetchArticle = async (id: string): Promise<AdminArticle | null> => 
 /** Saves only over the version that was opened, so nobody overwrites someone else's work unseen. */
 export const saveArticle = async (
   id: string | null,
-  payload: ArticlePayload,
+  payload: ArticlePayload & { breaking_until?: string | null },
   expectedUpdatedAt: string | null,
 ): Promise<AdminArticle> => {
   const client = requireSupabaseClient();
@@ -51,6 +51,17 @@ export const saveArticle = async (
   if (error) throw failure(error);
   if (!data) throw new ArticleConflictError();
   return toArticle(data);
+};
+
+/** Breaking news ends by itself: a note gets 24 hours when it starts, and keeps its date after. */
+export const breakingUntilFor = (
+  isBreaking: boolean,
+  current: Pick<AdminArticle, "is_breaking" | "breaking_until"> | null,
+  now: Date,
+) => {
+  if (!isBreaking) return null;
+  if (current?.is_breaking) return current.breaking_until;
+  return new Date(now.getTime() + 24 * 3_600_000).toISOString();
 };
 
 export const replaceTags = async (articleId: string, tagIds: string[]) => {

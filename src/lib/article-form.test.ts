@@ -25,6 +25,7 @@ const article = (overrides: Partial<AdminArticle> = {}): AdminArticle => ({
   scheduled_at: null,
   is_featured: false,
   is_breaking: false,
+  breaking_until: null,
   views_count: 0,
   category_id: null,
   author_id: "u1",

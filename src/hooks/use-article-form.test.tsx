@@ -15,6 +15,7 @@ const article = (id: string, title = `Nota ${id}`, views = 0, updatedAt = "v1"):
   scheduled_at: null,
   is_featured: false,
   is_breaking: false,
+  breaking_until: null,
   views_count: views,
   category_id: null,
   author_id: "u1",

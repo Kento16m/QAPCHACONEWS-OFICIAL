@@ -399,6 +399,34 @@ test.describe("accounts", () => {
   });
 });
 
+test("the note chosen in the panel leads the homepage", async ({ page }) => {
+  const title = `E2E elegida ${STAMP}`;
+  const [note] = await api("/rest/v1/articles", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({
+      title,
+      slug: `e2e-elegida-${STAMP}`,
+      content: "<p>x</p>",
+      status: "published",
+      published_at: new Date(Date.now() - 86_400_000 * 400).toISOString(),
+    }),
+  });
+  await api("/rest/v1/homepage_slots?position=eq.1", { method: "DELETE" });
+  await api("/rest/v1/homepage_slots", {
+    method: "POST",
+    body: JSON.stringify({ position: 1, article_id: note.id }),
+  });
+  try {
+    await prepare(page);
+    await page.goto("/");
+    await expect(page.getByRole("heading", { name: title }).first()).toBeVisible();
+  } finally {
+    await api("/rest/v1/homepage_slots?position=eq.1", { method: "DELETE" });
+    await api(`/rest/v1/articles?id=eq.${note.id}`, { method: "DELETE" });
+  }
+});
+
 test.describe("comments", () => {
   test("a comment that fails moderation shows why, is not published and keeps the draft", async ({
     page,

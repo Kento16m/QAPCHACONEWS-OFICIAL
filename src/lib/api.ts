@@ -1,3 +1,4 @@
+import { composeHomepage, LATEST_NEEDED } from "./homepage";
 import type { PostgrestError } from "@supabase/supabase-js";
 import { requireSupabaseClient } from "@/lib/supabase";
 import type { Article, Category, Paginated, Tag } from "@/types";
@@ -144,11 +145,33 @@ export const getBreakingArticles = async (): Promise<Article[]> => {
     .select(makeArticleSelect(false))
     .eq("status", "published")
     .eq("is_breaking", true)
+    .or(`breaking_until.is.null,breaking_until.gt."${new Date().toISOString()}"`)
     .order("published_at", { ascending: false })
     .limit(10);
 
   handleSupabaseError(error);
   return (data ?? []).map(mapRow);
+};
+
+export const getHomepage = async () => {
+  // A failure here must not cost readers the homepage: without choices it fills by date.
+  const slots = await requireSupabaseClient()
+    .from("homepage_slots")
+    .select(`position, article:articles(${makeArticleSelect(false)})`);
+  if (slots.error) console.error("No se pudo leer la portada elegida:", slots.error.message);
+
+  const [featured, latest] = await Promise.all([
+    getFeaturedArticle(),
+    getLatestArticles(LATEST_NEEDED),
+  ]);
+
+  const chosen = ((slots.data ?? []) as unknown as { position: number; article: unknown }[]).map(
+    ({ position, article }) => ({
+      position,
+      article: article ? mapRow(article as Parameters<typeof mapRow>[0]) : null,
+    }),
+  );
+  return composeHomepage(chosen, featured, latest);
 };
 
 export const getMostReadArticles = async (limit = 5): Promise<Article[]> => {

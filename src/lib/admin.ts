@@ -18,6 +18,7 @@ export interface AdminArticle {
   scheduled_at: string | null;
   is_featured: boolean;
   is_breaking: boolean;
+  breaking_until: string | null;
   views_count: number;
   category_id: string | null;
   author_id: string | null;
@@ -104,6 +105,7 @@ export const selectArticleQuery = `
   scheduled_at,
   is_featured,
   is_breaking,
+  breaking_until,
   views_count,
   category_id,
   author_id,
@@ -132,6 +134,7 @@ export const mapArticleRow = (row: ArticleRow): AdminArticle => ({
   scheduled_at: row.scheduled_at ?? null,
   is_featured: Boolean(row.is_featured),
   is_breaking: Boolean(row.is_breaking),
+  breaking_until: row.breaking_until ?? null,
   views_count: Number(row.views_count ?? 0),
   category_id: row.category_id ?? null,
   author_id: row.author_id ?? null,

@@ -13,8 +13,7 @@ export function useDebouncedValue<T>(value: T, delay = 400) {
   return debouncedValue;
 }
 
-export const useFeaturedArticle = () =>
-  useQuery({ queryKey: ["featured"], queryFn: api.getFeaturedArticle });
+export const useHomepage = () => useQuery({ queryKey: ["homepage"], queryFn: api.getHomepage });
 export const useLatestArticles = (limit = 6) =>
   useQuery({ queryKey: ["latest", limit], queryFn: () => api.getLatestArticles(limit) });
 export const useBreakingArticles = () =>

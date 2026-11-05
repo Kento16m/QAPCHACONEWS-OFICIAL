@@ -222,6 +222,7 @@ export type Database = {
       articles: {
         Row: {
           author_id: string | null
+          breaking_until: string | null
           category_id: string | null
           content: string
           cover_image_url: string | null
@@ -244,6 +245,7 @@ export type Database = {
         }
         Insert: {
           author_id?: string | null
+          breaking_until?: string | null
           category_id?: string | null
           content: string
           cover_image_url?: string | null
@@ -266,6 +268,7 @@ export type Database = {
         }
         Update: {
           author_id?: string | null
+          breaking_until?: string | null
           category_id?: string | null
           content?: string
           cover_image_url?: string | null
@@ -407,6 +410,32 @@ export type Database = {
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      homepage_slots: {
+        Row: {
+          article_id: string | null
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          article_id?: string | null
+          position: number
+          updated_at?: string
+        }
+        Update: {
+          article_id?: string | null
+          position?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "homepage_slots_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
             referencedColumns: ["id"]
           },
         ]
@@ -627,6 +656,10 @@ export type Database = {
       incrementar_vista: { Args: { p_articulo_id: string }; Returns: undefined }
       replace_article_tags: {
         Args: { p_article_id: string; p_tag_ids: string[] }
+        Returns: undefined
+      }
+      replace_homepage_slots: {
+        Args: { p_article_ids: string[] }
         Returns: undefined
       }
       service_post_comment: {

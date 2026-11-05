@@ -75,6 +75,15 @@ describe("buildSearchFilter", () => {
   });
 });
 
+describe("getBreakingArticles", () => {
+  it("leaves out breaking news that already expired", async () => {
+    await getBreakingArticles();
+    const [{ args }] = calledWith("or") as unknown as [{ args: string[] }];
+    expect(args[0]).toContain("breaking_until.is.null");
+    expect(args[0]).toContain("breaking_until.gt.");
+  });
+});
+
 describe("getFeaturedArticle", () => {
   it("returns the featured article when there is one", async () => {
     fake.rows = { articles: [[{ id: "f1", title: "Destacada" }]] };
