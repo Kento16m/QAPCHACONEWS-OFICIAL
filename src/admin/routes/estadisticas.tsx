@@ -26,7 +26,7 @@ function Ranking({
   const top = Math.max(1, ...(data?.map((row) => row.reads) ?? []));
 
   return (
-    <section className="rounded-2xl border bg-card p-5">
+    <section className="min-w-0 rounded-2xl border bg-card p-5">
       <h2 className="mb-3 text-lg font-semibold">{title}</h2>
       {isError ? (
         <LoadError what="esta lista" onRetry={() => void refetch()} />
@@ -96,7 +96,7 @@ function StatsPage() {
         )}
       </header>
       <ReadsCard />
-      <div className="mt-4 grid items-start gap-4 lg:grid-cols-3">
+      <div className="mt-4 grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
         <Ranking title="Notas más leídas" dimension="article" range={range} />
         <Ranking title="Por sección" dimension="category" range={range} />
         <Ranking title="Por autor" dimension="author" range={range} />
