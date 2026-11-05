@@ -9,6 +9,8 @@ const root = path.resolve(__dirname, "src/admin");
 export default defineConfig({
   root,
   envDir: __dirname,
+  // Sharing the site's dependency cache makes each dev server break the other.
+  cacheDir: path.resolve(__dirname, "node_modules/.vite-admin"),
   plugins: [
     TanStackRouterVite({
       target: "react",
