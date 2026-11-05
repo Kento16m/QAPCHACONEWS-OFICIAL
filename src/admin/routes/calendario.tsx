@@ -158,7 +158,7 @@ function CalendarPage() {
     <>
       <header className="mb-5 flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-semibold">Calendario</h1>
-        <p className="capitalize text-muted-foreground">
+        <p className="text-muted-foreground first-letter:uppercase">
           {monthName.format(new Date(Date.UTC(year, month - 1, 1)))}
         </p>
         <div className="ml-auto flex gap-2">

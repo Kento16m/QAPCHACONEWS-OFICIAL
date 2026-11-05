@@ -10,10 +10,15 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ActividadRouteImport } from './routes/actividad'
 import { Route as CalendarioRouteImport } from './routes/calendario'
+import { Route as CategoriasRouteImport } from './routes/categorias'
+import { Route as ComentariosRouteImport } from './routes/comentarios'
 import { Route as ImagenesRouteImport } from './routes/imagenes'
+import { Route as NewsletterRouteImport } from './routes/newsletter'
 import { Route as PortadaRouteImport } from './routes/portada'
 import { Route as SeguridadRouteImport } from './routes/seguridad'
+import { Route as UsuariosRouteImport } from './routes/usuarios'
 import { Route as ArticulosIndexRouteImport } from './routes/articulos.index'
 import { Route as ArticulosIdRouteImport } from './routes/articulos.$id'
 
@@ -22,14 +27,34 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ActividadRoute = ActividadRouteImport.update({
+  id: '/actividad',
+  path: '/actividad',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CalendarioRoute = CalendarioRouteImport.update({
   id: '/calendario',
   path: '/calendario',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CategoriasRoute = CategoriasRouteImport.update({
+  id: '/categorias',
+  path: '/categorias',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComentariosRoute = ComentariosRouteImport.update({
+  id: '/comentarios',
+  path: '/comentarios',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ImagenesRoute = ImagenesRouteImport.update({
   id: '/imagenes',
   path: '/imagenes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewsletterRoute = NewsletterRouteImport.update({
+  id: '/newsletter',
+  path: '/newsletter',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PortadaRoute = PortadaRouteImport.update({
@@ -40,6 +65,11 @@ const PortadaRoute = PortadaRouteImport.update({
 const SeguridadRoute = SeguridadRouteImport.update({
   id: '/seguridad',
   path: '/seguridad',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UsuariosRoute = UsuariosRouteImport.update({
+  id: '/usuarios',
+  path: '/usuarios',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ArticulosIndexRoute = ArticulosIndexRouteImport.update({
@@ -55,29 +85,44 @@ const ArticulosIdRoute = ArticulosIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/actividad': typeof ActividadRoute
   '/calendario': typeof CalendarioRoute
+  '/categorias': typeof CategoriasRoute
+  '/comentarios': typeof ComentariosRoute
   '/imagenes': typeof ImagenesRoute
+  '/newsletter': typeof NewsletterRoute
   '/portada': typeof PortadaRoute
   '/seguridad': typeof SeguridadRoute
+  '/usuarios': typeof UsuariosRoute
   '/articulos/$id': typeof ArticulosIdRoute
   '/articulos/': typeof ArticulosIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/actividad': typeof ActividadRoute
   '/calendario': typeof CalendarioRoute
+  '/categorias': typeof CategoriasRoute
+  '/comentarios': typeof ComentariosRoute
   '/imagenes': typeof ImagenesRoute
+  '/newsletter': typeof NewsletterRoute
   '/portada': typeof PortadaRoute
   '/seguridad': typeof SeguridadRoute
+  '/usuarios': typeof UsuariosRoute
   '/articulos/$id': typeof ArticulosIdRoute
   '/articulos': typeof ArticulosIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/actividad': typeof ActividadRoute
   '/calendario': typeof CalendarioRoute
+  '/categorias': typeof CategoriasRoute
+  '/comentarios': typeof ComentariosRoute
   '/imagenes': typeof ImagenesRoute
+  '/newsletter': typeof NewsletterRoute
   '/portada': typeof PortadaRoute
   '/seguridad': typeof SeguridadRoute
+  '/usuarios': typeof UsuariosRoute
   '/articulos/$id': typeof ArticulosIdRoute
   '/articulos/': typeof ArticulosIndexRoute
 }
@@ -85,38 +130,58 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/actividad'
     | '/calendario'
+    | '/categorias'
+    | '/comentarios'
     | '/imagenes'
+    | '/newsletter'
     | '/portada'
     | '/seguridad'
+    | '/usuarios'
     | '/articulos/$id'
     | '/articulos/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/actividad'
     | '/calendario'
+    | '/categorias'
+    | '/comentarios'
     | '/imagenes'
+    | '/newsletter'
     | '/portada'
     | '/seguridad'
+    | '/usuarios'
     | '/articulos/$id'
     | '/articulos'
   id:
     | '__root__'
     | '/'
+    | '/actividad'
     | '/calendario'
+    | '/categorias'
+    | '/comentarios'
     | '/imagenes'
+    | '/newsletter'
     | '/portada'
     | '/seguridad'
+    | '/usuarios'
     | '/articulos/$id'
     | '/articulos/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ActividadRoute: typeof ActividadRoute
   CalendarioRoute: typeof CalendarioRoute
+  CategoriasRoute: typeof CategoriasRoute
+  ComentariosRoute: typeof ComentariosRoute
   ImagenesRoute: typeof ImagenesRoute
+  NewsletterRoute: typeof NewsletterRoute
   PortadaRoute: typeof PortadaRoute
   SeguridadRoute: typeof SeguridadRoute
+  UsuariosRoute: typeof UsuariosRoute
   ArticulosIdRoute: typeof ArticulosIdRoute
   ArticulosIndexRoute: typeof ArticulosIndexRoute
 }
@@ -130,6 +195,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/actividad': {
+      id: '/actividad'
+      path: '/actividad'
+      fullPath: '/actividad'
+      preLoaderRoute: typeof ActividadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/calendario': {
       id: '/calendario'
       path: '/calendario'
@@ -137,11 +209,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CalendarioRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/categorias': {
+      id: '/categorias'
+      path: '/categorias'
+      fullPath: '/categorias'
+      preLoaderRoute: typeof CategoriasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/comentarios': {
+      id: '/comentarios'
+      path: '/comentarios'
+      fullPath: '/comentarios'
+      preLoaderRoute: typeof ComentariosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/imagenes': {
       id: '/imagenes'
       path: '/imagenes'
       fullPath: '/imagenes'
       preLoaderRoute: typeof ImagenesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/newsletter': {
+      id: '/newsletter'
+      path: '/newsletter'
+      fullPath: '/newsletter'
+      preLoaderRoute: typeof NewsletterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/portada': {
@@ -156,6 +249,13 @@ declare module '@tanstack/react-router' {
       path: '/seguridad'
       fullPath: '/seguridad'
       preLoaderRoute: typeof SeguridadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/usuarios': {
+      id: '/usuarios'
+      path: '/usuarios'
+      fullPath: '/usuarios'
+      preLoaderRoute: typeof UsuariosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/articulos/': {
@@ -177,10 +277,15 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ActividadRoute: ActividadRoute,
   CalendarioRoute: CalendarioRoute,
+  CategoriasRoute: CategoriasRoute,
+  ComentariosRoute: ComentariosRoute,
   ImagenesRoute: ImagenesRoute,
+  NewsletterRoute: NewsletterRoute,
   PortadaRoute: PortadaRoute,
   SeguridadRoute: SeguridadRoute,
+  UsuariosRoute: UsuariosRoute,
   ArticulosIdRoute: ArticulosIdRoute,
   ArticulosIndexRoute: ArticulosIndexRoute,
 }

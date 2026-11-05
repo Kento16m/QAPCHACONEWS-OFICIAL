@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { api, makeUser, removeUsers, signIn, STAMP } from "./helpers";
+import { api, emailFor, makeUser, removeUsers, signIn, STAMP } from "./helpers";
 
 const created: string[] = [];
 
@@ -558,4 +558,142 @@ test("a scheduled note appears in the calendar and can change date", async ({ pa
 
   const [stored] = await api(`/rest/v1/articles?id=eq.${note.id}&select=scheduled_at`);
   expect(new Date(stored.scheduled_at).toISOString()).toBe(later.toISOString());
+});
+
+test("a new comment appears by itself; an administrator removes it and blocks the author", async ({
+  page,
+}) => {
+  const articleId = await makeNote(`E2E comentarios ${STAMP}`);
+  await api(`/rest/v1/articles?id=eq.${articleId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status: "published", published_at: new Date().toISOString() }),
+  });
+  const author = await makeUser("autor");
+  await signIn(page, "admin");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await page.goto("/comentarios");
+  await expect(page.getByRole("heading", { name: "Comentarios" })).toBeVisible();
+  await page.waitForTimeout(1500);
+
+  const body = `Comentario E2E ${STAMP}`;
+  await api("/rest/v1/comments", {
+    method: "POST",
+    body: JSON.stringify({ article_id: articleId, user_id: author, body }),
+  });
+  const row = page.getByRole("listitem").filter({ hasText: body });
+  await expect(row).toBeVisible({ timeout: 20_000 });
+
+  await row.getByRole("button", { name: "Bloquear al autor" }).click();
+  await page.getByLabel("Motivo").fill("Motivo E2E");
+  await page.getByRole("alertdialog").getByRole("button", { name: "Bloquear" }).click();
+  await expect(page.getByText("Cuenta bloqueada.")).toBeVisible();
+  const [profile] = await api(`/rest/v1/profiles?id=eq.${author}&select=is_blocked,blocked_reason`);
+  expect(profile).toEqual({ is_blocked: true, blocked_reason: "Motivo E2E" });
+
+  await row.getByRole("button", { name: "Borrar" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Borrar" }).click();
+  await expect(page.getByText("Comentario borrado.")).toBeVisible();
+  await expect(row).toHaveCount(0);
+});
+
+test("an editor reads comments but gets no way to remove them", async ({ page }) => {
+  const articleId = await makeNote(`E2E solo leer ${STAMP}`);
+  const author = await makeUser("autor2");
+  const body = `Solo leer ${STAMP}`;
+  await api("/rest/v1/comments", {
+    method: "POST",
+    body: JSON.stringify({ article_id: articleId, user_id: author, body }),
+  });
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await page.goto("/comentarios");
+  await expect(page.getByText(body, { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Borrar" })).toHaveCount(0);
+});
+
+test("an administrator manages roles, blocks, categories and subscribers", async ({ page }) => {
+  await makeUser("gestion");
+  await signIn(page, "admin");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+
+  await page.goto("/usuarios");
+  await page.getByRole("searchbox", { name: "Buscar usuarios" }).fill(emailFor("gestion"));
+  const person = page.getByRole("row").filter({ hasText: emailFor("gestion") });
+  await expect(person).toBeVisible();
+  await person.getByRole("combobox").selectOption("editor");
+  await expect(page.getByText("Rol cambiado.")).toBeVisible();
+
+  await page.goto("/categorias");
+  const name = `Sección E2E ${STAMP}`;
+  await page.getByRole("button", { name: "Nueva categoría" }).click();
+  await page.getByLabel("Nombre").fill(name);
+  await page.getByRole("button", { name: "Guardar" }).click();
+  await expect(page.getByRole("button", { name: `Editar ${name}` })).toBeVisible();
+  await page.getByRole("button", { name: `Borrar ${name}` }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Borrar" }).click();
+  await expect(page.getByRole("button", { name: `Editar ${name}` })).toHaveCount(0);
+
+  const email = `e2e-news-${STAMP}@test.invalid`;
+  await api("/rest/v1/newsletter_subscribers", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+  await page.goto("/newsletter");
+  await expect(page.getByText(email)).toBeVisible();
+  const download = page.waitForEvent("download");
+  await page.getByRole("button", { name: "Exportar CSV" }).click();
+  expect((await download).suggestedFilename()).toBe("suscriptores-qap.csv");
+  await page.getByRole("button", { name: `Quitar ${email}` }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Quitar" }).click();
+  await expect(page.getByText(email)).toHaveCount(0);
+});
+
+test("a deleted note can be restored from the activity log", async ({ page }) => {
+  const title = `E2E restaurar ${STAMP}`;
+  const id = await makeNote(title, "<p>Texto que vuelve.</p>");
+  await signIn(page, "admin");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await page.goto(`/articulos?q=${encodeURIComponent(title)}`);
+  await page.getByRole("checkbox", { name: `Elegir ${title}` }).check();
+  await page.getByRole("button", { name: "Borrar" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Borrar" }).click();
+  await expect(page.getByText("Notas borradas.")).toBeVisible();
+
+  await page.goto("/actividad");
+  const row = page.getByRole("listitem").filter({ hasText: `borró la nota ${title}` });
+  await row.getByRole("button", { name: "Restaurar" }).click();
+  await expect(page.getByText("Nota restaurada como borrador.")).toBeVisible();
+  const [note] = await api(`/rest/v1/articles?id=eq.${id}&select=status,content`);
+  expect(note.status).toBe("draft");
+  expect(note.content).toContain("Texto que vuelve.");
+
+  await page.getByRole("tab", { name: "Control de acceso" }).click();
+  await page.getByRole("searchbox", { name: "Buscar accesos" }).fill(emailFor("admin"));
+  await expect(
+    page
+      .getByRole("row")
+      .filter({ hasText: emailFor("admin") })
+      .first(),
+  ).toBeVisible();
+});
+
+test("Ctrl K finds a note and goes to it with the keyboard", async ({ page }) => {
+  const title = `E2E paleta ${STAMP}`;
+  const id = await makeNote(title);
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await page.keyboard.press("Control+k");
+  await page.getByRole("combobox", { name: "Buscar notas, usuarios o acciones" }).fill(title);
+  await expect(page.getByRole("option", { name: title })).toBeVisible();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(new RegExp(`/articulos/${id}$`));
+});
+
+test("an editor cannot open administrator screens by address", async ({ page }) => {
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  for (const path of ["/usuarios", "/newsletter", "/actividad", "/categorias"]) {
+    await page.goto(path);
+    await expect(page.getByText("Esta pantalla es solo para administradores.")).toBeVisible();
+  }
 });

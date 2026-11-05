@@ -334,6 +334,49 @@ select pg_temp.check('anon cannot list authors', pg_temp.exec('anon', null, 'sel
 select pg_temp.check('reader cannot list authors', pg_temp.exec('authenticated', '00000000-0000-0000-0000-000000000001', 'select * from public.list_team_authors()'), 'err:42501');
 select pg_temp.check('editor sees an administrator among the authors', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$select 1 from public.list_team_authors() where id = '00000000-0000-0000-0000-00000000000a'$s$), 'ok:1');
 
+-- Panel: users with email
+select pg_temp.check('anon cannot list users', pg_temp.exec('anon', null, 'select * from public.admin_list_users()'), 'err:42501');
+select pg_temp.check('reader cannot list users', pg_temp.exec('authenticated', '00000000-0000-0000-0000-000000000001', 'select * from public.admin_list_users()'), 'err:42501');
+select pg_temp.check('editor cannot list users', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', 'select * from public.admin_list_users()'), 'err:42501');
+select pg_temp.check('admin finds a user by email', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', $s$select * from public.admin_list_users(1, 'editor@test.invalid')$s$), 'ok:1');
+select pg_temp.check('a percent sign is not a wildcard', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', $s$select * from public.admin_list_users(1, '%%%')$s$), 'ok:0');
+
+-- Panel: activity log
+select pg_temp.check('editor creates a note', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$insert into public.articles (title, slug, content, status) values ('Actividad', 'actividad-test', 'x', 'draft')$s$), 'ok:1');
+select pg_temp.check('creating is logged with its author', pg_temp.val($s$select action || ':' || coalesce(actor_id::text, 'sistema') from public.activity_log where entity = 'article' and summary = 'Actividad' order by id desc limit 1$s$), 'created:00000000-0000-0000-0000-00000000000e');
+select pg_temp.check('editor publishes', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$update public.articles set status = 'published', published_at = now() where slug = 'actividad-test'$s$), 'ok:1');
+select pg_temp.check('publishing is logged', pg_temp.val($s$select action || ':' || coalesce(actor_id::text, 'sistema') from public.activity_log where entity = 'article' and summary = 'Actividad' order by id desc limit 1$s$), 'published:00000000-0000-0000-0000-00000000000e');
+select pg_temp.check('editor edits', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$update public.articles set content = 'y' where slug = 'actividad-test'$s$), 'ok:1');
+select pg_temp.check('editing is logged', pg_temp.val($s$select action || ':' || coalesce(actor_id::text, 'sistema') from public.activity_log where entity = 'article' and summary = 'Actividad' order by id desc limit 1$s$), 'edited:00000000-0000-0000-0000-00000000000e');
+select pg_temp.setup($s$update public.articles set views_count = views_count + 1 where slug = 'actividad-test'$s$);
+select pg_temp.check('a read is not activity', pg_temp.val($s$select count(*) from public.activity_log where entity = 'article' and summary = 'Actividad'$s$), '3');
+select pg_temp.check('editor unpublishes', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$update public.articles set status = 'draft' where slug = 'actividad-test'$s$), 'ok:1');
+select pg_temp.check('unpublishing is logged', pg_temp.val($s$select action || ':' || coalesce(actor_id::text, 'sistema') from public.activity_log where entity = 'article' and summary = 'Actividad' order by id desc limit 1$s$), 'unpublished:00000000-0000-0000-0000-00000000000e');
+select pg_temp.setup($s$insert into public.comments (id, article_id, user_id, body) values (9901, (select id from public.articles where slug = 'actividad-test'), '00000000-0000-0000-0000-000000000002', 'A moderar')$s$);
+select pg_temp.check('admin removes a comment', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', 'delete from public.comments where id = 9901'), 'ok:1');
+select pg_temp.check('moderating is logged', pg_temp.val($s$select action || ':' || coalesce(actor_id::text, 'sistema') from public.activity_log where entity = 'comment' and entity_id = '9901' order by id desc limit 1$s$), 'deleted:00000000-0000-0000-0000-00000000000a');
+select pg_temp.setup($s$insert into public.comments (id, article_id, user_id, body) values (9902, (select id from public.articles where slug = 'actividad-test'), '00000000-0000-0000-0000-000000000002', 'Mío')$s$);
+select pg_temp.check('a person removes their own comment', pg_temp.exec('authenticated', '00000000-0000-0000-0000-000000000002', 'delete from public.comments where id = 9902'), 'ok:1');
+select pg_temp.check('removing your own comment is not moderation', pg_temp.val($s$select count(*) from public.activity_log where entity = 'comment' and entity_id = '9902'$s$), '0');
+select pg_temp.check('admin changes a role', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', $s$select public.admin_set_user_role('00000000-0000-0000-0000-000000000002', 'editor')$s$), 'ok:1');
+select pg_temp.check('a role change is logged', pg_temp.val($s$select action || ':' || coalesce(actor_id::text, 'sistema') from public.activity_log where entity = 'user' and entity_id = '00000000-0000-0000-0000-000000000002' order by id desc limit 1$s$), 'role_changed:00000000-0000-0000-0000-00000000000a');
+select pg_temp.check('admin blocks someone', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', $s$select public.admin_set_user_block('00000000-0000-0000-0000-000000000002', true, 'Motivo')$s$), 'ok:1');
+select pg_temp.check('a block is logged', pg_temp.val($s$select action || ':' || coalesce(actor_id::text, 'sistema') from public.activity_log where entity = 'user' and entity_id = '00000000-0000-0000-0000-000000000002' order by id desc limit 1$s$), 'blocked:00000000-0000-0000-0000-00000000000a');
+select pg_temp.setup($s$select public.admin_set_user_block('00000000-0000-0000-0000-000000000002', false, '')$s$);
+select pg_temp.check('admin creates a category', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', $s$insert into public.categories (id, name, slug) values ('c0000000-0000-0000-0000-00000000ddd2', 'Nueva', 'nueva-test')$s$), 'ok:1');
+select pg_temp.check('a new category is logged', pg_temp.val($s$select action || ':' || coalesce(actor_id::text, 'sistema') from public.activity_log where entity = 'category' and entity_id = 'c0000000-0000-0000-0000-00000000ddd2' order by id desc limit 1$s$), 'created:00000000-0000-0000-0000-00000000000a');
+select pg_temp.setup($s$insert into public.articles (id, title, slug, content, status, published_at) values ('a0000000-0000-0000-0000-00000000ddd3', 'Para portada', 'para-portada-test', 'x', 'published', now() - interval '1 hour')$s$);
+select pg_temp.setup($s$delete from public.activity_log where entity = 'homepage'$s$);
+select pg_temp.check('editor saves the homepage', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$select public.replace_homepage_slots('{a0000000-0000-0000-0000-00000000ddd3}')$s$), 'ok:1');
+select pg_temp.check('the homepage change is logged once', pg_temp.val($s$select count(*) from public.activity_log where entity = 'homepage' and actor_id = '00000000-0000-0000-0000-00000000000e'$s$), '1');
+select pg_temp.check('admin deletes a note', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', $s$delete from public.articles where slug = 'actividad-test'$s$), 'ok:1');
+select pg_temp.check('deleting is logged', pg_temp.val($s$select action || ':' || coalesce(actor_id::text, 'sistema') from public.activity_log where entity = 'article' and entity = 'article' and summary = 'Actividad' order by id desc limit 1$s$), 'deleted:00000000-0000-0000-0000-00000000000a');
+select pg_temp.check('admin reads the activity', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', $s$select 1 from public.activity_log where entity = 'article' and summary = 'Actividad' limit 1$s$), 'ok:1');
+select pg_temp.check('editor does not read the activity', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', 'select 1 from public.activity_log'), 'ok:0');
+select pg_temp.check('anon does not read the activity', pg_temp.exec('anon', null, 'select 1 from public.activity_log'), 'err:42501');
+select pg_temp.check('nobody forges activity', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', $s$insert into public.activity_log (action, entity, summary) values ('x', 'x', 'x')$s$), 'err:42501');
+select pg_temp.check('nobody erases activity', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', 'delete from public.activity_log'), 'err:42501');
+
 -- Structure
 select pg_temp.check('every public table has RLS', pg_temp.val($s$select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity$s$), '0');
 select pg_temp.check('anon has no whole-table write access', pg_temp.val($s$select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and has_table_privilege('anon', c.oid, 'INSERT, UPDATE, DELETE')$s$), '0');

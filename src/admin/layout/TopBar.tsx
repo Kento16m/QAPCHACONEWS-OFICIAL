@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { CommandPalette } from "../features/palette/CommandPalette";
 import { useDashboard } from "../features/today/api";
 import { attentionItems } from "../lib/attention";
 import { isReady } from "../lib/nav";
@@ -135,6 +136,7 @@ export function TopBar({
   onToggleSidebar: () => void;
   onOpenMobile: () => void;
 }) {
+  const { profile } = useSession();
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b bg-card px-4 lg:px-6">
       <Button
@@ -155,6 +157,7 @@ export function TopBar({
       >
         <PanelLeft className="size-5" />
       </Button>
+      <CommandPalette role={profile?.role === "admin" ? "admin" : "editor"} />
       <div className="ml-auto flex items-center gap-2 sm:gap-3">
         <Button asChild size="lg" className="rounded-lg px-3 sm:px-4">
           <Link to="/articulos/$id" params={{ id: "nueva" }}>

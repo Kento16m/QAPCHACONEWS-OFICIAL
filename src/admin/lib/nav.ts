@@ -64,7 +64,18 @@ const GROUPS: NavGroup[] = [
 ];
 
 // Screens already built. Each stage adds its own, and the menu shows the rest as coming soon.
-const READY = new Set(["/", "/articulos", "/portada", "/calendario", "/imagenes"]);
+const READY = new Set([
+  "/",
+  "/articulos",
+  "/portada",
+  "/calendario",
+  "/imagenes",
+  "/comentarios",
+  "/newsletter",
+  "/usuarios",
+  "/actividad",
+  "/categorias",
+]);
 
 export const isReady = (to: string) => READY.has(to);
 

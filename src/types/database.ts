@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          entity: string
+          entity_id: string | null
+          id: number
+          summary: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          entity: string
+          entity_id?: string | null
+          id?: never
+          summary: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          entity?: string
+          entity_id?: string | null
+          id?: never
+          summary?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_log_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activity_log_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       admin_access_logs: {
         Row: {
           accessed_at: string
@@ -597,6 +642,21 @@ export type Database = {
     }
     Functions: {
       admin_dashboard_stats: { Args: never; Returns: Json }
+      admin_list_users: {
+        Args: { p_page?: number; p_q?: string }
+        Returns: {
+          avatar_url: string
+          blocked_reason: string
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_blocked: boolean
+          is_protected: boolean
+          role: Database["public"]["Enums"]["user_role"]
+          total: number
+        }[]
+      }
       admin_restore_article: {
         Args: { p_revision_id: number }
         Returns: string
