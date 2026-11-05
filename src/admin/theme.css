@@ -1,6 +1,8 @@
 @import "tailwindcss" source(none);
 @import "tw-animate-css";
 @import "@fontsource-variable/outfit";
+@import "../assets/vendor/fonts/fonts.css";
+@import "../article-content.css";
 @source "./";
 @source "../components/ui";
 
@@ -8,6 +10,7 @@
 
 @theme inline {
   --font-sans: "Outfit Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Playfair Display", Georgia, serif;
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
@@ -129,6 +132,97 @@
     ::after {
       transition-duration: 0.01ms !important;
       animation-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* Inside this box a note looks as it does on the public site, whatever the panel's theme. */
+  .site-preview {
+    --primary: oklch(0.56 0.215 27);
+    --foreground: #1d2939;
+    --muted-foreground: #5d6679;
+    --border: #e4e7ec;
+    background: #ffffff;
+    color: #1d2939;
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  .note-editor {
+    min-height: 26rem;
+    padding: 1.25rem;
+    outline: none;
+    font-size: 1.0625rem;
+    line-height: 1.7;
+
+    & > * + * {
+      margin-top: 1em;
+    }
+    & h1,
+    & h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      line-height: 1.25;
+    }
+    & h3 {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+    & h4,
+    & h5,
+    & h6 {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    & ul {
+      list-style: disc;
+      padding-left: 1.5em;
+    }
+    & ol {
+      list-style: decimal;
+      padding-left: 1.5em;
+    }
+    & blockquote {
+      border-inline-start: 3px solid var(--input);
+      padding-inline-start: 1em;
+      color: var(--muted-foreground);
+    }
+    & a {
+      color: var(--link);
+      text-decoration: underline;
+    }
+    & img,
+    & video,
+    & iframe {
+      max-width: 100%;
+      border-radius: 0.75rem;
+    }
+    & iframe {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      height: auto;
+      /* A click must select the video in the text, not start playing it. */
+      pointer-events: none;
+    }
+    & table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    & td,
+    & th {
+      border: 1px solid var(--border);
+      padding: 0.4em 0.6em;
+    }
+    & .ProseMirror-selectednode {
+      outline: 2px solid var(--ring);
+      outline-offset: 2px;
+    }
+    & p.is-editor-empty:first-child::before {
+      content: attr(data-placeholder);
+      float: left;
+      height: 0;
+      color: var(--muted-foreground);
+      pointer-events: none;
     }
   }
 }

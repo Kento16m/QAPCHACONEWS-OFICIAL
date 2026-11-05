@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Bell, LogOut, Menu, Moon, PanelLeft, ShieldCheck, Sun } from "lucide-react";
+import { Bell, LogOut, Menu, Moon, PanelLeft, Plus, ShieldCheck, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -72,7 +72,7 @@ function Notifications() {
           items.map((item) =>
             isReady(item.to) ? (
               <DropdownMenuItem key={item.id} asChild>
-                <Link to={item.to}>
+                <Link to={item.to as "/"}>
                   {item.count} · {item.title}
                 </Link>
               </DropdownMenuItem>
@@ -156,6 +156,12 @@ export function TopBar({
         <PanelLeft className="size-5" />
       </Button>
       <div className="ml-auto flex items-center gap-2 sm:gap-3">
+        <Button asChild size="lg" className="rounded-lg px-3 sm:px-4">
+          <Link to="/articulos/$id" params={{ id: "nueva" }}>
+            <Plus className="size-4" aria-hidden />
+            <span className="sr-only sm:not-sr-only">Nueva nota</span>
+          </Link>
+        </Button>
         <ThemeButton />
         <Notifications />
         <UserMenu />

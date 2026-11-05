@@ -455,6 +455,10 @@ export type Database = {
         }
       }
       incrementar_vista: { Args: { p_articulo_id: string }; Returns: undefined }
+      replace_article_tags: {
+        Args: { p_article_id: string; p_tag_ids: string[] }
+        Returns: undefined
+      }
       service_post_comment: {
         Args: {
           p_article_id: string

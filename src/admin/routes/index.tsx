@@ -59,7 +59,7 @@ function AttentionRow({ item }: { item: AttentionItem }) {
         <p className="text-[0.8125rem] text-muted-foreground">{item.detail}</p>
       </div>
       {isReady(item.to) && (
-        <Link to={item.to} className="ml-auto font-semibold text-link hover:underline">
+        <Link to={item.to as "/"} className="ml-auto font-semibold text-link hover:underline">
           {item.action}
         </Link>
       )}

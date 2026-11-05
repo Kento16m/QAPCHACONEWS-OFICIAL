@@ -92,7 +92,7 @@ export interface AdminArticleComment {
   author_avatar: string | null;
 }
 
-const selectArticleQuery = `
+export const selectArticleQuery = `
   id,
   title,
   slug,
@@ -114,13 +114,13 @@ const selectArticleQuery = `
   author:public_profiles(id,full_name,avatar_url)
 `;
 
-type ArticleRow = Omit<AdminArticle, "category" | "author" | "views_count"> & {
+export type ArticleRow = Omit<AdminArticle, "category" | "author" | "views_count"> & {
   views_count: number | null;
   category: { id: string; name: string; slug: string } | null;
   author: { id: string | null; full_name: string | null } | null;
 };
 
-const mapArticleRow = (row: ArticleRow): AdminArticle => ({
+export const mapArticleRow = (row: ArticleRow): AdminArticle => ({
   id: row.id,
   title: row.title,
   slug: row.slug,

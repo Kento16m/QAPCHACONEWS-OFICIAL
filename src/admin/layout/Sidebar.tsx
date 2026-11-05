@@ -46,7 +46,7 @@ function Item({
 
   return (
     <Link
-      to={item.to}
+      to={item.to as "/"}
       onClick={onNavigate}
       title={collapsed ? item.label : undefined}
       activeOptions={{ exact: item.to === "/" }}

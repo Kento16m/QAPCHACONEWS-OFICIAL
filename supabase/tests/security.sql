@@ -239,6 +239,17 @@ select pg_temp.check('reader cannot read dashboard stats', pg_temp.exec('authent
 select pg_temp.check('editor reads dashboard stats', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', 'select public.admin_dashboard_stats()'), 'ok:1');
 select pg_temp.check('blocked editor cannot read dashboard stats', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000d', 'select public.admin_dashboard_stats()'), 'err:42501');
 
+-- Panel: replacing tags
+select pg_temp.check('reader cannot replace tags', pg_temp.exec('authenticated', '00000000-0000-0000-0000-000000000001', $s$select public.replace_article_tags('a0000000-0000-0000-0000-000000000002', '{}')$s$), 'err:42501');
+select pg_temp.check('anon cannot replace tags', pg_temp.exec('anon', null, $s$select public.replace_article_tags('a0000000-0000-0000-0000-000000000002', '{}')$s$), 'err:42501');
+select pg_temp.setup($s$insert into public.tags (id, name, slug) values ('b0000000-0000-0000-0000-000000000001', 'T1', 't1-test'), ('b0000000-0000-0000-0000-000000000002', 'T2', 't2-test')$s$);
+select pg_temp.check('editor replaces tags', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$select public.replace_article_tags('a0000000-0000-0000-0000-000000000002', '{b0000000-0000-0000-0000-000000000001,b0000000-0000-0000-0000-000000000002}')$s$), 'ok:1');
+select pg_temp.check('both tags are stored', pg_temp.val($s$select count(*) from public.article_tags where article_id = 'a0000000-0000-0000-0000-000000000002'$s$), '2');
+select pg_temp.check('a tag that does not exist fails', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$select public.replace_article_tags('a0000000-0000-0000-0000-000000000002', '{b0000000-0000-0000-0000-00000000dead}')$s$), 'err:23503');
+select pg_temp.check('that failure keeps the old tags', pg_temp.val($s$select count(*) from public.article_tags where article_id = 'a0000000-0000-0000-0000-000000000002'$s$), '2');
+select pg_temp.check('replacing removes the rest', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$select public.replace_article_tags('a0000000-0000-0000-0000-000000000002', '{b0000000-0000-0000-0000-000000000002}')$s$), 'ok:1');
+select pg_temp.check('one tag is left', pg_temp.val($s$select count(*) from public.article_tags where article_id = 'a0000000-0000-0000-0000-000000000002'$s$), '1');
+
 -- Structure
 select pg_temp.check('every public table has RLS', pg_temp.val($s$select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity$s$), '0');
 select pg_temp.check('anon has no whole-table write access', pg_temp.val($s$select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and has_table_privilege('anon', c.oid, 'INSERT, UPDATE, DELETE')$s$), '0');

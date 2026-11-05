@@ -161,5 +161,6 @@ export function useArticleForm(
     hasRestoredDraft,
     hasStaleDraft,
     tagsReady,
+    isDirty: contentOf(form) !== contentOf(baseline.current),
   };
 }
