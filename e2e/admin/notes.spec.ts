@@ -146,6 +146,155 @@ test("without internet the text stays and comes back after reloading", async ({ 
   await page.waitForTimeout(1200);
 
   await page.route("**/rest/v1/articles**", (route) => route.abort());
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  await expect(page.getByText(/No pudimos guardar/)).toBeVisible();
+  await expect(page.locator(".note-editor")).toContainText("Escrito sin conexión.");
+  await page.unroute("**/rest/v1/articles**");
+
+  page.on("dialog", (dialog) => void dialog.accept());
+  await page.reload();
+  await expect(page.getByText("Recuperamos lo que estabas escribiendo")).toBeVisible();
+  await expect(page.locator(".note-editor")).toContainText("Escrito sin conexión.");
+});
+
+test("an old note with media opens and saves without losing it", async ({ page }) => {
+  const id = await makeNote(
+    `E2E medios ${STAMP}`,
+    `<h3>Sub</h3><p><span style="font-weight: bolder;">Fuerte</span> y normal.</p><div data-media-block="true" contenteditable="false"><figure class="m"><img src="https://x.supabase.co/a.webp" alt="Foto"></figure><button type="button" data-remove-media="true" aria-label="Quitar">×</button></div><div data-media-block="true" contenteditable="false"><iframe src="https://www.instagram.com/reel/abc/embed/" title="R"></iframe><button type="button" data-remove-media="true" aria-label="Quitar">×</button></div>`,
+  );
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await openNote(page, id);
+  await page.locator(".note-editor").click();
+  await page.keyboard.press("Control+Home");
+  await page.keyboard.type("Nuevo. ");
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  await expect(page.getByText("Guardado.")).toBeVisible();
+
+  const [stored] = await api(`/rest/v1/articles?id=eq.${id}&select=content`);
+  expect(stored.content).toContain(`src="https://x.supabase.co/a.webp"`);
+  expect(stored.content).toContain(`alt="Foto"`);
+  expect(stored.content).toContain(`src="https://www.instagram.com/reel/abc/embed/"`);
+  expect(stored.content).toContain("<strong>Fuerte</strong>");
+  expect(stored.content).not.toContain("×");
+});
+
+test("an earlier version can be compared and brought back", async ({ page }) => {
+  const id = await makeNote(`E2E historial ${STAMP}`, "<p>Primera redacción.</p>");
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await openNote(page, id);
+
+  await page.getByRole("tab", { name: "Historial" }).click();
+  await expect(page.getByText("Todavía no hay versiones anteriores")).toBeVisible();
+
+  await page.locator(".note-editor").click();
+  await page.keyboard.press("Control+A");
+  await page.keyboard.type("Segunda redacción.");
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  await expect(page.getByText("Guardado.")).toBeVisible();
+
+  await page.getByRole("button", { name: /Cambiada por/ }).click();
+  await expect(page.getByRole("dialog").locator("del")).toContainText("Primera");
+  await expect(page.getByRole("dialog").locator("ins")).toContainText("Segunda");
+  await page.getByRole("button", { name: "Usar esta versión" }).click();
+
+  await expect(page.locator(".note-editor")).toContainText("Primera redacción.");
+  await expect(page.getByText("Cambios sin guardar")).toBeVisible();
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  await expect(page.getByText("Todo guardado")).toBeVisible();
+
+  const [stored] = await api(`/rest/v1/articles?id=eq.${id}&select=content`);
+  expect(stored.content).toContain("Primera redacción.");
+  const versions = await api(`/rest/v1/article_revisions?article_id=eq.${id}&select=id`);
+  expect(versions).toHaveLength(2);
+});
+
+const mockAssistant = (page: Page, result: unknown, status = 200) =>
+  page.route("**/functions/v1/editor-assist", (route) =>
+    route.fulfill({
+      status,
+      contentType: "application/json",
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: JSON.stringify(status === 200 ? { result } : result),
+    }),
+  );
+
+test("the assistant suggests and nothing changes until it is accepted", async ({ page }) => {
+  const id = await makeNote(`E2E asistente ${STAMP}`, "<p>El presidente hablo ayer.</p>");
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await openNote(page, id);
+  await page.getByRole("tab", { name: "Asistente" }).click();
+
+  await mockAssistant(page, { titles: ["Título sugerido", "Otro título"] });
+  await page.getByRole("button", { name: "Títulos" }).click();
+  await expect(page.getByText("Título sugerido")).toBeVisible();
+  await expect(page.getByPlaceholder("Título de la nota")).toHaveValue(`E2E asistente ${STAMP}`);
+  await page
+    .getByRole("listitem")
+    .filter({ hasText: "Otro título" })
+    .getByRole("button", { name: "Descartar" })
+    .click();
+  await expect(page.getByText("Otro título")).toHaveCount(0);
+  await page.getByRole("button", { name: "Usar" }).click();
+  await expect(page.getByPlaceholder("Título de la nota")).toHaveValue("Título sugerido");
+
+  await page.unroute("**/functions/v1/editor-assist");
+  await mockAssistant(page, {
+    fixes: [{ original: "hablo", replacement: "habló", reason: "Falta la tilde" }],
+  });
+  await page.getByRole("button", { name: "Ortografía" }).click();
+  await expect(page.getByText("Falta la tilde")).toBeVisible();
+  await expect(page.locator(".note-editor")).toContainText("hablo ayer");
+  await page.getByRole("button", { name: "Corregir" }).click();
+  await expect(page.locator(".note-editor")).toContainText("habló ayer");
+});
+
+test("when the assistant fails, the note is untouched and writing goes on", async ({ page }) => {
+  const id = await makeNote(`E2E asistente caído ${STAMP}`, "<p>Texto intacto.</p>");
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await openNote(page, id);
+  await page.getByRole("tab", { name: "Asistente" }).click();
+
+  await mockAssistant(page, { error: "El asistente no respondió." }, 502);
+  await page.getByRole("button", { name: "Resumen" }).click();
+  await expect(page.getByRole("alert")).toContainText("Podés seguir escribiendo");
+  await page.locator(".note-editor").click();
+  await page.keyboard.press("End");
+  await page.keyboard.type(" Más texto.");
+  await expect(page.locator(".note-editor")).toContainText("Texto intacto. Más texto.");
+});
+
+// One white pixel, as a real upload.
+const PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=",
+  "base64",
+);
+
+test("an image uploaded from the computer reaches the library and the note", async ({ page }) => {
+  const id = await makeNote(`E2E imagen ${STAMP}`);
+  const alt = `Foto E2E ${STAMP}`;
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await openNote(page, id);
+
+  await page.getByRole("button", { name: "Elegir foto" }).click();
+  await page.getByRole("tab", { name: "Subir" }).click();
+  await page.getByLabel("Descripción de la imagen").fill(alt);
+  await page
+    .getByLabel("Elegir archivo")
+    .setInputFiles({ name: "foto.png", mimeType: "image/png", buffer: PNG });
+  await expect(page.getByAltText("Foto de portada elegida")).toBeVisible();
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  await expect(page.getByText("Guardado.")).toBeVisible();
+
+  const [note] = await api(`/rest/v1/articles?id=eq.${id}&select=cover_image_url`);
+  expect(note.cover_image_url).toContain("/article-media/");
+  expect(note.cover_image_url).toContain(".webp");
+
+  await page.goto("/imagenes");
   await page.getByRole("searchbox", { name: "Buscar imágenes" }).fill(alt);
   await page.getByRole("button", { name: alt }).click();
   await expect(page.getByRole("dialog").getByText(`E2E imagen ${STAMP}`)).toBeVisible();
@@ -695,4 +844,183 @@ test("the picker reaches older images and a cover cannot be a video", async ({ p
       { method: "DELETE" },
     );
   }
+});
+
+test("finish: a note signed by the newsroom stays that way when someone else saves it", async ({
+  page,
+}) => {
+  const id = await makeNote(`E2E redaccion ${STAMP}`);
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await openNote(page, id);
+  const author = page.getByRole("combobox", { name: "Autor" });
+  await expect(author.locator("option:checked")).toHaveText("Redacción");
+  await page.getByPlaceholder("Título de la nota").fill(`E2E redaccion cambiada ${STAMP}`);
+  await page.getByRole("button", { name: "Guardar", exact: true }).click();
+  await expect(page.getByText("Guardado.")).toBeVisible();
+  const [note] = await api(`/rest/v1/articles?id=eq.${id}&select=author_id,title`);
+  expect(note.title).toContain("cambiada");
+  expect(note.author_id).toBeNull();
+});
+
+test("finish: Hoy shows the rise in reads and says which period its lists cover", async ({
+  page,
+}) => {
+  const [note] = await api("/rest/v1/articles", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({
+      title: `E2E subida ${STAMP}`,
+      slug: `e2e-subida-${STAMP}`,
+      content: "<p>x</p>",
+      status: "published",
+      published_at: new Date().toISOString(),
+    }),
+  });
+  created.push(note.id);
+  const dayAgo = (days: number) =>
+    new Date(Date.now() - 3 * 3_600_000 - days * 86_400_000).toISOString().slice(0, 10);
+  await api("/rest/v1/article_views_daily?on_conflict=article_id,day", {
+    method: "POST",
+    headers: { Prefer: "resolution=merge-duplicates" },
+    body: JSON.stringify(
+      Array.from({ length: 14 }, (_, days) => ({
+        article_id: note.id,
+        day: dayAgo(days),
+        views: days < 7 ? 5000 : 1000,
+      })),
+    ),
+  });
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  const reads = page.locator("section").filter({ hasText: "Lecturas totales" });
+  await expect(reads).toContainText(/\+\d+% en 7 días/);
+  await expect(page.locator("section").filter({ hasText: "Comentarios, 24 h" })).toContainText(
+    /ayer/,
+  );
+  await expect(page.getByText("Suscriptores confirmados")).toBeVisible();
+  await expect(page.locator("section").filter({ hasText: "Más leídas" }).last()).toContainText(
+    "Desde el inicio",
+  );
+});
+
+test("finish: Newsletter says how many subscribers are confirmed", async ({ page }) => {
+  const email = `e2e-sub-${STAMP}@test.invalid`;
+  const [row] = await api("/rest/v1/newsletter_subscribers", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({ email }),
+  });
+  await signIn(page, "admin");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await page.goto("/newsletter");
+  await expect(page.getByText(/suscriptor(es)?, \d+ confirmados?/)).toBeVisible();
+  await api(`/rest/v1/newsletter_subscribers?id=eq.${row.id}`, { method: "DELETE" });
+});
+
+test("finish: a long title grows instead of being cut, and stays on one paragraph", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await page.goto("/articulos/nueva");
+  const title = page.getByPlaceholder("Título de la nota");
+  await title.fill(
+    "Un título bastante largo que no entra en una sola línea cuando se escribe desde el teléfono",
+  );
+  await title.press("Enter");
+  await expect(title).not.toHaveValue(/\n/);
+  const cut = await title.evaluate((node) =>
+    Math.max(node.scrollHeight - node.clientHeight, node.scrollWidth - node.clientWidth),
+  );
+  expect(cut).toBeLessThanOrEqual(0);
+});
+
+test("finish: saving stays at hand on a long note", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const id = await makeNote(`E2E larga ${STAMP}`, "<p>Párrafo.</p>".repeat(120));
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await openNote(page, id);
+  await page.evaluate(() => window.scrollTo(0, 2500));
+  await expect(page.getByRole("button", { name: "Guardar", exact: true })).toBeInViewport();
+  await expect(page.getByRole("combobox", { name: "Estado" })).toBeInViewport();
+  await expect(page.getByRole("tab", { name: "Historial" })).toBeInViewport();
+  const tabTops = await page
+    .getByRole("tab")
+    .evaluateAll((tabs) => tabs.map((tab) => tab.getBoundingClientRect().top));
+  expect(new Set(tabTops).size).toBe(1);
+});
+
+test("finish: the keyboard's position is visible, selects are drawn, and a lost image says so", async ({
+  page,
+}) => {
+  const alt = `Foto perdida ${STAMP}`;
+  const [asset] = await api("/rest/v1/media_assets", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({ url: `https://x.test/${STAMP}-perdida.webp`, source: "url", alt }),
+  });
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await page.goto("/articulos");
+  const select = page.getByRole("combobox", { name: "Filtrar por estado" });
+  expect(await select.evaluate((node) => getComputedStyle(node).appearance)).toBe("none");
+  await page.keyboard.press("Tab");
+  const outline = await page.evaluate(() => {
+    const style = getComputedStyle(document.activeElement as Element);
+    return [style.outlineStyle, style.outlineWidth];
+  });
+  expect(outline).toEqual(["solid", "2px"]);
+  await page.goto("/imagenes");
+  await page.getByRole("searchbox", { name: "Buscar imágenes" }).fill(alt);
+  await expect(
+    page.getByRole("button", { name: alt }).getByRole("img", { name: "Imagen no disponible" }),
+  ).toBeVisible();
+  await api(`/rest/v1/media_assets?id=eq.${asset.id}`, { method: "DELETE" });
+});
+
+test("finish: on a phone the calendar is a list, filters fold away and names stay whole", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  const title = `E2E agenda ${STAMP}`;
+  const [note] = await api("/rest/v1/articles", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({
+      title,
+      slug: `e2e-agenda-${STAMP}`,
+      content: "<p>x</p>",
+      status: "published",
+      published_at: new Date().toISOString(),
+    }),
+  });
+  created.push(note.id);
+  await signIn(page, "admin");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+
+  await page.goto("/calendario");
+  await expect(page.getByRole("link", { name: title })).toBeInViewport();
+  await expect(page.getByRole("table")).toHaveCount(0);
+
+  await page.goto("/articulos");
+  const status = page.getByRole("combobox", { name: "Filtrar por estado" });
+  await expect(status).toBeHidden();
+  await page.getByRole("button", { name: /Filtros/ }).click();
+  await expect(status).toBeVisible();
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(0);
+
+  await page.getByRole("button", { name: "Buscar", exact: true }).click();
+  await page.getByRole("combobox", { name: "Buscar notas, usuarios o acciones" }).fill("admin E2E");
+  const person = page.getByRole("option", { name: /admin E2E/ });
+  const cut = await person
+    .locator("span")
+    .first()
+    .evaluate((node) => node.scrollWidth - node.clientWidth);
+  expect(cut).toBeLessThanOrEqual(0);
 });

@@ -49,6 +49,37 @@ export const comparedToPrevious = (current: DayReads[], previous: DayReads[]) =>
     : null;
 };
 
+/** A top for the chart's scale that leaves little room above the highest value. */
+export const niceMax = (value: number) => {
+  if (value <= 4) return 4;
+  const step = 10 ** Math.floor(Math.log10(value));
+  const multiple = [1, 1.5, 2, 3, 4, 5, 6, 8, 10].find((candidate) => candidate * step >= value);
+  return (multiple ?? 10) * step;
+};
+
+/** A curve through every point that stays between neighbours, so it cannot invent a peak. */
+export const smoothPath = (points: { x: number; y: number }[]) => {
+  const slopes = points.slice(1).map((point, index) => {
+    const before = points[index] as { x: number; y: number };
+    return (point.y - before.y) / (point.x - before.x);
+  });
+  const tangent = (index: number) => {
+    const left = slopes[index - 1] ?? slopes[index] ?? 0;
+    const right = slopes[index] ?? left;
+    return left * right <= 0 ? 0 : (2 * left * right) / (left + right);
+  };
+  return points
+    .map(({ x, y }, index) => {
+      const before = points[index - 1];
+      if (!before) return `M${x} ${y}`;
+      const third = (x - before.x) / 3;
+      const c1 = `${before.x + third} ${before.y + tangent(index - 1) * third}`;
+      const c2 = `${x - third} ${y - tangent(index) * third}`;
+      return `C${c1} ${c2} ${x} ${y}`;
+    })
+    .join(" ");
+};
+
 export const hasEnoughHistory = (rows: DayReads[]) =>
   rows.filter((row) => row.reads > 0).length >= MIN_DAYS_WITH_READS;
 

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { useDebouncedValue } from "@/hooks/use-news";
 import { cn } from "@/lib/utils";
 import {
+  describeRoleChange,
   listAccess,
   listActivity,
   listAiUsage,
@@ -55,7 +56,9 @@ const ENTITIES: Record<string, string> = {
 const sentence = (row: ActivityRow) =>
   row.entity === "homepage"
     ? ACTIONS["homepage_changed"]
-    : `${ACTIONS[row.action] ?? row.action} ${ENTITIES[row.entity] ?? ""} ${row.summary}`;
+    : `${ACTIONS[row.action] ?? row.action} ${ENTITIES[row.entity] ?? ""} ${
+        row.action === "role_changed" ? describeRoleChange(row.summary) : row.summary
+      }`;
 
 function ActivityList() {
   const queryClient = useQueryClient();

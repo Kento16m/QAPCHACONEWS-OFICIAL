@@ -1,6 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
-import { useDashboard, type DashboardStats } from "../features/today/api";
+import {
+  useCommentsBefore,
+  useDashboard,
+  useReadsChange,
+  type DashboardStats,
+} from "../features/today/api";
 import { ReadsCard } from "../features/today/ReadsCard";
 import { attentionItems, type AttentionItem } from "../lib/attention";
 import { isReady } from "../lib/nav";
@@ -31,7 +36,40 @@ const Skeleton = ({ className }: { className: string }) => (
   <div className={cn("animate-pulse rounded-lg bg-muted", className)} />
 );
 
-function Figure({ label, value }: { label: string; value: number | undefined }) {
+type Change = { text: string; rise: boolean };
+
+const readsChange = (percent: number | null | undefined): Change | undefined => {
+  if (percent === undefined) return undefined;
+  if (percent === null) return { text: "Sin datos previos", rise: false };
+  if (percent === 0) return { text: "Igual que la semana anterior", rise: false };
+  return {
+    text: `${percent > 0 ? "+" : "−"}${Math.abs(percent)}% en 7 días`,
+    rise: percent > 0,
+  };
+};
+
+const commentsChange = (
+  now: number | undefined,
+  before: number | undefined,
+): Change | undefined => {
+  if (now === undefined || before === undefined) return undefined;
+  if (now === before) return { text: "Igual que ayer", rise: false };
+  const difference = now - before;
+  return {
+    text: `${difference > 0 ? "+" : "−"}${Math.abs(difference)} frente a ayer`,
+    rise: difference > 0,
+  };
+};
+
+function Figure({
+  label,
+  value,
+  change,
+}: {
+  label: string;
+  value: number | undefined;
+  change?: Change | undefined;
+}) {
   return (
     <Card>
       <p className="text-muted-foreground">{label}</p>
@@ -39,6 +77,16 @@ function Figure({ label, value }: { label: string; value: number | undefined }) 
         <Skeleton className="mt-2 h-8 w-20" />
       ) : (
         <p className="mt-1.5 text-3xl font-semibold">{number.format(value)}</p>
+      )}
+      {change && (
+        <p
+          className={cn(
+            "mt-2 inline-block rounded-full px-2 py-0.5 text-xs font-medium",
+            change.rise ? "bg-success-soft text-success" : "bg-muted text-muted-foreground",
+          )}
+        >
+          {change.text}
+        </p>
       )}
     </Card>
   );
@@ -95,7 +143,8 @@ function Attention({ stats }: { stats: DashboardStats | undefined }) {
 function MostRead({ stats }: { stats: DashboardStats | undefined }) {
   return (
     <Card className="lg:col-span-7">
-      <h2 className="mb-3 text-lg font-semibold">Más leídas</h2>
+      <h2 className="text-lg font-semibold">Más leídas</h2>
+      <p className="mb-3 text-[0.8125rem] text-muted-foreground">Desde el inicio</p>
       {!stats ? (
         <Skeleton className="h-48" />
       ) : stats.most_read.length === 0 ? (
@@ -146,7 +195,8 @@ function BySection({ stats }: { stats: DashboardStats | undefined }) {
   const top = Math.max(1, ...(stats?.by_category.map((section) => section.reads) ?? []));
   return (
     <Card className="lg:col-span-5">
-      <h2 className="mb-3 text-lg font-semibold">Lecturas por sección</h2>
+      <h2 className="text-lg font-semibold">Lecturas por sección</h2>
+      <p className="mb-3 text-[0.8125rem] text-muted-foreground">Desde el inicio</p>
       {!stats ? (
         <Skeleton className="h-48" />
       ) : stats.by_category.length === 0 ? (
@@ -175,6 +225,8 @@ function BySection({ stats }: { stats: DashboardStats | undefined }) {
 
 function Today() {
   const { data: stats, isError, refetch } = useDashboard();
+  const readsPercent = useReadsChange();
+  const commentsBefore = useCommentsBefore();
 
   return (
     <>
@@ -195,10 +247,18 @@ function Today() {
       )}
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Figure label="Lecturas totales" value={stats?.total_reads} />
+        <Figure
+          label="Lecturas totales"
+          value={stats?.total_reads}
+          change={readsChange(readsPercent)}
+        />
         <Figure label="Notas publicadas" value={stats?.published} />
-        <Figure label="Comentarios, 24 h" value={stats?.comments_24h} />
-        <Figure label="Suscriptores" value={stats?.subscribers} />
+        <Figure
+          label="Comentarios, 24 h"
+          value={stats?.comments_24h}
+          change={commentsChange(stats?.comments_24h, commentsBefore)}
+        />
+        <Figure label="Suscriptores confirmados" value={stats?.subscribers} />
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-12">

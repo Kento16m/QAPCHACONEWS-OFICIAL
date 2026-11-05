@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight, ImageOff, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, ImageOff, Search, SlidersHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 import type { ArticleStatus } from "@/lib/admin";
 import { useDebouncedValue } from "@/hooks/use-news";
 import {
@@ -83,6 +84,7 @@ function ArticlesPage() {
   const [term, setTerm] = useState(search.q ?? "");
   const debounced = useDebouncedValue(term, 350);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [showFilters, setShowFilters] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const update = (changes: Partial<Search>) =>
@@ -137,6 +139,8 @@ function ArticlesPage() {
     setSelected(next);
   };
 
+  const activeFilters = [search.status, search.category, search.author].filter(Boolean).length;
+
   return (
     <>
       <header className="mb-5 flex flex-wrap items-center gap-3">
@@ -164,44 +168,61 @@ function ArticlesPage() {
               className="h-10 rounded-lg bg-card pl-9"
             />
           </label>
-          <Select
-            aria-label="Filtrar por estado"
-            value={search.status ?? ""}
-            onChange={(event) =>
-              update({ status: (event.target.value || undefined) as ArticleStatus | undefined })
-            }
+          <Button
+            variant="outline"
+            className="h-10 rounded-lg sm:hidden"
+            aria-expanded={showFilters}
+            onClick={() => setShowFilters(!showFilters)}
           >
-            <option value="">Todos los estados</option>
-            {STATUS_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </Select>
-          <Select
-            aria-label="Filtrar por sección"
-            value={search.category ?? ""}
-            onChange={(event) => update({ category: event.target.value || undefined })}
+            <SlidersHorizontal className="size-4" aria-hidden />
+            Filtros
+            {activeFilters > 0 && ` (${activeFilters})`}
+          </Button>
+          <div
+            className={cn(
+              showFilters ? "grid" : "hidden",
+              "w-full gap-3 sm:flex sm:w-auto sm:flex-wrap",
+            )}
           >
-            <option value="">Todas las secciones</option>
-            {categories?.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </Select>
-          <Select
-            aria-label="Filtrar por autor"
-            value={search.author ?? ""}
-            onChange={(event) => update({ author: event.target.value || undefined })}
-          >
-            <option value="">Todos los autores</option>
-            {authors?.map((author) => (
-              <option key={author.id} value={author.id}>
-                {author.full_name ?? "Sin nombre"}
-              </option>
-            ))}
-          </Select>
+            <Select
+              aria-label="Filtrar por estado"
+              value={search.status ?? ""}
+              onChange={(event) =>
+                update({ status: (event.target.value || undefined) as ArticleStatus | undefined })
+              }
+            >
+              <option value="">Todos los estados</option>
+              {STATUS_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
+            <Select
+              aria-label="Filtrar por sección"
+              value={search.category ?? ""}
+              onChange={(event) => update({ category: event.target.value || undefined })}
+            >
+              <option value="">Todas las secciones</option>
+              {categories?.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </Select>
+            <Select
+              aria-label="Filtrar por autor"
+              value={search.author ?? ""}
+              onChange={(event) => update({ author: event.target.value || undefined })}
+            >
+              <option value="">Todos los autores</option>
+              {authors?.map((author) => (
+                <option key={author.id} value={author.id}>
+                  {author.full_name ?? "Sin nombre"}
+                </option>
+              ))}
+            </Select>
+          </div>
         </div>
 
         {selected.size > 0 && (

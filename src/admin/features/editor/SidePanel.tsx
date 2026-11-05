@@ -9,7 +9,7 @@ import type { EditorForm } from "@/lib/article-form";
 import { cn } from "@/lib/utils";
 import { useAuthors, useCategories } from "../../lib/articles";
 import { shareCard, type Issue } from "../../lib/save-article";
-import { Select, STATUS_OPTIONS } from "../../ui/Field";
+import { Select, STATUS_OPTIONS, Thumb } from "../../ui/Field";
 import { ImagePicker } from "../media/ImagePicker";
 
 const SITE = import.meta.env.VITE_APP_URL || "https://qapchaconews.com";
@@ -47,10 +47,12 @@ function Field({
 const counter = (value: string, max: number) => `${value.length} de ${max}`;
 
 function PublishingFields({
+  isNew,
   form,
   onChange,
   tagsReady,
 }: {
+  isNew: boolean;
   form: EditorForm;
   onChange: (changes: Partial<EditorForm>) => void;
   tagsReady: boolean;
@@ -97,7 +99,7 @@ function PublishingFields({
       <div>
         <p className="font-medium">Foto de portada</p>
         {form.cover_image_url ? (
-          <img
+          <Thumb
             src={form.cover_image_url}
             alt="Foto de portada elegida"
             className="mt-1.5 aspect-video w-full rounded-xl bg-muted object-cover"
@@ -144,7 +146,7 @@ function PublishingFields({
           value={form.author_id ?? ""}
           onChange={(event) => onChange({ author_id: event.target.value || null })}
         >
-          <option value="">Yo</option>
+          <option value="">{isNew ? "Yo" : "Redacción"}</option>
           {authors?.map((author) => (
             <option key={author.id} value={author.id}>
               {author.full_name ?? "Sin nombre"}
@@ -287,12 +289,14 @@ function ReviewList({ issues }: { issues: Issue[] }) {
 }
 
 export function SidePanel({
+  isNew,
   form,
   onChange,
   issues,
   tagsReady,
   extraTabs = [],
 }: {
+  isNew: boolean;
   form: EditorForm;
   onChange: (changes: Partial<EditorForm>) => void;
   issues: Issue[];
@@ -302,11 +306,11 @@ export function SidePanel({
   const [tab, setTab] = useState<string>("publicacion");
 
   return (
-    <aside className="min-w-0 rounded-2xl border bg-card lg:col-span-4">
+    <aside className="min-w-0 rounded-2xl border bg-card lg:sticky lg:top-[8.125rem] lg:col-span-4 lg:max-h-[calc(100svh-9.125rem)] lg:overflow-y-auto">
       <div
         role="tablist"
         aria-label="Datos de la nota"
-        className="flex flex-wrap gap-1 border-b p-2"
+        className="flex gap-0.5 overflow-x-auto border-b p-2 [scrollbar-width:none]"
       >
         {[...TABS, ...extraTabs].map((item) => (
           <button
@@ -316,7 +320,7 @@ export function SidePanel({
             aria-selected={tab === item.id}
             onClick={() => setTab(item.id)}
             className={cn(
-              "rounded-lg px-3 py-1.5 font-medium transition-colors duration-150",
+              "shrink-0 whitespace-nowrap rounded-lg px-2 py-1.5 text-[0.8125rem] font-medium transition-colors duration-150",
               tab === item.id ? "bg-accent text-accent-foreground" : "hover:bg-muted",
             )}
           >
@@ -327,7 +331,7 @@ export function SidePanel({
       </div>
       <div role="tabpanel" className="p-4">
         {tab === "publicacion" && (
-          <PublishingFields form={form} onChange={onChange} tagsReady={tagsReady} />
+          <PublishingFields isNew={isNew} form={form} onChange={onChange} tagsReady={tagsReady} />
         )}
         {tab === "seo" && <SeoFields form={form} onChange={onChange} />}
         {tab === "revision" && <ReviewList issues={issues} />}

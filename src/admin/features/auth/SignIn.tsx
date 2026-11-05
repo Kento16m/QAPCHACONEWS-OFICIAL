@@ -3,6 +3,7 @@ import { requireSupabaseClient } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AuthScreen } from "./AuthScreen";
+import { GoogleIcon } from "@/components/auth/GoogleIcon";
 
 const SITE = import.meta.env.VITE_APP_URL || "https://qapchaconews.com";
 
@@ -43,6 +44,7 @@ export function SignIn() {
   return (
     <AuthScreen title="Entrá al panel" description="Para el equipo de QAP Chaco News.">
       <Button variant="outline" size="lg" className="w-full" onClick={() => void google()}>
+        <GoogleIcon />
         Entrar con Google
       </Button>
 

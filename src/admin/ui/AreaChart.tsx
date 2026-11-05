@@ -1,16 +1,10 @@
 import { useId, useState, type PointerEvent } from "react";
-import type { DayReads } from "../lib/series";
+import { ChevronRight } from "lucide-react";
+import { niceMax, smoothPath, type DayReads } from "../lib/series";
 
 const WIDTH = 800;
 const HEIGHT = 240;
 const number = new Intl.NumberFormat("es-PY");
-
-const niceMax = (value: number) => {
-  if (value <= 4) return 4;
-  const step = 10 ** Math.floor(Math.log10(value));
-  const multiple = [1, 2, 5, 10].find((candidate) => candidate * step >= value) ?? 10;
-  return multiple * step;
-};
 
 export function AreaChart({
   rows,
@@ -26,9 +20,7 @@ export function AreaChart({
   const top = niceMax(Math.max(0, ...rows.map((row) => row.reads)));
   const xOf = (index: number) => (index / Math.max(1, rows.length - 1)) * WIDTH;
   const yOf = (reads: number) => HEIGHT - (reads / top) * HEIGHT;
-  const line = rows
-    .map((row, index) => `${index === 0 ? "M" : "L"}${xOf(index)} ${yOf(row.reads)}`)
-    .join(" ");
+  const line = smoothPath(rows.map((row, index) => ({ x: xOf(index), y: yOf(row.reads) })));
   const area = `${line} L${WIDTH} ${HEIGHT} L0 ${HEIGHT} Z`;
   const ticks = [1, 0.75, 0.5, 0.25, 0];
   const labelEvery = Math.max(1, Math.ceil(rows.length / 7));
@@ -124,8 +116,12 @@ export function AreaChart({
             <span key={row.day}>{formatLabel(row.day)}</span>
           ))}
       </div>
-      <details className="mt-3">
-        <summary className="cursor-pointer text-[0.8125rem] text-muted-foreground">
+      <details className="group mt-3">
+        <summary className="flex w-fit cursor-pointer list-none items-center gap-1 text-[0.8125rem] text-muted-foreground [&::-webkit-details-marker]:hidden">
+          <ChevronRight
+            className="size-3.5 transition-transform duration-150 group-open:rotate-90"
+            aria-hidden
+          />
           Ver como tabla
         </summary>
         <table className="mt-2 w-full max-w-sm text-left text-[0.8125rem]">

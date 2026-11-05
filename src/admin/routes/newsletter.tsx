@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { useDashboard } from "../features/today/api";
 import { downloadCsv, toCsv } from "../lib/csv";
 import {
   allSubscribers,
@@ -47,6 +48,7 @@ function NewsletterPage() {
   const { profile } = useSession();
   const [page, setPage] = useState(1);
   const [removing, setRemoving] = useState<Subscriber | null>(null);
+  const { data: stats } = useDashboard();
 
   const { data, isPending, isError, refetch } = useQuery({
     queryKey: ["admin", "subscribers", page],
@@ -95,6 +97,8 @@ function NewsletterPage() {
         {data && (
           <p className="text-muted-foreground">
             {data.total} {data.total === 1 ? "suscriptor" : "suscriptores"}
+            {stats &&
+              `, ${stats.subscribers} ${stats.subscribers === 1 ? "confirmado" : "confirmados"}`}
           </p>
         )}
         <Button

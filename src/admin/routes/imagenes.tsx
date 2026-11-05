@@ -24,7 +24,7 @@ import {
   updateAlt,
   type MediaAsset,
 } from "../lib/media";
-import { Skeleton } from "../ui/Field";
+import { Skeleton, Thumb } from "../ui/Field";
 
 export const Route = createFileRoute("/imagenes")({ component: ImagesPage });
 
@@ -75,10 +75,10 @@ function AssetDialog({ asset, onClose }: { asset: MediaAsset; onClose: () => voi
         {asset.mime_type?.startsWith("video/") ? (
           <video src={asset.url} controls className="max-h-72 w-full rounded-xl bg-muted" />
         ) : (
-          <img
+          <Thumb
             src={asset.url}
             alt={alt}
-            className="max-h-72 w-full rounded-xl bg-muted object-contain"
+            className="max-h-72 min-h-32 w-full rounded-xl bg-muted object-contain"
           />
         )}
         <label className="block font-medium">
@@ -185,7 +185,7 @@ function ImagesPage() {
         </Button>
       </header>
 
-      <section className="rounded-2xl border bg-card p-4">
+      <section>
         <Input
           type="search"
           aria-label="Buscar imágenes"
@@ -195,7 +195,7 @@ function ImagesPage() {
             setPage(1);
           }}
           placeholder="Buscar por descripción"
-          className="h-10 max-w-md rounded-lg"
+          className="h-10 max-w-md rounded-lg bg-card"
         />
 
         {isError ? (
@@ -227,7 +227,7 @@ function ImagesPage() {
                 <button
                   type="button"
                   onClick={() => setChosen(asset)}
-                  className="group w-full overflow-hidden rounded-xl border text-left transition-colors duration-150 hover:border-primary"
+                  className="group w-full overflow-hidden rounded-xl border bg-card text-left transition-colors duration-150 hover:border-primary"
                 >
                   {asset.mime_type?.startsWith("video/") ? (
                     <video
@@ -236,12 +236,7 @@ function ImagesPage() {
                       className="aspect-video w-full bg-muted"
                     />
                   ) : (
-                    <img
-                      src={asset.url}
-                      alt=""
-                      loading="lazy"
-                      className="aspect-video w-full bg-muted object-cover"
-                    />
+                    <Thumb src={asset.url} className="aspect-video w-full bg-muted object-cover" />
                   )}
                   <span className="block truncate p-2 text-[0.8125rem] text-muted-foreground">
                     {asset.alt || "Sin descripción"}

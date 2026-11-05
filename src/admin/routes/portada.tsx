@@ -1,7 +1,7 @@
 import { useEffect, useState, type DragEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowDown, ArrowUp, ImageOff, X } from "lucide-react";
+import { ArrowDown, ArrowUp, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ import {
   type SlotNote,
 } from "../lib/homepage-admin";
 import { NotePicker } from "../features/homepage/NotePicker";
-import { Skeleton } from "../ui/Field";
+import { Skeleton, Thumb } from "../ui/Field";
 
 export const Route = createFileRoute("/portada")({ component: HomepagePage });
 
@@ -67,29 +67,30 @@ function Slot({
         note && "cursor-grab active:cursor-grabbing",
       )}
     >
-      {note?.cover_image_url ? (
-        <img
-          src={note.cover_image_url}
-          alt=""
-          className={cn("w-full bg-muted object-cover", large ? "aspect-[21/9]" : "aspect-video")}
-        />
-      ) : (
-        <div
-          className={cn(
-            "flex w-full items-center justify-center bg-muted text-muted-foreground",
-            large ? "aspect-[21/9]" : "aspect-video",
-          )}
-        >
-          {note ? <ImageOff className="size-5" aria-hidden /> : "Libre"}
-        </div>
-      )}
+      <div className="relative">
+        <span className="absolute left-2 top-2 z-[1] rounded-md border bg-card px-2 py-0.5 text-xs font-medium">
+          {name}
+        </span>
+        {note?.cover_image_url ? (
+          <Thumb
+            src={note.cover_image_url}
+            className={cn("w-full bg-muted object-cover", large ? "aspect-[21/9]" : "aspect-video")}
+          />
+        ) : (
+          <div
+            className={cn(
+              "flex w-full items-center justify-center bg-muted text-muted-foreground",
+              large ? "aspect-[21/9]" : "aspect-video",
+            )}
+          >
+            {note ? "Sin foto" : "Libre"}
+          </div>
+        )}
+      </div>
       <div className="flex flex-1 flex-col gap-2 p-3">
-        <div>
-          <p className="text-xs text-muted-foreground">{name}</p>
-          <p className={cn("font-medium", large && "text-lg font-semibold")}>
-            {note?.title ?? "Se rellena con lo más reciente"}
-          </p>
-        </div>
+        <p className={cn("font-medium", large && "text-lg font-semibold")}>
+          {note?.title ?? "Se rellena con lo más reciente"}
+        </p>
         <div className="mt-auto flex flex-wrap items-center gap-1">
           <Button variant="outline" size="sm" onClick={onChoose}>
             {note ? "Cambiar" : "Elegir"}
@@ -305,7 +306,7 @@ function HomepagePage() {
       </header>
 
       <div className="grid items-start gap-4 lg:grid-cols-12">
-        <section className="rounded-2xl border bg-card p-5 lg:col-span-8">
+        <section className="lg:col-span-8">
           <h2 className="text-lg font-semibold">Notas elegidas</h2>
           <p className="mt-1 text-muted-foreground">
             Arrastrá una nota a otro lugar, o usá las flechas. “Lo más reciente” y la tira de arriba

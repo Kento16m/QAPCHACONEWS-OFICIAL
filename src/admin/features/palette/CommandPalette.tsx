@@ -81,7 +81,9 @@ export function CommandPalette({ role }: { role: "editor" | "admin" }) {
       >
         <Search className="size-4 shrink-0" aria-hidden />
         <span className="truncate">Buscar notas, usuarios o acciones</span>
-        <kbd className="ml-auto rounded-md border bg-background px-1.5 py-0.5 text-xs">Ctrl K</kbd>
+        <kbd className="ml-auto rounded-md border font-sans bg-background px-1.5 py-0.5 text-xs">
+          Ctrl K
+        </kbd>
       </button>
       <button
         type="button"
@@ -134,9 +136,11 @@ export function CommandPalette({ role }: { role: "editor" | "admin" }) {
                   )}
                 >
                   <Icon className="size-4 shrink-0" aria-hidden />
-                  <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                  <span className={cn("min-w-0 truncate", !item.detail && "flex-1")}>
+                    {item.label}
+                  </span>
                   {item.detail && (
-                    <span className="truncate text-[0.8125rem] text-muted-foreground">
+                    <span className="min-w-0 flex-1 truncate text-right text-[0.8125rem] text-muted-foreground">
                       {item.detail}
                     </span>
                   )}

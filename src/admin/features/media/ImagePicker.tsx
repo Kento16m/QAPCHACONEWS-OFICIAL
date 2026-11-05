@@ -19,7 +19,7 @@ import {
   uploadMedia,
   type MediaAsset,
 } from "../../lib/media";
-import { Skeleton } from "../../ui/Field";
+import { Skeleton, Thumb } from "../../ui/Field";
 import { Pager } from "../../ui/Pager";
 
 type Tab = "library" | "upload" | "url";
@@ -155,12 +155,7 @@ export function ImagePicker({
                   aria-label={`Elegir ${asset.alt || "imagen sin descripción"}`}
                   className="overflow-hidden rounded-lg border transition-colors duration-150 hover:border-primary"
                 >
-                  <img
-                    src={asset.url}
-                    alt=""
-                    loading="lazy"
-                    className="aspect-video w-full bg-muted object-cover"
-                  />
+                  <Thumb src={asset.url} className="aspect-video w-full bg-muted object-cover" />
                 </button>
               ))}
             </div>

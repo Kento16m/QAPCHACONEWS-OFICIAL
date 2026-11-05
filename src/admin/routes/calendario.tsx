@@ -40,6 +40,13 @@ const timeOf = new Intl.DateTimeFormat("es-PY", {
   minute: "2-digit",
 });
 
+const dayName = new Intl.DateTimeFormat("es-PY", {
+  timeZone: "UTC",
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+});
+
 const noteMoment = (note: CalendarNote) =>
   (note.status === "scheduled" ? note.scheduled_at : note.published_at) ?? "";
 
@@ -110,6 +117,15 @@ function CalendarPage() {
     }
     return days;
   }, [data]);
+
+  // On a phone what matters first is today and what is coming, then what already went out.
+  const agenda = useMemo(() => {
+    const days = [...byDay].filter(([day]) => day.startsWith(prefix));
+    return [
+      ...days.filter(([day]) => day >= today),
+      ...days.filter(([day]) => day < today).reverse(),
+    ];
+  }, [byDay, prefix, today]);
 
   const move = useMutation({
     mutationFn: ({ note, day }: { note: CalendarNote; day: string }) =>
@@ -203,58 +219,84 @@ function CalendarPage() {
       ) : isPending ? (
         <Skeleton className="h-[34rem]" />
       ) : (
-        <section className="overflow-x-auto rounded-2xl border bg-card">
-          <table className="w-full min-w-[720px] table-fixed border-collapse">
-            <thead>
-              <tr className="border-b text-xs text-muted-foreground">
-                {WEEKDAYS.map((day) => (
-                  <th key={day} scope="col" className="py-2 font-normal">
-                    {day}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {weeks.map((week) => (
-                <tr key={week[0]}>
-                  {week.map((day) => (
-                    <td
-                      key={day}
-                      data-day={day}
-                      onDragOver={(event) => {
-                        event.preventDefault();
-                        setOver(day);
-                      }}
-                      onDragLeave={() => setOver(null)}
-                      onDrop={(event) => onDrop(event, day)}
-                      className={cn(
-                        "h-28 border border-border p-1.5 align-top transition-colors duration-150",
-                        !day.startsWith(prefix) && "bg-muted/40",
-                        over === day && "bg-accent",
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "mb-1 inline-flex size-6 items-center justify-center rounded-full text-xs",
-                          day === today
-                            ? "bg-primary font-semibold text-primary-foreground"
-                            : !day.startsWith(prefix) && "text-muted-foreground",
-                        )}
-                      >
-                        {Number(day.slice(8))}
-                      </span>
-                      <ul className="space-y-1">
-                        {byDay.get(day)?.map((note) => (
-                          <NoteChip key={note.id} note={note} onAskMove={askMove} />
-                        ))}
-                      </ul>
-                    </td>
+        <>
+          <section className="space-y-3 lg:hidden">
+            {agenda.length === 0 && (
+              <p className="rounded-2xl border bg-card p-5 text-muted-foreground">
+                No hay notas este mes.
+              </p>
+            )}
+            {agenda.map(([day, notes]) => (
+              <div key={day} className="rounded-2xl border bg-card p-3">
+                <h2 className="mb-2 flex items-center gap-2 font-medium first-letter:uppercase">
+                  {dayName.format(new Date(`${day}T00:00:00Z`))}
+                  {day === today && (
+                    <span className="rounded-full bg-primary px-2 py-0.5 text-xs text-primary-foreground">
+                      Hoy
+                    </span>
+                  )}
+                </h2>
+                <ul className="space-y-1.5">
+                  {notes.map((note) => (
+                    <NoteChip key={note.id} note={note} onAskMove={askMove} />
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </section>
+          <section className="hidden overflow-x-auto rounded-2xl border bg-card lg:block">
+            <table className="w-full min-w-[720px] table-fixed border-collapse">
+              <thead>
+                <tr className="border-b text-xs text-muted-foreground">
+                  {WEEKDAYS.map((day) => (
+                    <th key={day} scope="col" className="py-2 font-normal">
+                      {day}
+                    </th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
+              </thead>
+              <tbody>
+                {weeks.map((week) => (
+                  <tr key={week[0]}>
+                    {week.map((day) => (
+                      <td
+                        key={day}
+                        data-day={day}
+                        onDragOver={(event) => {
+                          event.preventDefault();
+                          setOver(day);
+                        }}
+                        onDragLeave={() => setOver(null)}
+                        onDrop={(event) => onDrop(event, day)}
+                        className={cn(
+                          "h-28 border border-border p-1.5 align-top transition-colors duration-150",
+                          !day.startsWith(prefix) && "bg-muted/40",
+                          over === day && "bg-accent",
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "mb-1 inline-flex size-6 items-center justify-center rounded-full text-xs",
+                            day === today
+                              ? "bg-primary font-semibold text-primary-foreground"
+                              : !day.startsWith(prefix) && "text-muted-foreground",
+                          )}
+                        >
+                          {Number(day.slice(8))}
+                        </span>
+                        <ul className="space-y-1">
+                          {byDay.get(day)?.map((note) => (
+                            <NoteChip key={note.id} note={note} onAskMove={askMove} />
+                          ))}
+                        </ul>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        </>
       )}
 
       <Dialog open={moving !== null} onOpenChange={(open) => !open && setMoving(null)}>

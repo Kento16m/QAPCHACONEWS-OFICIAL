@@ -105,7 +105,7 @@ function Toolbar({
     <div
       role="toolbar"
       aria-label="Formato del texto"
-      className="sticky top-16 z-10 flex flex-wrap items-center gap-0.5 rounded-t-2xl border-b bg-card p-2"
+      className="sticky top-16 z-[5] flex flex-wrap lg:top-[8.125rem] items-center gap-0.5 rounded-t-2xl border-b bg-card p-2"
     >
       <ToolButton
         label="Negrita"

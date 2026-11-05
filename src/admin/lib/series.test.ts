@@ -5,7 +5,9 @@ import {
   fillMissingDays,
   groupByMonth,
   hasEnoughHistory,
+  niceMax,
   rangeFor,
+  smoothPath,
 } from "./series";
 
 describe("fillMissingDays", () => {
@@ -97,5 +99,47 @@ describe("rangeFor", () => {
   it("gives the period before it, the same length", () => {
     expect(rangeFor(7, now).from).toBe("2026-10-29");
     expect(rangeFor(14, now).from).toBe("2026-10-22");
+  });
+});
+
+describe("niceMax", () => {
+  it.each([
+    [57, 60],
+    [100, 100],
+    [101, 150],
+    [3, 4],
+    [0, 4],
+    [950, 1000],
+  ])("fits %i under %i", (value, top) => {
+    expect(niceMax(value)).toBe(top);
+  });
+});
+
+describe("smoothPath", () => {
+  const points = [
+    { x: 0, y: 100 },
+    { x: 10, y: 100 },
+    { x: 20, y: 40 },
+    { x: 30, y: 60 },
+  ];
+  const numbers = (path: string) => (path.match(/-?\d+(\.\d+)?/g) ?? []).map(Number);
+
+  it("passes through every point", () => {
+    const path = smoothPath(points);
+    expect(path.startsWith("M0 100")).toBe(true);
+    expect(path).toContain("10 100 C");
+    expect(path).toContain("20 40 C");
+    expect(path.endsWith("30 60")).toBe(true);
+  });
+
+  it("never invents a peak beyond the data", () => {
+    const ys = numbers(smoothPath(points)).filter((_, index) => index % 2 === 1);
+    expect(Math.min(...ys)).toBeGreaterThanOrEqual(40);
+    expect(Math.max(...ys)).toBeLessThanOrEqual(100);
+  });
+
+  it("copes with one point and with none", () => {
+    expect(smoothPath([{ x: 5, y: 5 }])).toBe("M5 5");
+    expect(smoothPath([])).toBe("");
   });
 });

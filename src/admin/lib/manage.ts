@@ -115,6 +115,19 @@ export type ActivityRow = {
   actor_email: string | null;
 };
 
+const ROLE_NAMES: Record<string, string> = {
+  reader: "Lector",
+  editor: "Editor",
+  admin: "Administrador",
+};
+
+/** The log stores roles as the database names them. */
+export const describeRoleChange = (summary: string) =>
+  summary.replace(
+    /(reader|editor|admin) a (reader|editor|admin)$/,
+    (_match, from: string, to: string) => `${ROLE_NAMES[from]} a ${ROLE_NAMES[to]}`,
+  );
+
 export const listActivity = async (page: number) => {
   const { data, error, count } = await requireSupabaseClient()
     .from("activity_log")

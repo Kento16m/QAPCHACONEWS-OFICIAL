@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { Editor } from "@tiptap/core";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { getArticleTagIds, type AdminArticle, type ArticleStatus } from "@/lib/admin";
 import { buildArticlePayload, type EditorForm } from "@/lib/article-form";
 import { useArticleForm } from "@/hooks/use-article-form";
@@ -85,7 +85,9 @@ export function NoteEditor({ article }: { article: AdminArticle | null }) {
         toast.error("Todavía estamos cargando las etiquetas. Probá de nuevo en un momento.");
         return;
       }
-      const next = { ...form, status, author_id: form.author_id ?? session?.user.id ?? null };
+      // Only a new note starts with its writer: saving someone else's must not take the byline.
+      const author = article ? form.author_id : (form.author_id ?? session?.user.id ?? null);
+      const next = { ...form, status, author_id: author };
       let payload;
       try {
         const now = new Date();
@@ -191,7 +193,7 @@ export function NoteEditor({ article }: { article: AdminArticle | null }) {
 
   return (
     <>
-      <header className="mb-4 flex flex-wrap items-center gap-3">
+      <header className="mb-4 flex flex-wrap items-center gap-3 lg:sticky lg:top-16 lg:z-10 lg:-mx-6 lg:border-b lg:bg-background lg:px-6 lg:py-3">
         <Button
           asChild
           variant="outline"
@@ -272,12 +274,14 @@ export function NoteEditor({ article }: { article: AdminArticle | null }) {
         <div className="min-w-0 space-y-4 lg:col-span-8">
           <label className="block">
             <span className="sr-only">Título</span>
-            <Input
+            <Textarea
+              rows={1}
               value={form.title}
-              onChange={(event) => change({ title: event.target.value })}
+              onChange={(event) => change({ title: event.target.value.replace(/\s*\n\s*/g, " ") })}
+              onKeyDown={(event) => event.key === "Enter" && event.preventDefault()}
               placeholder="Título de la nota"
               maxLength={IN_TITLE_LIMIT * 2}
-              className="h-14 rounded-2xl bg-card px-5 text-xl font-semibold md:text-xl"
+              className="min-h-14 resize-none rounded-2xl bg-card px-5 py-3.5 text-xl font-semibold [field-sizing:content] md:text-xl"
             />
           </label>
           <RichEditor
@@ -288,6 +292,7 @@ export function NoteEditor({ article }: { article: AdminArticle | null }) {
           />
         </div>
         <SidePanel
+          isNew={!article}
           form={form}
           onChange={change}
           issues={issues}
