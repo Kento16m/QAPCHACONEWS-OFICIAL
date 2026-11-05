@@ -29,7 +29,10 @@ const makeNote = async (title: string, content = "<p>Texto original.</p>") => {
 };
 
 const openNote = async (page: Page, id: string) => {
+  // Saving waits for the note's tags, so the test does too.
+  const tags = page.waitForResponse("**/rest/v1/article_tags**");
   await page.goto(`/articulos/${id}`);
+  await tags;
   await expect(page.getByRole("heading", { name: "Editar nota" })).toBeVisible();
   await expect(page.locator(".note-editor")).toBeVisible();
 };
@@ -357,4 +360,162 @@ test("choosing the homepage and breaking news", async ({ page }) => {
   expect(Math.round(hours)).toBe(24);
 
   await api("/rest/v1/homepage_slots?position=gte.1", { method: "DELETE" });
+});
+
+const edit = async (page: Page, text: string) => {
+  await page.locator(".note-editor").click();
+  await page.keyboard.press("End");
+  await page.keyboard.type(text);
+};
+
+const saveButton = (page: Page) => page.getByRole("button", { name: "Guardar", exact: true });
+
+const enter = async (page: Page, id: string) => {
+  await signIn(page, "editor");
+  await expect(page.getByRole("heading", { name: "Hoy" })).toBeVisible();
+  await openNote(page, id);
+};
+
+const reconnect = (page: Page) =>
+  page.evaluate(() => {
+    window.dispatchEvent(new Event("offline"));
+    window.dispatchEvent(new Event("online"));
+  });
+
+test("a save by someone else is noticed even if the page refreshed its data", async ({ page }) => {
+  const id = await makeNote(`E2E token ${STAMP}`);
+  await enter(page, id);
+  await api(`/rest/v1/articles?id=eq.${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ content: "<p>Lo de Beto.</p>" }),
+  });
+  await reconnect(page);
+  await page.waitForTimeout(1500);
+  await edit(page, " Lo de Ana.");
+  await saveButton(page).click();
+  await expect(page.getByRole("heading", { name: "Otra persona guardó esta nota" })).toBeVisible();
+  const [stored] = await api(`/rest/v1/articles?id=eq.${id}&select=content`);
+  expect(stored.content).toContain("Lo de Beto.");
+});
+
+test("reopening a note shows what is saved now, not an old copy", async ({ page }) => {
+  const id = await makeNote(`E2E reabrir ${STAMP}`);
+  await enter(page, id);
+  await page.getByRole("link", { name: "Volver a Artículos" }).click();
+  await expect(page.getByRole("heading", { name: "Artículos" })).toBeVisible();
+  await api(`/rest/v1/articles?id=eq.${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ content: "<p>Versión de Beto.</p>" }),
+  });
+  await page.getByRole("searchbox", { name: "Buscar notas" }).fill(`E2E reabrir ${STAMP}`);
+  await page.getByRole("link", { name: `E2E reabrir ${STAMP}` }).click();
+  await expect(page.locator(".note-editor")).toContainText("Versión de Beto.");
+});
+
+test("words typed while saving stay on screen and stay pending", async ({ page }) => {
+  const id = await makeNote(`E2E durante ${STAMP}`);
+  await enter(page, id);
+  await edit(page, " Primero.");
+  await page.route("**/rest/v1/articles**", async (route) => {
+    if (route.request().method() === "PATCH") await new Promise((done) => setTimeout(done, 1500));
+    await route.continue();
+  });
+  await page.keyboard.press("Control+s");
+  await page.keyboard.type(" Durante.");
+  await expect(page.getByText("Guardado.")).toBeVisible();
+  await expect(page.locator(".note-editor")).toContainText("Durante.");
+  await expect(page.getByText("Cambios sin guardar")).toBeVisible();
+});
+
+test("publishing an existing draft leaves nothing pending", async ({ page }) => {
+  const id = await makeNote(`E2E publicar ${STAMP}`);
+  await enter(page, id);
+  await page.getByRole("button", { name: "Publicar" }).click();
+  await page.getByRole("button", { name: "Publicar igual" }).click();
+  await expect(page.getByText("Nota publicada.")).toBeVisible();
+  await expect(page.getByText("Todo guardado")).toBeVisible();
+});
+
+test("pressing save twice does not look like someone else saved", async ({ page }) => {
+  const id = await makeNote(`E2E doble ${STAMP}`);
+  await enter(page, id);
+  await edit(page, " Doble.");
+  await page.route("**/rest/v1/articles**", async (route) => {
+    if (route.request().method() === "PATCH") await new Promise((done) => setTimeout(done, 800));
+    await route.continue();
+  });
+  await page.keyboard.press("Control+s");
+  await page.keyboard.press("Control+s");
+  await expect(page.getByText("Guardado.")).toBeVisible();
+  await page.waitForTimeout(1200);
+  await expect(page.getByRole("heading", { name: "Otra persona guardó esta nota" })).toHaveCount(0);
+});
+
+test("when only the tags fail, it says so and the next save works", async ({ page }) => {
+  const id = await makeNote(`E2E etiquetas ${STAMP}`);
+  await enter(page, id);
+  await edit(page, " Con etiquetas.");
+  await page.route("**/rpc/replace_article_tags", (route) => route.abort());
+  await saveButton(page).click();
+  await expect(page.getByText(/se guardó, pero no las etiquetas/)).toBeVisible();
+  const [stored] = await api(`/rest/v1/articles?id=eq.${id}&select=content`);
+  expect(stored.content).toContain("Con etiquetas.");
+
+  await page.unroute("**/rpc/replace_article_tags");
+  await edit(page, " Otra vez.");
+  await saveButton(page).click();
+  await expect(page.getByText("Guardado.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Otra persona guardó esta nota" })).toHaveCount(0);
+});
+
+test("choosing the other person's version really loads it", async ({ page }) => {
+  const id = await makeNote(`E2E lo suyo ${STAMP}`);
+  await enter(page, id);
+  await edit(page, " Lo mío.");
+  await api(`/rest/v1/articles?id=eq.${id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ content: "<p>Lo suyo.</p>" }),
+  });
+  await saveButton(page).click();
+  await page.getByRole("button", { name: "Usar lo suyo" }).click();
+  await expect(page.locator(".note-editor")).toContainText("Lo suyo.");
+  await expect(page.locator(".note-editor")).not.toContainText("Lo mío.");
+});
+
+test("saving a note someone deleted explains it and keeps the text", async ({ page }) => {
+  const id = await makeNote(`E2E borrada ${STAMP}`);
+  await enter(page, id);
+  await edit(page, " Sigue acá.");
+  await api(`/rest/v1/articles?id=eq.${id}`, { method: "DELETE" });
+  await saveButton(page).click();
+  await expect(page.getByText(/ya no existe/)).toBeVisible();
+  await expect(page.locator(".note-editor")).toContainText("Sigue acá.");
+});
+
+test("a failed background refresh does not take the editor away", async ({ page }) => {
+  const id = await makeNote(`E2E sin fondo ${STAMP}`);
+  await enter(page, id);
+  await edit(page, " Escribiendo.");
+  await page.route("**/rest/v1/articles**", (route) => route.abort());
+  await reconnect(page);
+  await page.waitForTimeout(2500);
+  await expect(page.locator(".note-editor")).toContainText("Escribiendo.");
+  await page.unroute("**/rest/v1/articles**");
+});
+
+test("the preview stays readable in dark mode", async ({ page }) => {
+  const id = await makeNote(`E2E oscuro ${STAMP}`);
+  await page.emulateMedia({ colorScheme: "dark" });
+  await enter(page, id);
+  await page.getByRole("button", { name: "Vista previa" }).click();
+  const background = await page
+    .getByRole("dialog")
+    .evaluate((element) => getComputedStyle(element).backgroundColor);
+  expect(background).toBe("rgb(255, 255, 255)");
+});
+
+test("an editor can choose a colleague as author", async ({ page }) => {
+  const id = await makeNote(`E2E autor ${STAMP}`);
+  await enter(page, id);
+  await expect(page.getByLabel("Autor").getByRole("option", { name: "admin E2E" })).toHaveCount(1);
 });

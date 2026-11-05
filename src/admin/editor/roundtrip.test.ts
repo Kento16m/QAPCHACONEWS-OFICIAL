@@ -75,4 +75,28 @@ describe("roundtrip", () => {
     expect(out).not.toContain("×");
     expect(out).not.toContain("<button");
   });
+
+  it("keeps plain text as separate paragraphs", () => {
+    expect(roundtrip("Uno\n\nDos")).toBe("<p>Uno</p><p>Dos</p>");
+  });
+
+  it("keeps an image stored inside the text", () => {
+    expect(roundtrip(`<img src="data:image/png;base64,AAAA" alt="x">`)).toContain("data:image/png");
+  });
+
+  it("keeps a video that uses a source tag", () => {
+    const out = roundtrip(`<video controls><source src="https://x.supabase.co/v.mp4"></video>`);
+    expect(out).toContain(`src="https://x.supabase.co/v.mp4"`);
+  });
+
+  it("keeps audio", () => {
+    expect(roundtrip(`<audio src="https://x.supabase.co/a.mp3" controls></audio>`)).toContain(
+      "<audio",
+    );
+  });
+
+  it("keeps a file embedded from our own storage", () => {
+    const src = "https://x.supabase.co/storage/v1/object/public/a.pdf";
+    expect(roundtrip(`<iframe src="${src}"></iframe>`)).toContain(src);
+  });
 });

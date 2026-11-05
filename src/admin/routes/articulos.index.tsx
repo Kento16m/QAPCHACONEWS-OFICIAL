@@ -196,13 +196,11 @@ function ArticlesPage() {
             onChange={(event) => update({ author: event.target.value || undefined })}
           >
             <option value="">Todos los autores</option>
-            {authors
-              ?.filter((author) => author.role !== "reader")
-              .map((author) => (
-                <option key={author.id} value={author.id}>
-                  {author.full_name ?? "Sin nombre"}
-                </option>
-              ))}
+            {authors?.map((author) => (
+              <option key={author.id} value={author.id}>
+                {author.full_name ?? "Sin nombre"}
+              </option>
+            ))}
           </Select>
         </div>
 

@@ -28,7 +28,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { ImagePicker } from "../features/media/ImagePicker";
 import { MEDIA_TYPES, uploadMedia, type MediaAsset } from "../lib/media";
-import { embedUrlFor, extensions, removeOldControls } from "./extensions";
+import { embedUrlFor, extensions, toEditorHtml } from "./extensions";
 import { cleanPastedHtml } from "./paste";
 
 const allExtensions = [
@@ -191,10 +191,12 @@ export function RichEditor({
   value,
   onChange,
   onEditorReady,
+  readOnly = false,
 }: {
   value: string;
   onChange: (html: string) => void;
   onEditorReady?: (editor: Editor) => void;
+  readOnly?: boolean;
 }) {
   const lastEmitted = useRef(value);
   const [pending, setPending] = useState<Pending>(null);
@@ -205,7 +207,7 @@ export function RichEditor({
 
   const editor = useEditor({
     extensions: allExtensions,
-    content: removeOldControls(value),
+    content: toEditorHtml(value),
     editorProps: {
       attributes: { class: "note-editor", "aria-label": "Texto de la nota" },
       transformPastedHTML: cleanPastedHtml,
@@ -237,11 +239,15 @@ export function RichEditor({
     if (editor) onEditorReady?.(editor);
   }, [editor, onEditorReady]);
 
+  useEffect(() => {
+    editor?.setEditable(!readOnly);
+  }, [editor, readOnly]);
+
   // A restored draft or version arrives from outside: typing must never pass through here.
   useEffect(() => {
     if (!editor || value === lastEmitted.current) return;
     lastEmitted.current = value;
-    editor.commands.setContent(removeOldControls(value), { emitUpdate: false });
+    editor.commands.setContent(toEditorHtml(value), { emitUpdate: false });
   }, [editor, value]);
 
   const insertAsset = (asset: MediaAsset, at?: number) => {

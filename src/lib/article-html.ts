@@ -1,6 +1,6 @@
 import DOMPurify from "dompurify";
 
-function normalizeArticleContent(html: string) {
+export function normalizeArticleContent(html: string) {
   const trimmed = html.trim();
   if (!trimmed) return "";
 
@@ -108,7 +108,7 @@ export function prepareArticleHtml(html: string) {
       "webkitallowfullscreen",
       "mozallowfullscreen",
     ],
-    ALLOWED_URI_REGEXP:
-      /^(?:(?:(?:f|ht)tps?|mailto|tel|data):|[^a-z]|[\w\-._~!$&'()*+,;=:@/?%#[\]\\]*$)/i,
+    // A note is only text and media: nothing in it may collect data or restyle the page.
+    FORBID_TAGS: ["form", "input", "textarea", "select", "style"],
   });
 }

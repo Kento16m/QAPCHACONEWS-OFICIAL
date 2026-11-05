@@ -2,15 +2,20 @@ import { generateHTML, generateJSON, mergeAttributes, Node, type Extensions } fr
 import Image from "@tiptap/extension-image";
 import { TableKit } from "@tiptap/extension-table";
 import StarterKit from "@tiptap/starter-kit";
+import { normalizeArticleContent } from "@/lib/article-html";
 
 // Same sites the public site's CSP lets play inside a note.
 const EMBED_HOSTS = /^(www\.)?(youtube\.com|youtube-nocookie\.com|instagram\.com)$/;
+const OWN_STORAGE = /\.supabase\.co$/;
 
 export const isAllowedEmbed = (src: string | null) => {
   if (!src) return false;
   try {
     const url = new URL(src);
-    return url.protocol === "https:" && EMBED_HOSTS.test(url.hostname);
+    return (
+      url.protocol === "https:" &&
+      (EMBED_HOSTS.test(url.hostname) || OWN_STORAGE.test(url.hostname))
+    );
   } catch {
     return false;
   }
@@ -56,19 +61,37 @@ export const Video = Node.create({
   group: "block",
   atom: true,
   draggable: true,
-  addAttributes: () => copyAttributes(["src", "poster", "class", "controls", "playsinline"]),
-  parseHTML: () => [{ tag: "video[src]" }],
+  addAttributes: () => ({
+    ...copyAttributes(["poster", "class", "controls", "playsinline"]),
+    src: {
+      default: null,
+      parseHTML: (element: HTMLElement) =>
+        element.getAttribute("src") ?? element.querySelector("source")?.getAttribute("src"),
+    },
+  }),
+  parseHTML: () => [{ tag: "video" }],
   renderHTML: ({ HTMLAttributes }) => ["video", mergeAttributes(HTMLAttributes)],
+});
+
+export const Audio = Node.create({
+  name: "audio",
+  group: "block",
+  atom: true,
+  draggable: true,
+  addAttributes: () => copyAttributes(["src", "class", "controls"]),
+  parseHTML: () => [{ tag: "audio" }],
+  renderHTML: ({ HTMLAttributes }) => ["audio", mergeAttributes(HTMLAttributes)],
 });
 
 export const extensions: Extensions = [
   StarterKit.configure({
     link: { openOnClick: false, HTMLAttributes: { rel: "noopener noreferrer", target: null } },
   }),
-  Image.configure({ allowBase64: false }),
+  Image.configure({ allowBase64: true }),
   TableKit,
   Embed,
   Video,
+  Audio,
 ];
 
 /** The old panel left its own buttons inside some notes. The media stays, the buttons go. */
@@ -79,8 +102,21 @@ export const removeOldControls = (html: string) => {
   return doc.body.innerHTML;
 };
 
+// Readers do not see them, and the public cleanup leaves them around quotes and media.
+const dropEmptyParagraphs = (html: string) => {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  doc.querySelectorAll("p").forEach((node) => {
+    if (!node.textContent?.trim() && node.children.length === 0) node.remove();
+  });
+  return doc.body.innerHTML;
+};
+
+/** What the editor opens: the note as readers see it, without the old panel's buttons. */
+export const toEditorHtml = (html: string) =>
+  dropEmptyParagraphs(removeOldControls(normalizeArticleContent(html)));
+
 export const roundtrip = (html: string) =>
-  generateHTML(generateJSON(removeOldControls(html), extensions), extensions);
+  generateHTML(generateJSON(toEditorHtml(html), extensions), extensions);
 
 /** What to embed for a link someone pastes from YouTube or Instagram, or null if it is neither. */
 export const embedUrlFor = (link: string): string | null => {

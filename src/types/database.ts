@@ -164,13 +164,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "article_revisions_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "article_revisions_edited_by_fkey"
             columns: ["edited_by"]
             isOneToOne: false
@@ -654,6 +647,13 @@ export type Database = {
         }
       }
       incrementar_vista: { Args: { p_articulo_id: string }; Returns: undefined }
+      list_team_authors: {
+        Args: never
+        Returns: {
+          full_name: string
+          id: string
+        }[]
+      }
       replace_article_tags: {
         Args: { p_article_id: string; p_tag_ids: string[] }
         Returns: undefined

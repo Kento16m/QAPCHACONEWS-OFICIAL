@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Eye } from "lucide-react";
@@ -20,9 +20,11 @@ import { getArticleTagIds, type AdminArticle, type ArticleStatus } from "@/lib/a
 import { buildArticlePayload, type EditorForm } from "@/lib/article-form";
 import { useArticleForm } from "@/hooks/use-article-form";
 import { RichEditor } from "../../editor/RichEditor";
+import { useCategories } from "../../lib/articles";
 import {
   ArticleConflictError,
   breakingUntilFor,
+  explainFailedSave,
   fetchArticle,
   prePublishIssues,
   replaceTags,
@@ -39,10 +41,17 @@ import { SidePanel } from "./SidePanel";
 
 const IN_TITLE_LIMIT = 120;
 
+const SAVE_REFUSED = {
+  deleted: "Esta nota ya no existe. Tu texto sigue acá: copialo antes de salir.",
+  forbidden: "Tu cuenta no puede guardar esta nota. Tu texto sigue acá y en este navegador.",
+  unknown: "No pudimos guardar. Tu texto sigue acá y en este navegador: probá de nuevo.",
+};
+
 export function NoteEditor({ article }: { article: AdminArticle | null }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { session } = useSession();
+  const { data: categories } = useCategories();
   const {
     form,
     setForm,
@@ -53,9 +62,12 @@ export function NoteEditor({ article }: { article: AdminArticle | null }) {
     hasStaleDraft,
     tagsReady,
     isDirty,
+    openedVersion,
+    discardStaleDraft,
   } = useArticleForm(article, getArticleTagIds);
 
   const [saving, setSaving] = useState(false);
+  const savingNow = useRef(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [editor, setEditor] = useState<Editor | null>(null);
   const [conflict, setConflict] = useState<AdminArticle | null>(null);
@@ -86,42 +98,68 @@ export function NoteEditor({ article }: { article: AdminArticle | null }) {
         return;
       }
 
+      if (savingNow.current) return;
+      savingNow.current = true;
       setSaving(true);
       try {
         const saved = await saveArticle(
           article?.id ?? null,
           payload,
-          overVersion ?? article?.updated_at ?? null,
+          overVersion ?? openedVersion(),
         );
-        await replaceTags(saved.id, next.tag_ids);
-        setForm(next);
-        clearDraft(saved.updated_at);
+        // Only what the save decided: the person may have kept typing while it ran.
+        setForm((value) => ({ ...value, status, author_id: next.author_id }));
+        clearDraft(saved.updated_at, next);
         queryClient.setQueryData(["admin", "article", saved.id], saved);
         void queryClient.invalidateQueries({ queryKey: ["admin", "articles"] });
         void queryClient.invalidateQueries({ queryKey: ["admin", "revisions"] });
         void queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
-        toast.success(
-          status === "published" && form.status !== "published" ? "Nota publicada." : "Guardado.",
-        );
+
+        // The note is already saved here, so a problem with the tags must not look like a failed save.
+        try {
+          await replaceTags(saved.id, next.tag_ids);
+          toast.success(
+            status === "published" && form.status !== "published" ? "Nota publicada." : "Guardado.",
+          );
+        } catch (error) {
+          console.error("No se pudieron guardar las etiquetas:", error);
+          toast.error("La nota se guardó, pero no las etiquetas. Revisalas y guardá de nuevo.");
+        }
+
         if (!article) {
           void navigate({ to: "/articulos/$id", params: { id: saved.id }, replace: true });
         }
       } catch (error) {
         if (error instanceof ArticleConflictError && article) {
-          setConflict(await fetchArticle(article.id));
+          const version = overVersion ?? openedVersion();
+          const latest = await fetchArticle(article.id).catch(() => undefined);
+          const reason = explainFailedSave(latest, version);
+          if (reason === "conflict") setConflict(latest ?? null);
+          else toast.error(SAVE_REFUSED[reason]);
         } else {
           console.error("No se pudo guardar la nota:", error);
           toast.error(
             error instanceof Error && error.message.includes("dirección")
               ? error.message
-              : "No pudimos guardar. Tu texto sigue acá y en este navegador: probá de nuevo.",
+              : SAVE_REFUSED.unknown,
           );
         }
       } finally {
+        savingNow.current = false;
         setSaving(false);
       }
     },
-    [article, clearDraft, form, navigate, queryClient, session?.user.id, setForm, tagsReady],
+    [
+      article,
+      clearDraft,
+      form,
+      navigate,
+      openedVersion,
+      queryClient,
+      session?.user.id,
+      setForm,
+      tagsReady,
+    ],
   );
 
   const publish = () => {
@@ -219,13 +257,18 @@ export function NoteEditor({ article }: { article: AdminArticle | null }) {
       {hasStaleDraft && (
         <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl bg-warning-soft px-4 py-3 text-warning">
           <p>Hay un borrador tuyo de antes de que esta nota cambiara.</p>
-          <Button variant="outline" size="sm" className="ml-auto" onClick={recoverDraft}>
-            Recuperar mi borrador
-          </Button>
+          <div className="ml-auto flex gap-2">
+            <Button variant="outline" size="sm" onClick={discardStaleDraft}>
+              Descartar
+            </Button>
+            <Button variant="outline" size="sm" onClick={recoverDraft}>
+              Recuperar mi borrador
+            </Button>
+          </div>
         </div>
       )}
 
-      <div className="grid items-start gap-4 lg:grid-cols-12">
+      <fieldset disabled={saving && !article} className="grid items-start gap-4 lg:grid-cols-12">
         <div className="min-w-0 space-y-4 lg:col-span-8">
           <label className="block">
             <span className="sr-only">Título</span>
@@ -237,7 +280,12 @@ export function NoteEditor({ article }: { article: AdminArticle | null }) {
               className="h-14 rounded-2xl bg-card px-5 text-xl font-semibold md:text-xl"
             />
           </label>
-          <RichEditor value={form.content} onChange={setContent} onEditorReady={setEditor} />
+          <RichEditor
+            value={form.content}
+            onChange={setContent}
+            onEditorReady={setEditor}
+            readOnly={saving && !article}
+          />
         </div>
         <SidePanel
           form={form}
@@ -258,12 +306,15 @@ export function NoteEditor({ article }: { article: AdminArticle | null }) {
                   articleId={article?.id ?? null}
                   form={form}
                   onRestore={(revision) => {
+                    const sectionExists = categories?.some(
+                      (category) => category.id === revision.category_id,
+                    );
                     change({
                       title: revision.title,
                       excerpt: revision.excerpt ?? "",
                       content: revision.content,
                       cover_image_url: revision.cover_image_url ?? "",
-                      category_id: revision.category_id,
+                      category_id: sectionExists ? revision.category_id : null,
                       seo_title: revision.seo_title ?? "",
                       seo_description: revision.seo_description ?? "",
                     });
@@ -276,7 +327,7 @@ export function NoteEditor({ article }: { article: AdminArticle | null }) {
             },
           ]}
         />
-      </div>
+      </fieldset>
 
       <PreviewDialog form={form} open={previewOpen} onOpenChange={setPreviewOpen} />
 
@@ -291,9 +342,9 @@ export function NoteEditor({ article }: { article: AdminArticle | null }) {
         }}
         onUseTheirs={() => {
           setConflict(null);
-          void queryClient
-            .invalidateQueries({ queryKey: ["admin", "article", article?.id] })
-            .then(reset);
+          // The new data reaches the form on the next render, and reset reloads from it.
+          queryClient.setQueryData(["admin", "article", article?.id], conflict);
+          setTimeout(reset, 0);
         }}
       />
 

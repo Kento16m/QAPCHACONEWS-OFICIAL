@@ -19,7 +19,7 @@ const query = new Proxy(
 
 vi.mock("@/lib/supabase", () => ({ requireSupabaseClient: () => ({ from: () => query }) }));
 
-const { ArticleConflictError, prePublishIssues, saveArticle, shareCard } =
+const { ArticleConflictError, explainFailedSave, prePublishIssues, saveArticle, shareCard } =
   await import("./save-article");
 
 const payload = { title: "T" } as never;
@@ -118,5 +118,23 @@ describe("shareCard", () => {
       "https://x.com/a.webp",
     );
     expect(shareCard(form, SITE).image).toBe(`${SITE}/og-image.png`);
+  });
+});
+
+describe("explainFailedSave", () => {
+  it("is a conflict when the note has a newer version", () => {
+    expect(explainFailedSave({ updated_at: "v2" }, "v1")).toBe("conflict");
+  });
+
+  it("is a lack of permission when nothing changed yet the save was refused", () => {
+    expect(explainFailedSave({ updated_at: "v1" }, "v1")).toBe("forbidden");
+  });
+
+  it("knows when the note was deleted", () => {
+    expect(explainFailedSave(null, "v1")).toBe("deleted");
+  });
+
+  it("admits it does not know when it could not check", () => {
+    expect(explainFailedSave(undefined, "v1")).toBe("unknown");
   });
 });

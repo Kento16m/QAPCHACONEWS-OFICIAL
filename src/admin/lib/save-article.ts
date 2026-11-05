@@ -64,6 +64,16 @@ export const breakingUntilFor = (
   return new Date(now.getTime() + 24 * 3_600_000).toISOString();
 };
 
+/** A save that matched no row: the note changed, disappeared, or this person may not write it. */
+export const explainFailedSave = (
+  latest: Pick<AdminArticle, "updated_at"> | null | undefined,
+  version: string | null,
+) => {
+  if (latest === undefined) return "unknown";
+  if (latest === null) return "deleted";
+  return latest.updated_at === version ? "forbidden" : "conflict";
+};
+
 export const replaceTags = async (articleId: string, tagIds: string[]) => {
   const { error } = await requireSupabaseClient().rpc("replace_article_tags", {
     p_article_id: articleId,

@@ -3,7 +3,8 @@
   "include": [
     "src/admin/**/*.ts",
     "src/admin/**/*.tsx",
-    "src/env.d.ts"
+    "src/env.d.ts",
+    "src/test/setup.ts"
   ],
   "exclude": [],
   "compilerOptions": {

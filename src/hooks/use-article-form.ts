@@ -4,6 +4,8 @@ import { emptyForm, type EditorForm, formFromArticle } from "@/lib/article-form"
 
 const DRAFT_DELAY_MS = 800;
 const draftKey = (key: string) => `qap_article_draft:${key}`;
+// An old draft waiting for a decision lives apart, so new typing cannot overwrite it.
+const oldDraftKey = (key: string) => `${key}:old`;
 
 // `version` is the article's updated_at when editing began, to detect a newer save by someone else.
 type StoredDraft = { form: Partial<EditorForm>; version: string | null };
@@ -70,10 +72,12 @@ export function useArticleForm(
     version.current = current?.updated_at ?? null;
     const isStale = Boolean(draft && draft.version !== version.current);
     const usable = isStale ? null : draft;
+    // shortcut: a second old draft replaces the first; keep a list if this ever happens in practice.
+    const waiting = isStale ? draft : readDraft(oldDraftKey(key));
 
     baseline.current = current ? formFromArticle(current, []) : emptyForm();
-    staleDraft.current = isStale ? draft : null;
-    setHasStaleDraft(isStale);
+    staleDraft.current = waiting;
+    setHasStaleDraft(Boolean(waiting));
     setHasRestoredDraft(Boolean(usable));
     setForm({ ...baseline.current, ...usable?.form });
 
@@ -107,35 +111,52 @@ export function useArticleForm(
     }
 
     pendingDraft.current = window.setTimeout(() => {
+      if (staleDraft.current) writeDraft(oldDraftKey(key), staleDraft.current);
       const { tag_ids, ...withoutTags } = form;
       writeDraft(key, {
         form: tagsKnown.current ? { ...withoutTags, tag_ids } : withoutTags,
         version: version.current,
       });
-      staleDraft.current = null;
-      setHasStaleDraft(false);
     }, DRAFT_DELAY_MS);
     return () => window.clearTimeout(pendingDraft.current);
   }, [form, key]);
 
-  // After a save, what is on screen is the new reference point.
+  // After a save, what was sent is the new reference point. Anything typed since stays pending.
   const clearDraft = useCallback(
-    (savedVersion?: string) => {
+    (savedVersion?: string, savedForm?: EditorForm) => {
       window.clearTimeout(pendingDraft.current);
-      baseline.current = latest.current.form;
+      baseline.current = savedForm ?? latest.current.form;
       if (savedVersion) version.current = savedVersion;
-      staleDraft.current = null;
-      removeDraft(key);
+      if (staleDraft.current) writeDraft(oldDraftKey(key), staleDraft.current);
+      const current = latest.current.form;
+      if (contentOf(current) === contentOf(baseline.current)) {
+        removeDraft(key);
+      } else {
+        const { tag_ids, ...withoutTags } = current;
+        writeDraft(key, {
+          form: tagsKnown.current ? { ...withoutTags, tag_ids } : withoutTags,
+          version: version.current,
+        });
+      }
       setHasRestoredDraft(false);
-      setHasStaleDraft(false);
     },
     [key],
   );
+
+  const discardStaleDraft = useCallback(() => {
+    staleDraft.current = null;
+    removeDraft(oldDraftKey(key));
+    if (readDraft(key)?.version !== version.current) removeDraft(key);
+    setHasStaleDraft(false);
+  }, [key]);
+
+  const openedVersion = useCallback(() => version.current, []);
 
   const reset = useCallback(() => {
     window.clearTimeout(pendingDraft.current);
     staleDraft.current = null;
     removeDraft(key);
+    removeDraft(oldDraftKey(key));
     setReloads((value) => value + 1);
   }, [key]);
 
@@ -143,6 +164,7 @@ export function useArticleForm(
     const draft = staleDraft.current;
     if (!draft) return;
     staleDraft.current = null;
+    removeDraft(oldDraftKey(key));
     setForm((value) => ({ ...value, ...draft.form }));
     if (draft.form.tag_ids !== undefined) {
       tagsKnown.current = true;
@@ -150,7 +172,7 @@ export function useArticleForm(
     }
     setHasStaleDraft(false);
     setHasRestoredDraft(true);
-  }, []);
+  }, [key]);
 
   return {
     form,
@@ -162,5 +184,7 @@ export function useArticleForm(
     hasStaleDraft,
     tagsReady,
     isDirty: contentOf(form) !== contentOf(baseline.current),
+    openedVersion,
+    discardStaleDraft,
   };
 }

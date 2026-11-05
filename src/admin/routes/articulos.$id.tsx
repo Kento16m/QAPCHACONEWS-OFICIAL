@@ -16,11 +16,14 @@ function NotePage() {
     enabled: !isNew,
     refetchOnMount: true,
     staleTime: 0,
+    // A note always opens as it is saved now, and an open note is not refreshed behind the writer.
+    gcTime: 0,
+    refetchOnReconnect: false,
   });
 
   if (isNew) return <NoteEditor key="nueva" article={null} />;
 
-  if (isError) {
+  if (isError && !data) {
     return (
       <div role="alert" className="flex flex-wrap items-center gap-3 rounded-xl border p-5">
         <p>No pudimos abrir la nota. Revisá tu conexión.</p>
@@ -31,7 +34,7 @@ function NotePage() {
     );
   }
 
-  if (isPending) {
+  if (isPending && !data) {
     return (
       <div className="grid gap-4 lg:grid-cols-12">
         <Skeleton className="h-[34rem] lg:col-span-8" />

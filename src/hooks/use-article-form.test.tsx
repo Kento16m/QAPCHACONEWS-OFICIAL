@@ -232,6 +232,87 @@ describe("useArticleForm", () => {
     expect(result.current.hasRestoredDraft).toBe(true);
   });
 
+  it("does not lose an old draft when the person starts typing", async () => {
+    const first = render(article("a"));
+    await settle();
+    type(first.result, "Borrador viejo");
+    flushDraft();
+    first.unmount();
+
+    const { result, unmount } = render(article("a", "Versión nueva", 0, "v2"));
+    await settle();
+    type(result, "Tecla nueva");
+    flushDraft();
+    expect(result.current.hasStaleDraft).toBe(true);
+    unmount();
+
+    const again = render(article("a", "Versión nueva", 0, "v2"));
+    await settle();
+    expect(again.result.current.hasStaleDraft).toBe(true);
+    act(() => again.result.current.recoverDraft());
+    expect(again.result.current.form.title).toBe("Borrador viejo");
+  });
+
+  it("keeps an old draft after saving, until the person decides", async () => {
+    const first = render(article("a"));
+    await settle();
+    type(first.result, "Borrador viejo");
+    flushDraft();
+    first.unmount();
+
+    const { result, unmount } = render(article("a", "Versión nueva", 0, "v2"));
+    await settle();
+    act(() => result.current.clearDraft("v3"));
+    unmount();
+
+    const again = render(article("a", "Versión nueva", 0, "v3"));
+    await settle();
+    expect(again.result.current.hasStaleDraft).toBe(true);
+    act(() => again.result.current.discardStaleDraft());
+    expect(again.result.current.hasStaleDraft).toBe(false);
+    again.unmount();
+
+    const last = render(article("a", "Versión nueva", 0, "v3"));
+    await settle();
+    expect(last.result.current.hasStaleDraft).toBe(false);
+  });
+
+  it("gives the version opened, which a later refresh of the data does not change", async () => {
+    const { result, rerender } = render(article("a", "Nota", 0, "v1"));
+    await settle();
+    rerender({ current: article("a", "Nota", 0, "v2") });
+    expect(result.current.openedVersion()).toBe("v1");
+    act(() => result.current.clearDraft("v3"));
+    expect(result.current.openedVersion()).toBe("v3");
+  });
+
+  it("keeps what was typed while a save was running", async () => {
+    const { result } = render(article("a"));
+    await settle();
+    type(result, "Lo guardado");
+    const saved = result.current.form;
+    type(result, "Lo guardado y más");
+    act(() => result.current.clearDraft("v2", saved));
+    flushDraft();
+
+    expect(result.current.form.title).toBe("Lo guardado y más");
+    expect(result.current.isDirty).toBe(true);
+    const stored = JSON.parse(window.localStorage.getItem("qap_article_draft:a") ?? "{}");
+    expect(stored.form.title).toBe("Lo guardado y más");
+    expect(stored.version).toBe("v2");
+  });
+
+  it("is clean right after saving when nothing else was typed", async () => {
+    const { result } = render(article("a"));
+    await settle();
+    const next = { ...result.current.form, status: "published" as const };
+    act(() => {
+      result.current.setForm(next);
+      result.current.clearDraft("v2", next);
+    });
+    expect(result.current.isDirty).toBe(false);
+  });
+
   it("discards an old draft on reset", async () => {
     const first = render(article("a"));
     await settle();

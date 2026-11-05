@@ -48,7 +48,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       setState(await readState());
     } catch (error) {
       console.error("No se pudo leer la sesión:", error);
-      setState((previous) => ({ ...previous, status: "error" }));
+      // Only the first read can block the panel: later, a network blip must not hide what is open.
+      setState((previous) =>
+        previous.status === "loading" ? { ...previous, status: "error" } : previous,
+      );
     }
   }, []);
 

@@ -399,6 +399,31 @@ test.describe("accounts", () => {
   });
 });
 
+test("a video saved by the new panel has a real size for readers", async ({ page }) => {
+  const slug = `e2e-tamano-video-${STAMP}`;
+  const [note] = await api("/rest/v1/articles", {
+    method: "POST",
+    headers: { Prefer: "return=representation" },
+    body: JSON.stringify({
+      title: `E2E video ${STAMP}`,
+      slug,
+      content:
+        '<p>Texto.</p><iframe src="https://www.youtube-nocookie.com/embed/abc" title="V" class="h-full w-full border-0"></iframe>',
+      status: "published",
+      published_at: new Date(Date.now() - 86_400_000).toISOString(),
+    }),
+  });
+  try {
+    await prepare(page);
+    await page.goto(`/noticia/${slug}`);
+    const box = await page.locator(".prose-news iframe").boundingBox();
+    expect(box?.width).toBeGreaterThan(400);
+    expect(Math.abs((box?.height ?? 0) - (box?.width ?? 0) * (9 / 16))).toBeLessThan(3);
+  } finally {
+    await api(`/rest/v1/articles?id=eq.${note.id}`, { method: "DELETE" });
+  }
+});
+
 test("the note chosen in the panel leads the homepage", async ({ page }) => {
   const title = `E2E elegida ${STAMP}`;
   const [note] = await api("/rest/v1/articles", {

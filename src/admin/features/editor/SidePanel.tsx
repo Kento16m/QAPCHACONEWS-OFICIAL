@@ -145,13 +145,11 @@ function PublishingFields({
           onChange={(event) => onChange({ author_id: event.target.value || null })}
         >
           <option value="">Yo</option>
-          {authors
-            ?.filter((author) => author.role !== "reader" || author.id === form.author_id)
-            .map((author) => (
-              <option key={author.id} value={author.id}>
-                {author.full_name ?? "Sin nombre"}
-              </option>
-            ))}
+          {authors?.map((author) => (
+            <option key={author.id} value={author.id}>
+              {author.full_name ?? "Sin nombre"}
+            </option>
+          ))}
         </Select>
       </Field>
 

@@ -16,7 +16,7 @@ export function PreviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="site-preview max-h-[90svh] max-w-4xl overflow-y-auto p-6 sm:p-10">
+      <DialogContent className="site-preview max-h-[90svh] max-w-4xl overflow-y-auto bg-white p-6 text-[#1d2939] sm:p-10">
         <DialogTitle asChild>
           <h2 className="font-[Playfair_Display,Georgia,serif] text-4xl font-bold leading-tight">
             {form.title || "Sin título"}

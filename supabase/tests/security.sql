@@ -322,6 +322,18 @@ select pg_temp.setup($s$delete from public.articles where id = 'a0000000-0000-00
 select pg_temp.check('deleting a note empties its place', pg_temp.val($s$select article_id is null from public.homepage_slots where position = 3$s$), 'true');
 select pg_temp.setup($s$delete from public.homepage_slots$s$);
 
+-- Panel: a category in use can be deleted
+select pg_temp.setup($s$insert into public.categories (id, name, slug) values ('c0000000-0000-0000-0000-00000000ccc1', 'Borrable', 'borrable-test')$s$);
+select pg_temp.setup($s$insert into public.articles (id, title, slug, content, status, category_id) values ('a0000000-0000-0000-0000-00000000ccc2', 'Con sección', 'con-seccion-test', 'x', 'draft', 'c0000000-0000-0000-0000-00000000ccc1')$s$);
+select pg_temp.check('admin deletes a category that a note uses', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', $s$delete from public.categories where id = 'c0000000-0000-0000-0000-00000000ccc1'$s$), 'ok:1');
+select pg_temp.check('the note stays, without section', pg_temp.val($s$select category_id is null from public.articles where id = 'a0000000-0000-0000-0000-00000000ccc2'$s$), 'true');
+select pg_temp.check('restoring a version with a deleted category works', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000a', $s$select public.admin_restore_article((select id from public.article_revisions where article_id = 'a0000000-0000-0000-0000-00000000ccc2' order by id desc limit 1))$s$), 'ok:1');
+
+-- Panel: the team's authors
+select pg_temp.check('anon cannot list authors', pg_temp.exec('anon', null, 'select * from public.list_team_authors()'), 'err:42501');
+select pg_temp.check('reader cannot list authors', pg_temp.exec('authenticated', '00000000-0000-0000-0000-000000000001', 'select * from public.list_team_authors()'), 'err:42501');
+select pg_temp.check('editor sees an administrator among the authors', pg_temp.exec('authenticated', '00000000-0000-0000-0000-00000000000e', $s$select 1 from public.list_team_authors() where id = '00000000-0000-0000-0000-00000000000a'$s$), 'ok:1');
+
 -- Structure
 select pg_temp.check('every public table has RLS', pg_temp.val($s$select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity$s$), '0');
 select pg_temp.check('anon has no whole-table write access', pg_temp.val($s$select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind = 'r' and has_table_privilege('anon', c.oid, 'INSERT, UPDATE, DELETE')$s$), '0');

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getAdminAuthors, getAdminCategories, type ArticleStatus } from "@/lib/admin";
+import { getAdminCategories, type ArticleStatus } from "@/lib/admin";
 import { buildSearchFilter } from "@/lib/api";
 import { requireSupabaseClient } from "@/lib/supabase";
 
@@ -81,5 +81,10 @@ export const deleteArticles = async (ids: string[]) => {
 export const useCategories = () =>
   useQuery({ queryKey: ["admin", "categories"], queryFn: getAdminCategories });
 
-export const useAuthors = () =>
-  useQuery({ queryKey: ["admin", "authors"], queryFn: getAdminAuthors });
+const listAuthors = async () => {
+  const { data, error } = await requireSupabaseClient().rpc("list_team_authors");
+  if (error) throw error;
+  return data ?? [];
+};
+
+export const useAuthors = () => useQuery({ queryKey: ["admin", "authors"], queryFn: listAuthors });
