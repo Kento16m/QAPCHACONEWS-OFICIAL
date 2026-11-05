@@ -82,6 +82,8 @@ export default defineConfig({
     maxicambiosProxyPlugin(),
   ],
   appType: "spa",
+  // The panel has its own entry and build: the site must not scan it.
+  optimizeDeps: { entries: ["index.html"] },
   server: {
     host: "0.0.0.0",
     port: 5173,
