@@ -408,6 +408,7 @@ export type Database = {
       }
     }
     Functions: {
+      admin_dashboard_stats: { Args: never; Returns: Json }
       admin_set_user_block: {
         Args: { p_blocked: boolean; p_reason: string; p_user_id: string }
         Returns: {

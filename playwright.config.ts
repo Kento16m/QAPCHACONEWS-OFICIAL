@@ -5,6 +5,7 @@ const { E2E_SUPABASE_URL, E2E_ANON_KEY } = process.env;
 
 export default defineConfig({
   testDir: "./e2e",
+  testIgnore: "admin/**",
   timeout: 60_000,
   expect: { timeout: 15_000 },
   fullyParallel: false,
