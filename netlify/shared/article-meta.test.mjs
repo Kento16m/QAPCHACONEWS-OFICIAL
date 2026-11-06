@@ -1,6 +1,11 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from "vitest";
-import { fetchArticleForMeta, handleArticleRequest, injectArticleMeta } from "./article-meta.mjs";
+import {
+  ARTICLE_NOT_FOUND,
+  fetchArticleForMeta,
+  handleArticleRequest,
+  injectArticleMeta,
+} from "./article-meta.mjs";
 
 const SITE = "https://qapchaconews.com";
 const HTML = `<!doctype html><html><head>
@@ -102,6 +107,35 @@ describe("injectArticleMeta", () => {
     expect(description.length).toBeLessThanOrEqual(200);
   });
 
+  it("gives crawlers without JavaScript the article's text", () => {
+    const html = inject({
+      content: "<p>Primer <strong>párrafo</strong>.</p><h2>Título</h2><p>Otro.</p>",
+    });
+    const noscript = /<noscript>([\s\S]*)<\/noscript>/.exec(html)?.[1] ?? "";
+
+    expect(noscript).toContain("<h1>Lluvias en Filadelfia</h1>");
+    expect(noscript).toContain("<p>Primer párrafo.</p>");
+    expect(noscript).toContain("<p>Título</p>");
+    expect(noscript).toContain("<p>Otro.</p>");
+    expect(noscript).not.toContain("<strong>");
+    expect(html.indexOf("<noscript>")).toBeGreaterThan(html.indexOf('<div id="root">'));
+    expect(html.indexOf("</noscript>")).toBeLessThan(html.indexOf("</div>"));
+  });
+
+  it("does not let article text break out of the noscript block", () => {
+    const html = inject({
+      title: "</noscript><script>alert(1)</script>",
+      content: "<p>a</noscript><script>alert(2)</script>b < c</p>",
+    });
+    expect(html.match(/<\/noscript>/g)).toHaveLength(1);
+    expect(html).not.toContain("<script>alert");
+    expect(html).toContain("b &lt; c");
+  });
+
+  it("adds no noscript block for an article without text", () => {
+    expect(inject({ content: null })).not.toContain("<noscript>");
+  });
+
   it("removes markup and extra spaces from the description", () => {
     expect(inject({ excerpt: "<p>Hola\n\n  mundo</p>" })).toContain(
       'name="description" content="Hola mundo"',
@@ -126,9 +160,9 @@ describe("fetchArticleForMeta", () => {
     expect(init.headers.apikey).toBe("anon");
   });
 
-  it("returns nothing for an unknown slug", async () => {
+  it("says so when the slug is confirmed not to exist", async () => {
     const http = vi.fn().mockResolvedValue(new Response("[]", { status: 200 }));
-    expect(await fetchArticleForMeta("x", config, http)).toBeNull();
+    expect(await fetchArticleForMeta("x", config, http)).toBe(ARTICLE_NOT_FOUND);
   });
 
   it.each([
@@ -204,7 +238,23 @@ describe("handleArticleRequest", () => {
     expect(response.headers.get("netlify-cdn-cache-control")).toBeNull();
   });
 
-  it("returns the normal page when the article is unknown or Supabase fails", async () => {
+  it("answers a real 404, without caching, when the article does not exist", async () => {
+    const http = vi.fn().mockResolvedValue(new Response("[]", { status: 200 }));
+    const response = await handleArticleRequest(
+      request("/noticia/no-existe"),
+      async () => page(),
+      config,
+      http,
+    );
+
+    expect(response.status).toBe(404);
+    expect(await response.text()).toContain('<div id="root">');
+    expect(response.headers.get("netlify-cdn-cache-control")).toBeNull();
+    expect(response.headers.get("etag")).toBeNull();
+  });
+
+  // A 404 here would make Google drop real articles during a database outage.
+  it("never answers 404 when Supabase fails", async () => {
     const http = vi.fn().mockRejectedValue(new Error("down"));
     const original = page();
 

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ArticleListPage } from "@/components/news/ArticleList";
 import { useSearch } from "@/hooks/use-news";
+import { NOINDEX } from "@/lib/page-head";
 
 export const Route = createFileRoute("/buscar")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -9,6 +10,7 @@ export const Route = createFileRoute("/buscar")({
   head: () => ({
     meta: [
       { title: "Buscar — QAP ChacoNews" },
+      NOINDEX,
       { name: "description", content: "Buscá noticias en QAP ChacoNews." },
       { property: "og:title", content: "Buscar — QAP ChacoNews" },
       { property: "og:description", content: "Buscá noticias del Chaco y Paraguay." },

@@ -1,7 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { LegalPage } from "@/components/legal/LegalPage";
 
 export const Route = createFileRoute("/terminos-y-condiciones")({
+  head: () =>
+    pageHead(
+      "/terminos-y-condiciones",
+      "Términos y Condiciones",
+      "Normas de uso del sitio QAP ChacoNews, operado por Ímpetus E.A.S.",
+    ),
   component: TermsPage,
 });
 
@@ -9,7 +16,7 @@ function TermsPage() {
   return (
     <LegalPage
       title="Términos y Condiciones"
-      lastUpdated="31 de octubre de 2026"
+      lastUpdated="6 de noviembre de 2026"
       intro={
         <>
           <p>
@@ -69,6 +76,7 @@ function TermsPage() {
                   no recopilar contenidos con fines de extracción automatizada sin autorización;
                 </li>
                 <li>respetar la propiedad intelectual y los derechos de terceros;</li>
+                <li>no generar de forma artificial visitas o clics en los anuncios del sitio;</li>
                 <li>
                   no usar el sitio para difundir contenido falso, abusivo, difamatorio,
                   discriminatorio o ilegal.
@@ -105,6 +113,20 @@ function TermsPage() {
                 QAP ChacoNews no queda obligado a publicar todo contenido remitido por terceros y
                 puede retirar, ocultar o ajustar materiales si estima que se vulneran criterios de
                 calidad, seguridad o normativa aplicable.
+              </p>
+            </>
+          ),
+        },
+        {
+          title: "Publicidad",
+          content: (
+            <>
+              <p>
+                El sitio puede mostrar anuncios de terceros, entre ellos los servidos por Google
+                AdSense. Cada anunciante es responsable de sus anuncios y de lo que ofrece, y su
+                presencia en el sitio no implica aprobación ni recomendación por parte de QAP
+                ChacoNews. El tratamiento de datos asociado se explica en la Política de Privacidad
+                y en la Política de Cookies.
               </p>
             </>
           ),

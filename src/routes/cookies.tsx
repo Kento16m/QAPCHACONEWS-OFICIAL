@@ -1,7 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
+import { AdsDisclosure } from "@/components/legal/AdsDisclosure";
 import { LegalPage } from "@/components/legal/LegalPage";
 
 export const Route = createFileRoute("/cookies")({
+  head: () =>
+    pageHead(
+      "/cookies",
+      "Política de Cookies",
+      "Qué cookies usa QAP ChacoNews, para qué sirven, incluida la publicidad, y cómo gestionarlas.",
+    ),
   component: CookiesPage,
 });
 
@@ -9,15 +17,15 @@ function CookiesPage() {
   return (
     <LegalPage
       title="Política de Cookies"
-      lastUpdated="31 de octubre de 2026"
+      lastUpdated="6 de noviembre de 2026"
       intro={
         <>
           <p>
             En QAP ChacoNews utilizamos cookies y tecnologías similares para mejorar la experiencia
             de lectura, mantener la seguridad del sitio, recordar preferencias, facilitar el acceso
-            a funciones de la web, gestionar autenticación y analizar el uso del portal. Esta
-            política explica qué son, qué tipos usamos, para qué los utilizamos y cómo puede
-            gestionarlos.
+            a funciones de la web, gestionar autenticación, analizar el uso del portal y mostrar
+            publicidad. Esta política explica qué son, qué tipos usamos, para qué los utilizamos y
+            cómo puede gestionarlos.
           </p>
         </>
       }
@@ -63,6 +71,14 @@ function CookiesPage() {
                   incluida Google Analytics, para comprender el uso del medio.
                 </li>
                 <li>
+                  <strong>Cookies de publicidad:</strong> permiten mostrar anuncios y medir su
+                  rendimiento. Las colocan terceros, incluido Google, como se explica más abajo.
+                </li>
+                <li>
+                  <strong>Cookies de contenido embebido:</strong> plataformas como YouTube o
+                  Instagram pueden usar sus propias cookies cuando una nota incluye su contenido.
+                </li>
+                <li>
                   <strong>Cookies de autenticación y seguridad:</strong> se usan para mantener
                   sesiones, recordar identidades de usuario, prevenir accesos no autorizados y
                   administrar registros de comentarios, newsletter y perfil.
@@ -90,6 +106,7 @@ function CookiesPage() {
                 </li>
                 <li>analizar visitas, tráfico, tiempos de lectura y engagement del contenido;</li>
                 <li>medir la efectividad de noticias, secciones y campañas editoriales;</li>
+                <li>mostrar publicidad y medir su rendimiento;</li>
                 <li>prevenir usos abusivos, accesos no autorizados y fraudes;</li>
                 <li>cumplir con requisitos legales y operativos del servicio.</li>
               </ul>
@@ -107,22 +124,29 @@ function CookiesPage() {
                 sea coherente y segura.
               </p>
               <p>
-                QAP ChacoNews no vende datos personales ni crea perfiles publicitarios invasivos con
-                fines de comercialización no relacionada con la operación del servicio. En todo
-                caso, la información puede ser tratada por proveedores tecnológicos de hosting,
-                autenticación, analítica y almacenamiento, conforme a lo descrito en la Política de
-                Privacidad.
+                QAP ChacoNews no vende los datos de su cuenta, como su nombre o su correo
+                electrónico. La información puede ser tratada por proveedores tecnológicos de
+                hosting, autenticación, analítica, publicidad y almacenamiento, conforme a lo
+                descrito en la Política de Privacidad.
               </p>
             </>
           ),
+        },
+        {
+          title: "Publicidad y cookies de terceros",
+          content: <AdsDisclosure />,
         },
         {
           title: "Cómo gestionar o rechazar cookies",
           content: (
             <>
               <p>
-                Puede configurar su navegador para aceptar, rechazar o eliminar cookies. La mayoría
-                de los navegadores permiten gestionar estas opciones desde la sección de
+                Puede cambiar su decisión en cualquier momento desde «Preferencias de cookies», al
+                pie de cada página. Si la rechaza, Google Analytics no se activa.
+              </p>
+              <p>
+                También puede configurar su navegador para aceptar, rechazar o eliminar cookies. La
+                mayoría de los navegadores permiten gestionar estas opciones desde la sección de
                 configuración de privacidad o seguridad.
               </p>
               <p>

@@ -28,6 +28,7 @@ export const Route = createFileRoute("/")({
         content: "Últimas noticias del Chaco y de todo Paraguay, las 24 horas.",
       },
     ],
+    links: [{ rel: "canonical", href: "https://qapchaconews.com/" }],
   }),
   component: Index,
 });

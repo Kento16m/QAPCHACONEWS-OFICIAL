@@ -1017,7 +1017,7 @@ export function SiteHeader() {
       )}
 
       <div className="hidden bg-navy text-navy-foreground md:flex">
-        <div className="mx-auto flex h-auto min-h-10 max-w-7xl flex-wrap items-center gap-3 px-4 py-2 sm:px-6">
+        <div className="mx-auto flex h-auto min-h-10 w-full min-w-0 max-w-7xl flex-wrap items-center gap-3 px-4 py-2 sm:px-6">
           <span className="shrink-0 text-[11px] text-navy-muted sm:text-xs">{today}</span>
           <div className="min-w-0 flex-1">
             <Ticker />

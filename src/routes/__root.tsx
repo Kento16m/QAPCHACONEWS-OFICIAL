@@ -41,6 +41,8 @@ function NotFoundComponent() {
   return (
     <div className="flex min-h-[60vh] items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
+        {/* The host answers 200 for any address, so this keeps unknown ones out of search. */}
+        <meta name="robots" content="noindex" />
         <h1 className="text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">Página no encontrada</h2>
         <p className="mt-2 text-sm text-muted-foreground">
@@ -98,6 +100,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
+      { title: "QAP ChacoNews" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       {
         name: "description",

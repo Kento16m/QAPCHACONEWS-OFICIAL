@@ -2,7 +2,6 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /admin/
-Disallow: /api/
 Disallow: /private/
 Disallow: /_/
 
@@ -15,26 +14,22 @@ User-agent: Googlebot
 Allow: /
 Disallow: /admin
 Disallow: /admin/
-Disallow: /api/
 Disallow: /private/
 
 User-agent: Bingbot
 Allow: /
 Disallow: /admin
 Disallow: /admin/
-Disallow: /api/
 Disallow: /private/
 
 User-agent: Adsbot-Google
 Allow: /
 Disallow: /admin
 Disallow: /admin/
-Disallow: /api/
 Disallow: /private/
 
 User-agent: Google-Extended
 Allow: /
 Disallow: /admin
 Disallow: /admin/
-Disallow: /api/
 Disallow: /private/

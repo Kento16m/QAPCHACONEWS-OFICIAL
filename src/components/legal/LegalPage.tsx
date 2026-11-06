@@ -18,7 +18,7 @@ export function LegalPage({
   sections: LegalSection[];
 }) {
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:py-14">
+    <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 lg:py-14">
       <div className="rounded-[28px] border border-slate-200 bg-white/90 p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] backdrop-blur-sm sm:p-8 lg:p-10">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-5">
           <div>
@@ -51,6 +51,6 @@ export function LegalPage({
           ))}
         </div>
       </div>
-    </main>
+    </div>
   );
 }

@@ -4,6 +4,7 @@ const DEFAULT_DESCRIPTION = "Leé la nota completa en QAP ChacoNews.";
 const MAX_DESCRIPTION = 200;
 // Every uncached visitor waits for this query: better to skip the tags than to feel slow.
 const TIMEOUT_MS = 800;
+export const ARTICLE_NOT_FOUND = "article-not-found";
 
 const escapeHtml = (value) =>
   String(value)
@@ -29,6 +30,25 @@ const toImage = (cover, site) => {
   if (/^https?:\/\//i.test(cover ?? "")) return cover;
   if (cover?.startsWith("/")) return `${site}${cover}`;
   return `${site}/og-image.png`;
+};
+
+const toParagraphs = (content) =>
+  String(content ?? "")
+    .replace(/<\/(?:p|div|li|blockquote|h[1-6])>|<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]*>/g, "")
+    // Entities in the text stay valid; without "<" nothing can open a tag.
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+// Not shown to readers, so it does not change how the page looks while React loads.
+const toNoscript = (article) => {
+  const paragraphs = toParagraphs(article.content);
+  if (!paragraphs.length) return "";
+  const body = paragraphs.map((text) => `<p>${text}</p>`).join("");
+  return `<noscript><article><h1>${escapeHtml(article.title)}</h1>${body}</article></noscript>`;
 };
 
 export const injectArticleMeta = (html, article, site) => {
@@ -94,6 +114,7 @@ export const injectArticleMeta = (html, article, site) => {
       )
       // A function, so "$&" in a title stays literal text.
       .replace("</head>", () => `${head}\n  </head>`)
+      .replace('<div id="root">', (root) => root + toNoscript(article))
   );
 };
 
@@ -102,7 +123,7 @@ export const fetchArticleForMeta = async (slug, { supabaseUrl, anonKey }, http =
 
   const query = new URLSearchParams({
     select:
-      "title,slug,seo_title,seo_description,excerpt,subtitle,cover_image_url,published_at,updated_at,category:categories(name),author:public_profiles(full_name)",
+      "title,slug,seo_title,seo_description,excerpt,subtitle,content,cover_image_url,published_at,updated_at,category:categories(name),author:public_profiles(full_name)",
     slug: `eq.${slug}`,
     status: "eq.published",
     limit: "1",
@@ -115,7 +136,7 @@ export const fetchArticleForMeta = async (slug, { supabaseUrl, anonKey }, http =
     });
     if (!response.ok) return null;
     const rows = await response.json();
-    return rows[0] ?? null;
+    return rows[0] ?? ARTICLE_NOT_FOUND;
   } catch {
     // The tags are an extra: without them the visitor still gets the page.
     return null;
@@ -140,6 +161,11 @@ export const handleArticleRequest = async (request, next, config, http = fetch) 
   if (!article) return response;
 
   const headers = new Headers(response.headers);
+  if (article === ARTICLE_NOT_FOUND) {
+    headers.delete("etag");
+    return new Response(response.body, { status: 404, headers });
+  }
+
   headers.delete("content-length");
   headers.delete("etag");
   // The CDN keeps the page briefly, so most visitors never wait for the database.

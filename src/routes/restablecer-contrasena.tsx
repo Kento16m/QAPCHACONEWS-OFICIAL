@@ -3,9 +3,11 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NOINDEX } from "@/lib/page-head";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/restablecer-contrasena")({
+  head: () => ({ meta: [{ title: "Restablecer contraseña — QAP ChacoNews" }, NOINDEX] }),
   component: ResetPasswordPage,
 });
 

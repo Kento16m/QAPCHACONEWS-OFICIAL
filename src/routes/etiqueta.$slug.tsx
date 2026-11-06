@@ -1,16 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ArticleListPage } from "@/components/news/ArticleList";
 import { useArticlesByTag } from "@/hooks/use-news";
+import { pageHead } from "@/lib/page-head";
 
 export const Route = createFileRoute("/etiqueta/$slug")({
-  head: ({ params }) => ({
-    meta: [
-      { title: `#${params.slug} — QAP ChacoNews` },
-      { name: "description", content: `Noticias etiquetadas con ${params.slug}.` },
-      { property: "og:title", content: `#${params.slug} — QAP ChacoNews` },
-      { property: "og:description", content: `Noticias etiquetadas con ${params.slug}.` },
-    ],
-  }),
+  head: ({ params }) =>
+    pageHead(
+      `/etiqueta/${encodeURIComponent(params.slug)}`,
+      `#${params.slug}`,
+      `Noticias etiquetadas con ${params.slug}.`,
+    ),
   component: TagPage,
 });
 

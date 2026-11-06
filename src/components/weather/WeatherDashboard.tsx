@@ -983,7 +983,7 @@ export function WeatherDashboard({
           </div>
         </aside>
 
-        <main
+        <div
           className={cn(
             "h-full w-1/2 shrink-0 overflow-y-auto p-4 md:flex-1 md:p-3",
             isDark ? "bg-slate-950" : "bg-slate-100",
@@ -1135,7 +1135,7 @@ export function WeatherDashboard({
               ))}
             </div>
           </div>
-        </main>
+        </div>
       </div>
     </div>
   );

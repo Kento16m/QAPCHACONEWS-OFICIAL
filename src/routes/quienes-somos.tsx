@@ -1,7 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { LegalPage } from "@/components/legal/LegalPage";
 
 export const Route = createFileRoute("/quienes-somos")({
+  head: () =>
+    pageHead(
+      "/quienes-somos",
+      "Quiénes Somos",
+      "QAP ChacoNews es un medio digital que cubre la realidad del Chaco paraguayo y del país con rigor, independencia y cercanía.",
+    ),
   component: AboutUsPage,
 });
 

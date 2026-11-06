@@ -1,7 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { pageHead } from "@/lib/page-head";
 import { LegalPage } from "@/components/legal/LegalPage";
 
 export const Route = createFileRoute("/aviso-legal")({
+  head: () =>
+    pageHead(
+      "/aviso-legal",
+      "Aviso Legal",
+      "Titularidad, responsabilidad editorial y normativa aplicable de QAP ChacoNews.",
+    ),
   component: LegalNoticePage,
 });
 
@@ -9,7 +16,7 @@ function LegalNoticePage() {
   return (
     <LegalPage
       title="Aviso Legal"
-      lastUpdated="31 de octubre de 2026"
+      lastUpdated="6 de noviembre de 2026"
       intro={
         <>
           <p>
@@ -64,10 +71,10 @@ function LegalNoticePage() {
               <p>
                 QAP ChacoNews puede incorporar contenidos o servicios de terceros, ya sea por
                 integración de redes, citas, referencias, multimedia, contenido embebido, enlaces
-                externos, proveedores de analítica, autenticación social o infraestructura
-                tecnológica. El sitio no garantiza ni comparte necesariamente la responsabilidad
-                editorial de esos terceros, salvo que exista una relación directa de gestión o
-                producción.
+                externos, proveedores de analítica, publicidad, autenticación social o
+                infraestructura tecnológica. El sitio no garantiza ni comparte necesariamente la
+                responsabilidad editorial de esos terceros, salvo que exista una relación directa de
+                gestión o producción.
               </p>
             </>
           ),
@@ -109,6 +116,19 @@ function LegalNoticePage() {
                 contenido, dudas sobre la política legal o requerimientos relacionados con
                 privacidad y protección de datos. Para comunicaciones formales puede contactarse con
                 Ímpetus E.A.S. a través de direccion@impetuseas.com.
+              </p>
+            </>
+          ),
+        },
+        {
+          title: "Publicidad",
+          content: (
+            <>
+              <p>
+                QAP ChacoNews puede incluir anuncios de terceros, entre ellos los servidos por
+                Google AdSense. Los anuncios se identifican como publicidad y se presentan separados
+                del contenido periodístico. Las decisiones editoriales no dependen de los
+                anunciantes, y mostrar un anuncio no implica respaldar su contenido.
               </p>
             </>
           ),

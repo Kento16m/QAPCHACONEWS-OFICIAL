@@ -11,6 +11,13 @@ const GA_TRACKING_ID = "G-6WSQ6L8F6L";
 
 analytics.initialize(GA_TRACKING_ID);
 
+// index.html carries these for crawlers without JavaScript. From here on each route sets its own.
+document.head
+  .querySelectorAll(
+    'title, link[rel="canonical"], meta[name="description"], meta[property^="og:"], meta[name^="twitter:"]',
+  )
+  .forEach((tag) => tag.remove());
+
 const router = getRouter();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

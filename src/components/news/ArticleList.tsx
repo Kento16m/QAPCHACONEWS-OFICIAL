@@ -34,7 +34,11 @@ export function ArticleListPage({
             ))}
           </div>
         ) : !items?.length ? (
-          <StateMessage>{empty}</StateMessage>
+          <>
+            {/* An unknown or empty section has nothing for a search engine to list. */}
+            <meta name="robots" content="noindex" />
+            <StateMessage>{empty}</StateMessage>
+          </>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {items.map((a) => (

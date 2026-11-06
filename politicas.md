@@ -4,7 +4,7 @@ Este documento reúne la información legal del sitio web QAP Chaco News y debe 
 
 No constituye asesoramiento jurídico formal. Se recomienda que un abogado paraguayo valide la versión final antes de publicarla con carácter definitivo.
 
-Última actualización: 31 de octubre de 2026.
+Última actualización: 6 de noviembre de 2026.
 
 ## 1. Aviso Legal
 
@@ -273,8 +273,8 @@ Duración: variable según la red social o servicio.
 Consentimiento: sí.
 
 E. Cookies de publicidad o marketing
-Finalidad: medir campañas, rendimiento publicitario y segmentación, si se habilita dichos servicios en el futuro.
-Actualmente: no se activa de manera general, salvo que se incorporen nuevos servicios publicitarios.
+Finalidad: mostrar anuncios y medir su rendimiento, mediante Google AdSense y otros proveedores externos.
+Si se rechazan: solo se solicitan anuncios no personalizados.
 Consentimiento: sí.
 
 ### 3.3. Cookies y tecnologías que se usan en la práctica en este Sitio

@@ -1,16 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ArticleListPage } from "@/components/news/ArticleList";
 import { useArticlesByCategory, useCategories } from "@/hooks/use-news";
+import { getCategories } from "@/lib/api";
+import { pageHead } from "@/lib/page-head";
 
 export const Route = createFileRoute("/categoria/$slug")({
-  head: ({ params }) => ({
-    meta: [
-      { title: `${params.slug} — QAP ChacoNews` },
-      { name: "description", content: `Noticias de la sección ${params.slug} en QAP ChacoNews.` },
-      { property: "og:title", content: `${params.slug} — QAP ChacoNews` },
-      { property: "og:description", content: `Noticias de la sección ${params.slug}.` },
-    ],
-  }),
+  // The title shows the section's real name: slugs lose accents and capitals.
+  loader: async ({ context, params }) => {
+    const categories = await context.queryClient
+      .fetchQuery({ queryKey: ["categories"], queryFn: getCategories, staleTime: 60_000 })
+      .catch(() => []);
+    return categories.find((c) => c.slug === params.slug)?.name ?? params.slug;
+  },
+  head: ({ params, loaderData: name = params.slug }) =>
+    pageHead(
+      `/categoria/${encodeURIComponent(params.slug)}`,
+      name,
+      `Noticias de la sección ${name} en QAP ChacoNews.`,
+    ),
   component: CategoryPage,
 });
 

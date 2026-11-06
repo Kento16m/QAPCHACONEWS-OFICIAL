@@ -63,6 +63,14 @@ export const Route = createFileRoute("/noticia/$slug")({
         { name: "twitter:description", content: description },
         { name: "twitter:image", content: image },
       ],
+      links: article
+        ? [
+            {
+              rel: "canonical",
+              href: `${siteUrl}/noticia/${encodeURIComponent(article.slug)}`,
+            },
+          ]
+        : [],
     };
   },
   component: ArticlePage,
@@ -148,6 +156,7 @@ function NotFound() {
         <span className="mx-auto grid h-20 w-20 place-items-center rounded-3xl bg-accent text-primary">
           <FileQuestion className="h-9 w-9" />
         </span>
+        <meta name="robots" content="noindex" />
         <h1 className="mt-6 font-display text-4xl font-bold">No encontramos esta nota</h1>
         <p className="mt-3 text-muted-foreground">
           Puede que haya sido movida o que el enlace esté incompleto. Te invitamos a seguir leyendo

@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { LogOut, ShieldAlert } from "lucide-react";
+import { NOINDEX } from "@/lib/page-head";
 import { toast } from "sonner";
 
 import {
@@ -17,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/perfil")({
+  head: () => ({ meta: [{ title: "Mi perfil — QAP ChacoNews" }, NOINDEX] }),
   component: ProfilePage,
 });
 
