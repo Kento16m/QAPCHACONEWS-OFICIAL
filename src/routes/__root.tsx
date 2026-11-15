@@ -118,7 +118,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Cobertura local, análisis y actualidad del Chaco paraguayo con rigor editorial y mirada regional.",
       },
-      { property: "og:image", content: "https://qapchaconews.com/og-image.png" },
+      { property: "og:image", content: "https://qapchaconews.com/og-image.png?v=2" },
       { property: "og:image:alt", content: "QAP ChacoNews" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "QAP ChacoNews — Noticias del Chaco paraguayo" },
@@ -126,7 +126,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         name: "twitter:description",
         content: "Cobertura local, análisis y actualidad del Chaco paraguayo con rigor editorial.",
       },
-      { name: "twitter:image", content: "https://qapchaconews.com/og-image.png" },
+      { name: "twitter:image", content: "https://qapchaconews.com/og-image.png?v=2" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
     ],
     links: [
