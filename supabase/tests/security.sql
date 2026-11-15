@@ -386,7 +386,12 @@ select pg_temp.setup($s$select public.incrementar_vista('a0000000-0000-0000-0000
 select pg_temp.check('the total goes up', pg_temp.val($s$select views_count from public.articles where id = 'a0000000-0000-0000-0000-00000000eee1'$s$), '2');
 select pg_temp.check('the day goes up by the same', pg_temp.val($s$select views from public.article_views_daily where article_id = 'a0000000-0000-0000-0000-00000000eee1'$s$), '2');
 select pg_temp.setup($s$select public.incrementar_vista('a0000000-0000-0000-0000-00000000eee2')$s$);
-select pg_temp.check('a draft counts nowhere', pg_temp.val($s$select count(*) from public.article_views_daily where article_id = 'a0000000-0000-0000-0000-00000000eee2'$s$), '0');
+select pg_temp.setup($s$select set_config('request.headers', '{"user-agent":"Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X) Chrome/153.0 Mobile Safari/537.36 (compatible; Googlebot/2.1)"}', true), public.incrementar_vista('a0000000-0000-0000-0000-00000000eee1')$s$);
+select pg_temp.setup($s$select set_config('request.headers', '{"accept":"*/*"}', true), public.incrementar_vista('a0000000-0000-0000-0000-00000000eee1')$s$);
+select pg_temp.check('a robot or a script counts nowhere', pg_temp.val($s$select views_count from public.articles where id = 'a0000000-0000-0000-0000-00000000eee1'$s$), '2');
+select pg_temp.setup($s$select set_config('request.headers', '{"user-agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 Version/27.0 Mobile Safari/604.1"}', true), public.incrementar_vista('a0000000-0000-0000-0000-00000000eee1'), set_config('request.headers', '', true)$s$);
+select pg_temp.check('a phone browser counts', pg_temp.val($s$select views from public.article_views_daily where article_id = 'a0000000-0000-0000-0000-00000000eee1'$s$), '3');
+select pg_temp.check('a draft counts nowhere',pg_temp.val($s$select count(*) from public.article_views_daily where article_id = 'a0000000-0000-0000-0000-00000000eee2'$s$), '0');
 select pg_temp.check('late at night still counts as that day in Paraguay', pg_temp.val($s$select private.local_day('2026-11-05 02:30:00+00')$s$), '2026-11-04');
 select pg_temp.check('anon cannot read reads per day', pg_temp.exec('anon', null, 'select 1 from public.article_views_daily'), 'err:42501');
 select pg_temp.check('reader cannot read reads per day', pg_temp.exec('authenticated', '00000000-0000-0000-0000-000000000001', 'select 1 from public.article_views_daily'), 'ok:0');

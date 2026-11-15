@@ -18,6 +18,7 @@ import {
 import { useArticle, useRelated } from "@/hooks/use-news";
 import { getArticleBySlug, registerArticleView } from "@/lib/api";
 import { trackArticleView } from "@/lib/analytics";
+import { onceEngaged } from "@/lib/engaged";
 import type { Article } from "@/types";
 
 const getSiteUrl = () => {
@@ -240,7 +241,6 @@ function ArticlePage() {
 
       if (trackedViewRef.current !== a.id) {
         trackedViewRef.current = a.id;
-        registerArticleView(a.id);
         trackArticleView({
           id: a.id,
           title: a.title,
@@ -269,6 +269,12 @@ function ArticlePage() {
       setMetaTag('meta[property="og:image"]', { property: "og:image" }, "/og-image.svg");
     }
   }, [a, isLoading]);
+
+  const articleId = a?.id;
+  useEffect(() => {
+    if (!articleId) return;
+    return onceEngaged(() => registerArticleView(articleId));
+  }, [articleId]);
 
   if (isLoading) return <ArticleSkeleton />;
   if (isError)
