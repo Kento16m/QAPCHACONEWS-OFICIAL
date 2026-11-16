@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 import { useCategories, useDebouncedValue } from "@/hooks/use-news";
 import { Logo } from "./primitives";
 import { Ticker } from "./Ticker";
+import { RadioNavLink } from "@/components/radio/RadioNavLink";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { SheetClose } from "@/components/ui/sheet";
@@ -955,14 +956,8 @@ export function SiteHeader() {
   const goHome = () => {
     setMobileMenuOpen(false);
 
-    if (typeof window !== "undefined") {
-      if (window.location.pathname !== "/") {
-        window.location.assign("/");
-        return;
-      }
-      window.scrollTo({ top: 0, behavior: "auto" });
-    }
-
+    // No full reload here: it would cut the radio for someone listening.
+    window.scrollTo({ top: 0, behavior: "auto" });
     navigate({ to: "/" });
   };
 
@@ -1052,6 +1047,7 @@ export function SiteHeader() {
               >
                 <Logo className="h-9" variant="auto" />
               </button>
+              <RadioNavLink className="ml-2" />
             </div>
 
             <SearchBox className="mx-auto w-full max-w-md" />
@@ -1110,6 +1106,13 @@ export function SiteHeader() {
                     >
                       Inicio
                     </button>
+                    <Link
+                      to="/radio"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="rounded-xl px-3 py-2.5 font-semibold hover:bg-navy-border"
+                    >
+                      Radio
+                    </Link>
                     {cats?.map((c) => (
                       <Link
                         key={c.id}
@@ -1138,6 +1141,7 @@ export function SiteHeader() {
             </div>
 
             <div className="flex items-center gap-2">
+              <RadioNavLink />
               <ThemeToggle />
               <AuthControl />
             </div>

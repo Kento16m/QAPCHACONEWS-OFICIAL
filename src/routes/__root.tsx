@@ -18,6 +18,7 @@ import { trackPageView } from "@/lib/analytics";
 import { SiteHeader } from "@/components/news/SiteHeader";
 import { CookieBanner } from "@/components/news/CookieBanner";
 import { SiteFooter } from "@/components/news/SiteFooter";
+import { MiniPlayer } from "@/components/radio/MiniPlayer";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 
@@ -173,6 +174,7 @@ function RootComponent() {
           <Outlet />
         </main>
         {!isAdminRoute && <SiteFooter />}
+        {!isAdminRoute && <MiniPlayer />}
         {!isAdminRoute && <CookieBanner />}
         <AuthDialogWhenOpened />
       </AuthProvider>

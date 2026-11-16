@@ -18,6 +18,7 @@ import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as PerfilRouteImport } from './routes/perfil'
 import { Route as PoliticaDePrivacidadRouteImport } from './routes/politica-de-privacidad'
 import { Route as QuienesSomosRouteImport } from './routes/quienes-somos'
+import { Route as RadioRouteImport } from './routes/radio'
 import { Route as RestablecerContrasenaRouteImport } from './routes/restablecer-contrasena'
 import { Route as TerminosYCondicionesRouteImport } from './routes/terminos-y-condiciones'
 import { Route as CategoriaSlugRouteImport } from './routes/categoria.$slug'
@@ -69,6 +70,11 @@ const QuienesSomosRoute = QuienesSomosRouteImport.update({
   path: '/quienes-somos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RadioRoute = RadioRouteImport.update({
+  id: '/radio',
+  path: '/radio',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RestablecerContrasenaRoute = RestablecerContrasenaRouteImport.update({
   id: '/restablecer-contrasena',
   path: '/restablecer-contrasena',
@@ -105,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/perfil': typeof PerfilRoute
   '/politica-de-privacidad': typeof PoliticaDePrivacidadRoute
   '/quienes-somos': typeof QuienesSomosRoute
+  '/radio': typeof RadioRoute
   '/restablecer-contrasena': typeof RestablecerContrasenaRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
@@ -121,6 +128,7 @@ export interface FileRoutesByTo {
   '/perfil': typeof PerfilRoute
   '/politica-de-privacidad': typeof PoliticaDePrivacidadRoute
   '/quienes-somos': typeof QuienesSomosRoute
+  '/radio': typeof RadioRoute
   '/restablecer-contrasena': typeof RestablecerContrasenaRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/perfil': typeof PerfilRoute
   '/politica-de-privacidad': typeof PoliticaDePrivacidadRoute
   '/quienes-somos': typeof QuienesSomosRoute
+  '/radio': typeof RadioRoute
   '/restablecer-contrasena': typeof RestablecerContrasenaRoute
   '/terminos-y-condiciones': typeof TerminosYCondicionesRoute
   '/categoria/$slug': typeof CategoriaSlugRoute
@@ -156,6 +165,7 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/politica-de-privacidad'
     | '/quienes-somos'
+    | '/radio'
     | '/restablecer-contrasena'
     | '/terminos-y-condiciones'
     | '/categoria/$slug'
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/politica-de-privacidad'
     | '/quienes-somos'
+    | '/radio'
     | '/restablecer-contrasena'
     | '/terminos-y-condiciones'
     | '/categoria/$slug'
@@ -188,6 +199,7 @@ export interface FileRouteTypes {
     | '/perfil'
     | '/politica-de-privacidad'
     | '/quienes-somos'
+    | '/radio'
     | '/restablecer-contrasena'
     | '/terminos-y-condiciones'
     | '/categoria/$slug'
@@ -205,6 +217,7 @@ export interface RootRouteChildren {
   PerfilRoute: typeof PerfilRoute
   PoliticaDePrivacidadRoute: typeof PoliticaDePrivacidadRoute
   QuienesSomosRoute: typeof QuienesSomosRoute
+  RadioRoute: typeof RadioRoute
   RestablecerContrasenaRoute: typeof RestablecerContrasenaRoute
   TerminosYCondicionesRoute: typeof TerminosYCondicionesRoute
   CategoriaSlugRoute: typeof CategoriaSlugRoute
@@ -277,6 +290,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof QuienesSomosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/radio': {
+      id: '/radio'
+      path: '/radio'
+      fullPath: '/radio'
+      preLoaderRoute: typeof RadioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/restablecer-contrasena': {
       id: '/restablecer-contrasena'
       path: '/restablecer-contrasena'
@@ -325,6 +345,7 @@ const rootRouteChildren: RootRouteChildren = {
   PerfilRoute: PerfilRoute,
   PoliticaDePrivacidadRoute: PoliticaDePrivacidadRoute,
   QuienesSomosRoute: QuienesSomosRoute,
+  RadioRoute: RadioRoute,
   RestablecerContrasenaRoute: RestablecerContrasenaRoute,
   TerminosYCondicionesRoute: TerminosYCondicionesRoute,
   CategoriaSlugRoute: CategoriaSlugRoute,

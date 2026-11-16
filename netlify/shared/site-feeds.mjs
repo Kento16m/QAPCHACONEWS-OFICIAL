@@ -5,6 +5,7 @@ const FIXED_PAGES = [
   "/",
   "/quienes-somos",
   "/clima",
+  "/radio",
   "/cookies",
   "/politica-de-privacidad",
   "/terminos-y-condiciones",

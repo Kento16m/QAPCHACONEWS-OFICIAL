@@ -32,6 +32,17 @@ const toImage = (cover, site) => {
   return `${site}/og-image.png`;
 };
 
+export const replaceHead = (html, head) =>
+  html
+    .replace(/<title>[\s\S]*?<\/title>\s*/i, "")
+    .replace(/<link\s+rel="canonical"[^>]*>\s*/gi, "")
+    .replace(
+      /<meta\s+(?:property="og:[^"]*"|name="twitter:[^"]*"|name="description")[^>]*>\s*/gi,
+      "",
+    )
+    // A function, so "$&" in a title stays literal text.
+    .replace("</head>", () => `${head}\n  </head>`);
+
 const toParagraphs = (content) =>
   String(content ?? "")
     .replace(/<\/(?:p|div|li|blockquote|h[1-6])>|<br\s*\/?>/gi, "\n")
@@ -104,18 +115,7 @@ export const injectArticleMeta = (html, article, site) => {
     `<script type="application/ld+json">${structuredData}</script>`,
   ].join("\n    ");
 
-  return (
-    html
-      .replace(/<title>[\s\S]*?<\/title>\s*/i, "")
-      .replace(/<link\s+rel="canonical"[^>]*>\s*/gi, "")
-      .replace(
-        /<meta\s+(?:property="og:[^"]*"|name="twitter:[^"]*"|name="description")[^>]*>\s*/gi,
-        "",
-      )
-      // A function, so "$&" in a title stays literal text.
-      .replace("</head>", () => `${head}\n  </head>`)
-      .replace('<div id="root">', (root) => root + toNoscript(article))
-  );
+  return replaceHead(html, head).replace('<div id="root">', (root) => root + toNoscript(article));
 };
 
 export const fetchArticleForMeta = async (slug, { supabaseUrl, anonKey }, http = fetch) => {

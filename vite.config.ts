@@ -5,6 +5,9 @@ import tsconfigPaths from "vite-tsconfig-paths";
 import { TanStackRouterVite } from "@tanstack/router-plugin/vite";
 // @ts-expect-error plain JavaScript module shared with the Netlify function
 import { createRatesFetcher } from "./netlify/shared/maxicambios.mjs";
+import type { ServerResponse } from "node:http";
+// @ts-expect-error plain JavaScript module shared with the Netlify function
+import { getNowPlaying } from "./netlify/shared/now-playing.mjs";
 // @ts-expect-error plain JavaScript module shared with the Netlify function
 import { proxyWeather } from "./netlify/shared/openweather.mjs";
 
@@ -42,6 +45,14 @@ function maxicambiosProxyPlugin(): Plugin {
     res.end(await response.text());
   };
 
+  // Same behavior as netlify/functions/now-playing.mjs while developing locally.
+  const handleNowPlaying = async (res: ServerResponse) => {
+    const response = await getNowPlaying();
+    res.statusCode = response.status;
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.end(await response.text());
+  };
+
   return {
     name: "maxicambios-proxy",
     configureServer(server) {
@@ -52,6 +63,10 @@ function maxicambiosProxyPlugin(): Plugin {
         }
         if (req.url?.startsWith("/api/clima")) {
           await handleWeather(req, res);
+          return;
+        }
+        if (req.url?.startsWith("/.netlify/functions/now-playing")) {
+          await handleNowPlaying(res);
           return;
         }
         next();
@@ -65,6 +80,10 @@ function maxicambiosProxyPlugin(): Plugin {
         }
         if (req.url?.startsWith("/api/clima")) {
           await handleWeather(req, res);
+          return;
+        }
+        if (req.url?.startsWith("/.netlify/functions/now-playing")) {
+          await handleNowPlaying(res);
           return;
         }
         next();
